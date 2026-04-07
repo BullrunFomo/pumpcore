@@ -21,7 +21,7 @@ export default function Navbar() {
         <Link href="/" className="flex items-center gap-2">
           <img src="/logo1.png" alt="Pumpcore" width={28} height={28} className="rounded-md" />
           <span className="text-base font-bold tracking-widest uppercase" style={{ color: "#4f83ff" }}>
-            PUMPCORE
+            BUNDLEX
           </span>
         </Link>
 

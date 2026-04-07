@@ -4,7 +4,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Pumpcore.io",
+  title: "BundleX",
   description: "Professional PumpFun token launch & bundle trading tool",
   icons: { icon: "/logo1.png" },
 };
