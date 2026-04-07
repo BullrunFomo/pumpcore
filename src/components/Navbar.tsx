@@ -19,7 +19,14 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <img src="/logo1.png" alt="Pumpcore" width={28} height={28} className="rounded-md" />
+          <img
+            src="/logo1.png"
+            alt="Pumpcore"
+            width={28}
+            height={28}
+            className="rounded-md"
+            style={{ boxShadow: "0 0 8px rgba(79,131,255,0.8), 0 0 20px rgba(79,131,255,0.4), 0 0 40px rgba(79,131,255,0.15)" }}
+          />
           <span className="text-base font-bold tracking-widest uppercase" style={{ color: "#4f83ff" }}>
             BUNDLEX
           </span>
