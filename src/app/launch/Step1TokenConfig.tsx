@@ -129,7 +129,7 @@ export default function Step1TokenConfig() {
           >
             <input
               className={inputCls}
-              placeholder="Proxima Industry"
+              placeholder="Bundlex Coin"
               value={tokenConfig.name}
               maxLength={NAME_MAX}
               onChange={(e) => updateTokenConfig({ name: e.target.value })}
@@ -142,7 +142,7 @@ export default function Step1TokenConfig() {
           >
             <input
               className={inputCls}
-              placeholder="$PXM"
+              placeholder="$BDX"
               value={tokenConfig.symbol}
               maxLength={SYMBOL_MAX}
               onChange={(e) => updateTokenConfig({ symbol: e.target.value.toUpperCase() })}
@@ -221,7 +221,7 @@ export default function Step1TokenConfig() {
           <Field label="X/ Twitter">
             <input
               className={inputCls}
-              placeholder="x.com/proxima"
+              placeholder="x.com/bundlex"
               value={tokenConfig.twitter}
               onChange={(e) => updateTokenConfig({ twitter: e.target.value })}
             />
@@ -229,7 +229,7 @@ export default function Step1TokenConfig() {
           <Field label="Telegram">
             <input
               className={inputCls}
-              placeholder="t.me/proxima"
+              placeholder="t.me/bundlex"
               value={tokenConfig.telegram}
               onChange={(e) => updateTokenConfig({ telegram: e.target.value })}
             />
@@ -237,7 +237,7 @@ export default function Step1TokenConfig() {
           <Field label="Website">
             <input
               className={inputCls}
-              placeholder="proxima.io"
+              placeholder="bundlex.app"
               value={tokenConfig.website}
               onChange={(e) => updateTokenConfig({ website: e.target.value })}
             />

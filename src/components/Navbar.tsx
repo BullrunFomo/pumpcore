@@ -20,7 +20,7 @@ export default function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
           <img
-            src="/logo1.png"
+            src="/bundlex.png"
             alt="BundleX"
             width={28}
             height={28}

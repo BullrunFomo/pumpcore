@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 export const metadata: Metadata = {
   title: "BundleX",
   description: "Professional PumpFun token launch & bundle trading tool",
-  icons: { icon: "/logo1.png" },
+  icons: { icon: "/bundlex.png" },
 };
 
 export default function RootLayout({
