@@ -11,7 +11,7 @@ export default function LaunchPage() {
 
   return (
     <div className="relative flex flex-col flex-1 min-h-0">
-      <div className="flex flex-col flex-1 min-h-0 w-full max-w-2xl mx-auto px-4 py-5 overflow-hidden">
+      <div className="flex flex-col flex-1 min-h-0 w-full max-w-2xl mx-auto px-3 sm:px-4 py-3 sm:py-5 overflow-y-auto no-scrollbar">
         {/* Header */}
         <div className="shrink-0 mb-4">
           <h1 className="text-xl font-bold text-white tracking-tight">Launch a Token</h1>
@@ -24,7 +24,7 @@ export default function LaunchPage() {
           <StepIndicator currentStep={step} />
         </div>
 
-        <div className="flex-1 min-h-0 mt-5 overflow-y-auto no-scrollbar pb-2">
+        <div className="shrink-0 mt-4 pb-4">
           {step === 1 && <Step1TokenConfig />}
           {step === 2 && <Step2BundleConfig />}
           {step === 3 && <Step3OptionalSettings />}

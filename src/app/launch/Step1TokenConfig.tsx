@@ -3,7 +3,6 @@ import React, { useRef, useState } from "react";
 import { Upload, X, Flame, Coins, Bot, Send } from "lucide-react";
 import { useStore } from "@/store";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import type { TokenType } from "@/types";
 
 const NAME_MAX = 32;
@@ -51,17 +50,6 @@ const TOKEN_TYPES: {
   },
 ];
 
-const fieldStyle = {
-  background: "rgba(9,9,11,0.6)",
-  border: "1px solid rgba(63,63,70,0.25)",
-  borderRadius: "6px",
-  color: "#e4e4e7",
-  padding: "10px 12px",
-  fontSize: "14px",
-  width: "100%",
-  outline: "none",
-  transition: "border-color 0.15s",
-};
 
 function Field({
   label,
@@ -229,7 +217,7 @@ export default function Step1TokenConfig() {
         </div>
 
         {/* Socials row */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Field label="X/ Twitter">
             <input
               className={inputCls}
@@ -269,7 +257,7 @@ export default function Step1TokenConfig() {
           </span>
           <div className="h-px flex-1 bg-zinc-800" />
         </div>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {TOKEN_TYPES.map((t) => {
             const selected = tokenConfig.tokenType === t.value;
             return (
