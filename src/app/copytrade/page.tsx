@@ -196,13 +196,13 @@ export default function CopytradePage() {
   };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 px-6 py-5 max-w-7xl w-full mx-auto">
+    <div className="flex flex-col flex-1 min-h-0 px-3 py-3 sm:px-6 sm:py-5 max-w-7xl w-full mx-auto overflow-y-auto no-scrollbar">
 
       {/* Header */}
       <div className="shrink-0 flex items-center justify-between mb-5">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">CopyTrade</h1>
+            <h1 className="text-lg sm:text-2xl font-bold text-zinc-100 tracking-tight">CopyTrade</h1>
             {isActive && (
               <div
                 className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider"
@@ -218,10 +218,10 @@ export default function CopytradePage() {
       </div>
 
       {/* Body */}
-      <div className="flex gap-5 min-h-0 flex-1">
+      <div className="flex flex-col md:flex-row gap-3 sm:gap-5 min-h-0 flex-1">
 
         {/* Config panel */}
-        <div className="w-72 shrink-0 flex flex-col gap-3">
+        <div className="md:w-72 shrink-0 flex flex-col gap-3">
 
           {/* Follower wallet */}
           <div className="rounded-md p-4" style={card}>
@@ -353,7 +353,7 @@ export default function CopytradePage() {
         </div>
 
         {/* Activity log */}
-        <div className="flex flex-col flex-1 min-h-0 rounded-md overflow-hidden" style={card}>
+        <div className="flex flex-col flex-1 min-h-[300px] rounded-md overflow-hidden" style={card}>
           {/* Title bar */}
           <div
             className="shrink-0 flex items-center justify-between px-4 py-2.5"

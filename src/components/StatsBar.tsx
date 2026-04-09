@@ -28,7 +28,7 @@ export default function StatsBar() {
   };
 
   return (
-    <div className="grid grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
       {/* PnL */}
       <div
         className="rounded-md p-4 relative overflow-hidden"

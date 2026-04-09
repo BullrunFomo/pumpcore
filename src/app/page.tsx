@@ -47,13 +47,13 @@ export default function DashboardPage() {
   }, [activeTokenMint]);
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 px-6 py-5 max-w-7xl w-full mx-auto">
+    <div className="flex flex-col flex-1 min-h-0 px-3 py-3 sm:px-6 sm:py-5 max-w-7xl w-full mx-auto overflow-y-auto no-scrollbar">
 
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between mb-5">
+      <div className="shrink-0 flex items-center justify-between mb-3 sm:mb-5">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">Dashboard</h1>
+            <h1 className="text-lg sm:text-2xl font-bold text-zinc-100 tracking-tight">Dashboard</h1>
             {wallets.length > 0 && (
               <div
                 className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider"
@@ -78,7 +78,7 @@ export default function DashboardPage() {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs transition-all duration-200 disabled:opacity-50 ${
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs transition-all duration-200 disabled:opacity-50 ${
               refreshing
                 ? "text-[#4f83ff] scale-95"
                 : "text-zinc-500 hover:text-zinc-200"
@@ -89,29 +89,29 @@ export default function DashboardPage() {
             }}
           >
             <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshing ? "animate-spin" : ""}`} />
-            Refresh
+            <span className="hidden sm:block">Refresh</span>
           </button>
           <button
             onClick={() => setImportModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-zinc-500 hover:text-zinc-200 transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs text-zinc-500 hover:text-zinc-200 transition-colors"
             style={{ border: "1px solid rgba(63,63,70,0.25)" }}
           >
             <Plus className="h-3.5 w-3.5" />
-            Import Wallets
+            <span className="hidden sm:block">Import Wallets</span>
           </button>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="shrink-0 mb-5">
+      <div className="shrink-0 mb-3 sm:mb-5">
         <StatsBar />
       </div>
 
       {/* Main content */}
-      <div className="flex gap-5 min-h-0 flex-1">
+      <div className="flex flex-col lg:flex-row gap-3 sm:gap-5 min-h-0 flex-1">
 
         {/* Wallet panel */}
-        <div className="flex flex-col min-h-0 flex-1">
+        <div className="flex flex-col min-h-0 flex-1 min-h-[300px]">
 
           {wallets.length === 0 ? (
             <div
@@ -146,7 +146,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Sidebar */}
-        <div className="flex flex-col w-72 shrink-0 gap-3 overflow-y-auto no-scrollbar">
+        <div className="flex flex-col lg:w-72 shrink-0 gap-3">
 
           {/* Launch CTA */}
           <div

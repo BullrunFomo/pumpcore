@@ -56,7 +56,7 @@ export default function Footer() {
 
         {latency !== null && (
           <div
-            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono"
+            className="hidden sm:flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono"
             style={{
               background: "rgba(79,131,255,0.08)",
               border: "1px solid rgba(79,131,255,0.2)",
