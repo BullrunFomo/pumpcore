@@ -20,12 +20,11 @@ export default function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
           <img
-            src="/bundlex.png"
+            src="/bundlexapp.png"
             alt="BundleX"
-            width={28}
-            height={28}
+            width={24}
+            height={24}
             className="rounded-md"
-            style={{ boxShadow: "0 0 6px rgba(79,131,255,1), 0 0 16px rgba(79,131,255,0.9), 0 0 32px rgba(79,131,255,0.6), 0 0 60px rgba(79,131,255,0.3), 0 0 90px rgba(79,131,255,0.12)" }}
           />
           <span className="text-base font-bold tracking-widest uppercase hidden md:block" style={{ color: "#4f83ff" }}>
             BUNDLEX
