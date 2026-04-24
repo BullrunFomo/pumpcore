@@ -14,7 +14,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
   // Blank screen while checking localStorage to avoid flash
   if (status === "loading") {
-    return <div className="fixed inset-0 bg-zinc-950" />
+    return <div className="fixed inset-0" style={{ background: "#07090f" }} />
   }
 
   if (status === "unauthenticated") {

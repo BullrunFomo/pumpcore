@@ -51,7 +51,7 @@ export default function AccessKeyModal({ onAuthenticated }: Props) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: "rgba(9,9,11,0.75)" }}
+      style={{ background: "rgba(7,9,15,0.8)" }}
     >
       {/* Ambient glow */}
       <div
@@ -64,7 +64,7 @@ export default function AccessKeyModal({ onAuthenticated }: Props) {
 
       <div
         className="relative w-full max-w-sm mx-4 rounded-2xl border border-zinc-800 p-8 flex flex-col items-center gap-6"
-        style={{ background: "rgba(24,24,27,0.95)", boxShadow: "0 0 40px rgba(79,131,255,0.12), 0 20px 60px rgba(0,0,0,0.6)" }}
+        style={{ background: "rgba(13,17,24,0.97)", boxShadow: "0 0 40px rgba(79,131,255,0.14), 0 20px 60px rgba(0,0,0,0.7)" }}
       >
         {/* Logo */}
         <div className="flex flex-col items-center gap-3">
