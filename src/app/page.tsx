@@ -190,13 +190,13 @@ export default function DashboardPage() {
           {/* Latest Launches */}
           <div className="flex flex-col min-h-0">
             <div className="shrink-0 flex items-center gap-2 mb-2">
-              <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest">
+              <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest">
                 Latest Launches
               </span>
               {launches.length > 0 && (
                 <span
                   className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-                  style={{ background: "rgba(63,63,70,0.25)", color: "#71717a" }}
+                  style={{ background: "rgba(79,131,255,0.1)", color: "#7aa3ff", border: "1px solid rgba(79,131,255,0.2)" }}
                 >
                   {launches.length}
                 </span>
@@ -214,7 +214,7 @@ export default function DashboardPage() {
                   >
                     <Sparkles className="h-4 w-4 text-zinc-600" />
                   </div>
-                  <span className="text-xs text-zinc-600">No launches yet</span>
+                  <span className="text-xs text-zinc-400">No launches yet</span>
                 </div>
               ) : (
                 <div>
@@ -244,9 +244,9 @@ export default function DashboardPage() {
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="text-xs font-semibold text-zinc-200 truncate">{launch.name}</div>
-                        <div className="text-[10px] text-zinc-600">${launch.symbol}</div>
+                        <div className="text-[10px] text-zinc-400">${launch.symbol}</div>
                       </div>
-                      <div className="text-[10px] text-zinc-700 shrink-0">
+                      <div className="text-[10px] text-zinc-500 shrink-0">
                         {new Date(launch.launchedAt).toLocaleDateString([], { month: "short", day: "numeric" })}
                       </div>
                     </button>

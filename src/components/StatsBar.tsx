@@ -23,8 +23,8 @@ export default function StatsBar() {
   };
 
   const cardBase = {
-    background: "rgba(24,24,27,0.8)",
-    border: "1px solid rgba(63,63,70,0.25)",
+    background: "rgba(13,17,24,0.8)",
+    border: "1px solid rgba(28,38,56,0.8)",
   };
 
   return (
@@ -35,8 +35,8 @@ export default function StatsBar() {
         style={{
           ...cardBase,
           borderColor: totalPnlSol !== 0
-            ? isPositive ? "rgba(74,222,128,0.25)" : "rgba(248,113,113,0.25)"
-            : "rgba(63,63,70,0.25)",
+            ? isPositive ? "rgba(74,222,128,0.3)" : "rgba(248,113,113,0.3)"
+            : "rgba(28,38,56,0.8)",
         }}
       >
         <div
@@ -44,21 +44,18 @@ export default function StatsBar() {
           style={{
             background: totalPnlSol !== 0
               ? isPositive
-                ? "radial-gradient(ellipse at top left, rgba(74,222,128,0.08) 0%, transparent 60%)"
-                : "radial-gradient(ellipse at top left, rgba(248,113,113,0.08) 0%, transparent 60%)"
+                ? "radial-gradient(ellipse at top left, rgba(74,222,128,0.1) 0%, transparent 60%)"
+                : "radial-gradient(ellipse at top left, rgba(248,113,113,0.1) 0%, transparent 60%)"
               : "none",
           }}
         />
         <div className="flex items-start justify-between mb-3">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-600">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
             Overall PnL
           </span>
           <div
             className="w-6 h-6 rounded flex items-center justify-center"
-            style={{
-              background: "rgba(79,131,255,0.1)",
-              border: "1px solid rgba(79,131,255,0.2)",
-            }}
+            style={{ background: "rgba(79,131,255,0.1)", border: "1px solid rgba(79,131,255,0.2)" }}
           >
             <TrendingUp className="h-3 w-3 text-[#4f83ff]" />
           </div>
@@ -70,7 +67,7 @@ export default function StatsBar() {
           {isPositive ? "+" : ""}{formatSol(totalPnlSol, 4)}
           <span className="text-sm font-normal ml-1 opacity-70">SOL</span>
         </div>
-        <div className="text-xs mt-0.5" style={{ color: isPositive ? "#4ade8099" : "#f8717199" }}>
+        <div className="text-xs mt-0.5 font-medium" style={{ color: isPositive ? "#4ade8099" : "#f8717199" }}>
           {isPositive ? "+" : ""}{formatUsd(totalPnlUsd)}
         </div>
       </div>
@@ -78,24 +75,21 @@ export default function StatsBar() {
       {/* Total SOL */}
       <div className="rounded-md p-4 relative overflow-hidden" style={cardBase}>
         <div className="flex items-start justify-between mb-3">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-600">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
             Total SOL
           </span>
           <div
             className="w-6 h-6 rounded flex items-center justify-center"
-            style={{
-              background: "rgba(79,131,255,0.1)",
-              border: "1px solid rgba(79,131,255,0.2)",
-            }}
+            style={{ background: "rgba(79,131,255,0.1)", border: "1px solid rgba(79,131,255,0.2)" }}
           >
             <Zap className="h-3 w-3 text-[#4f83ff]" />
           </div>
         </div>
         <div className="text-xl font-bold text-zinc-100">
           {formatSol(totalSol, 4)}
-          <span className="text-sm font-normal ml-1 text-zinc-500">SOL</span>
+          <span className="text-sm font-normal ml-1 text-zinc-400">SOL</span>
         </div>
-        <div className="text-xs text-zinc-600 mt-0.5">
+        <div className="text-xs text-zinc-400 mt-0.5 font-medium">
           ≈ {formatUsd(totalSol * (tokenPrice?.solPrice ?? 0))}
         </div>
       </div>
@@ -103,24 +97,21 @@ export default function StatsBar() {
       {/* Wallets */}
       <div className="rounded-md p-4 relative overflow-hidden" style={cardBase}>
         <div className="flex items-start justify-between mb-3">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-600">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
             Wallets
           </span>
           <div
             className="w-6 h-6 rounded flex items-center justify-center"
-            style={{
-              background: "rgba(79,131,255,0.1)",
-              border: "1px solid rgba(79,131,255,0.2)",
-            }}
+            style={{ background: "rgba(79,131,255,0.1)", border: "1px solid rgba(79,131,255,0.2)" }}
           >
             <Wallet className="h-3 w-3 text-[#4f83ff]" />
           </div>
         </div>
         <div className="text-xl font-bold text-zinc-100">
           {wallets.length}
-          <span className="text-sm font-normal ml-1 text-zinc-500">loaded</span>
+          <span className="text-sm font-normal ml-1 text-zinc-400">loaded</span>
         </div>
-        <div className="text-xs text-zinc-600 mt-0.5">
+        <div className="text-xs text-zinc-400 mt-0.5 font-medium">
           {wallets.filter((w) => w.tokenBalance > 0).length} holding tokens
         </div>
       </div>
@@ -128,13 +119,13 @@ export default function StatsBar() {
       {/* Active Token */}
       <div className="rounded-md p-4 relative overflow-hidden" style={cardBase}>
         <div className="flex items-start justify-between mb-3">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-600">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
             Active Token
           </span>
           <div
             className="w-2 h-2 rounded-full mt-1"
             style={{
-              background: activeTokenMint ? "#4f83ff" : "#3f3f46",
+              background: activeTokenMint ? "#4f83ff" : "#52525b",
               boxShadow: activeTokenMint ? "0 0 6px rgba(79,131,255,0.6)" : "none",
             }}
           />
@@ -147,7 +138,7 @@ export default function StatsBar() {
               </span>
               <button
                 onClick={copyMint}
-                className="text-zinc-600 hover:text-zinc-300 transition-colors"
+                className="text-zinc-500 hover:text-zinc-200 transition-colors"
               >
                 <Copy className="h-3 w-3" />
               </button>
@@ -160,8 +151,8 @@ export default function StatsBar() {
           </>
         ) : (
           <>
-            <div className="text-base font-bold text-zinc-600">None</div>
-            <div className="text-xs text-zinc-700 mt-0.5">Launch a token first</div>
+            <div className="text-base font-bold text-zinc-500">None</div>
+            <div className="text-xs text-zinc-500 mt-0.5">Launch a token first</div>
           </>
         )}
       </div>

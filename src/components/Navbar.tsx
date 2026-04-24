@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Rocket, Copy, Rss } from "lucide-react";
+import { LayoutDashboard, Rocket, Copy, Rss, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -9,6 +9,7 @@ const navItems = [
   { href: "/copytrade", label: "Copytrade", icon: Copy },
   { href: "/xfeed", label: "X Feed", icon: Rss },
   { href: "/launch", label: "Launch", icon: Rocket },
+  { href: "/docs",   label: "Docs",   icon: BookOpen },
 ];
 
 export default function Navbar() {
