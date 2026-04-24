@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import AuthProvider from "@/components/AuthProvider";
 
 export const metadata: Metadata = {
   title: "BundleX",
@@ -23,16 +24,18 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-zinc-950 text-zinc-100">
-        <Navbar />
-        {/* Global ambient glow under navbar */}
-        <div
-          className="fixed left-0 right-0 top-14 h-48 pointer-events-none z-0"
-          style={{
-            background: "radial-gradient(ellipse 70% 100% at 50% 0%, rgba(79,131,255,0.09) 0%, transparent 100%)",
-          }}
-        />
-        <main className="fixed inset-0 top-14 bottom-9 overflow-y-auto flex flex-col z-10">{children}</main>
-        <Footer />
+        <AuthProvider>
+          <Navbar />
+          {/* Global ambient glow under navbar */}
+          <div
+            className="fixed left-0 right-0 top-14 h-48 pointer-events-none z-0"
+            style={{
+              background: "radial-gradient(ellipse 70% 100% at 50% 0%, rgba(79,131,255,0.09) 0%, transparent 100%)",
+            }}
+          />
+          <main className="fixed inset-0 top-14 bottom-9 overflow-y-auto flex flex-col z-10">{children}</main>
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );

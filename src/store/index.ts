@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { getAccountStoreName } from "@/lib/auth";
 import type {
   WalletInfo,
   LaunchState,
@@ -264,7 +265,7 @@ export const useStore = create<AppState>()(
       setImportModalOpen: (v) => set({ importModalOpen: v }),
     }),
     {
-      name: "pumpfun-bundler",
+      name: getAccountStoreName(),
       version: 1,
       migrate: (persisted: any, version: number) => {
         if (version < 1) {
