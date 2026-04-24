@@ -113,8 +113,8 @@ export default function WalletTable({ wallets }: WalletTableProps) {
     <div
       className="flex flex-col min-h-0 flex-1 rounded-md overflow-hidden"
       style={{
-        background: "rgba(24,24,27,0.8)",
-        border: "1px solid rgba(63,63,70,0.25)",
+        background: "rgba(13,17,24,0.8)",
+        border: "1px solid rgba(28,38,56,0.8)",
       }}
     >
       {/* Table header */}
@@ -122,8 +122,8 @@ export default function WalletTable({ wallets }: WalletTableProps) {
         className="shrink-0 grid items-center text-[10px] font-semibold uppercase tracking-widest text-zinc-500 px-3 py-2"
         style={{
           gridTemplateColumns: "28px 1fr 1fr 1fr 36px",
-          borderBottom: "1px solid rgba(63,63,70,0.25)",
-          background: "rgba(9,9,11,0.3)",
+          borderBottom: "1px solid rgba(28,38,56,0.8)",
+          background: "rgba(9,13,20,0.5)",
         }}
       >
         <div />
@@ -131,14 +131,14 @@ export default function WalletTable({ wallets }: WalletTableProps) {
           className="flex items-center gap-1 hover:text-zinc-300 transition-colors text-left"
           onClick={() => handleSort("address")}
         >
-          Wallet
+          WALLET
           <ArrowUpDown className="h-2.5 w-2.5 opacity-50" />
         </button>
         <button
           className="flex items-center gap-1 hover:text-zinc-300 transition-colors"
           onClick={() => handleSort("balance")}
         >
-          Balance
+          BALANCE
           <ArrowUpDown className="h-2.5 w-2.5 opacity-50" />
         </button>
         <span>Funding</span>
@@ -155,7 +155,7 @@ export default function WalletTable({ wallets }: WalletTableProps) {
               gridTemplateColumns: "28px 1fr 1fr 1fr 36px",
               borderBottom:
                 i < sorted.length - 1
-                  ? "1px solid rgba(63,63,70,0.2)"
+                  ? "1px solid rgba(28,38,56,0.6)"
                   : "none",
             }}
           >
@@ -221,12 +221,12 @@ export default function WalletTable({ wallets }: WalletTableProps) {
           className="shrink-0 grid items-center px-3 py-2 text-xs"
           style={{
             gridTemplateColumns: "28px 1fr 1fr 1fr 36px",
-            borderTop: "1px solid rgba(63,63,70,0.25)",
-            background: "rgba(9,9,11,0.3)",
+            borderTop: "1px solid rgba(28,38,56,0.8)",
+            background: "rgba(9,13,20,0.5)",
           }}
         >
           <div />
-          <span className="text-zinc-600 text-[10px]">{wallets.length} wallets</span>
+          <span className="text-zinc-600 text-[10px]">{wallets.length} WALLETS</span>
           <div className="flex items-center gap-1.5">
             <SolanaLogo className="h-3 w-3 shrink-0" />
             <span className="text-zinc-300 font-semibold tabular-nums">

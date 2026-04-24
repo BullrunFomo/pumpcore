@@ -21,8 +21,8 @@ const TOKEN_TYPES: {
     label: "Standard",
     desc: "Classic PumpFun token launch",
     icon: <Send className="h-5 w-5" />,
-    color: "#a1a1aa",
-    glow: "rgba(161,161,170,0.2)",
+    color: "#4f83ff",
+    glow: "rgba(79,131,255,0.25)",
   },
   {
     value: "Mayhem Mode",
@@ -45,8 +45,8 @@ const TOKEN_TYPES: {
     label: "AI Agent",
     desc: "Autonomous AI-powered trading",
     icon: <Bot className="h-5 w-5" />,
-    color: "#4f83ff",
-    glow: "rgba(79,131,255,0.25)",
+    color: "#a855f7",
+    glow: "rgba(168,85,247,0.25)",
   },
 ];
 
