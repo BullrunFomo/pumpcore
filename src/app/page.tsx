@@ -117,8 +117,8 @@ export default function DashboardPage() {
             <div
               className="flex-1 rounded-md flex flex-col items-center justify-center gap-4"
               style={{
-                background: "rgba(24,24,27,0.8)",
-                border: "1px solid rgba(63,63,70,0.25)",
+                background: "rgba(13,17,24,0.8)",
+                border: "1px solid rgba(28,38,56,0.8)",
               }}
             >
               <div
@@ -204,13 +204,13 @@ export default function DashboardPage() {
             </div>
             <div
               className="rounded-md overflow-hidden"
-              style={{ background: "rgba(24,24,27,0.8)", border: "1px solid rgba(63,63,70,0.25)" }}
+              style={{ background: "rgba(13,17,24,0.8)", border: "1px solid rgba(28,38,56,0.8)" }}
             >
               {launches.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 gap-2">
                   <div
                     className="w-8 h-8 rounded-md flex items-center justify-center"
-                    style={{ background: "rgba(63,63,70,0.25)", border: "1px solid rgba(63,63,70,0.25)" }}
+                    style={{ background: "rgba(28,38,56,0.5)", border: "1px solid rgba(28,38,56,0.8)" }}
                   >
                     <Sparkles className="h-4 w-4 text-zinc-600" />
                   </div>
