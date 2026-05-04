@@ -13,6 +13,8 @@ const badgeVariants = cva(
         mayhem: "border-transparent bg-red-600/80 text-white",
         cashback: "border-transparent bg-green-600/80 text-white",
         agent: "border-transparent bg-blue-500/80 text-white",
+        success: "border-transparent bg-green-600 text-white",
+        warning: "border-transparent bg-yellow-500 text-black",
       },
     },
     defaultVariants: { variant: "default" },
