@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import {
   Copy,
   Crown,
-  RefreshCw,
   ExternalLink,
   TrendingUp,
   TrendingDown,
@@ -17,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ActivityLog from "@/components/ActivityLog";
+import BombIcon from "@/components/icons/BombIcon";
 import {
   Dialog,
   DialogContent,
@@ -28,7 +28,6 @@ import {
   truncateAddress,
   formatSol,
   formatUsd,
-  pnlColor,
   formatNumber,
 } from "@/lib/utils";
 import type { WalletInfo } from "@/types";
@@ -236,46 +235,57 @@ function SellAllModal({ open, onClose }: { open: boolean; onClose: () => void })
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-red-400">
-            <AlertTriangle className="h-5 w-5" />
-            Sell All Wallets
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
+      <DialogContent className="p-0 overflow-hidden" style={{ background: "rgba(9,13,20,0.98)", border: "1px solid rgba(248,113,113,0.2)", maxWidth: "400px" }}>
+        {/* Top accent bar */}
+        <div className="h-0.5 w-full" style={{ background: "linear-gradient(90deg, transparent, #f87171, transparent)" }} />
+
+        <div className="px-6 pt-5 pb-6 space-y-5">
+          {/* Header */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-md flex-shrink-0" style={{ background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)" }}>
+              <BombIcon className="h-5 w-5" style={{ color: "#f87171" }} />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-zinc-100">NUKE</h2>
+              <p className="text-[11px] text-zinc-500 uppercase tracking-widest">Sell All Wallets</p>
+            </div>
+          </div>
+
+          {/* Body */}
           {!done ? (
-            <p className="text-sm text-zinc-400">
-              This will sell{" "}
-              <strong className="text-zinc-100">100%</strong> of tokens from all{" "}
-              <strong className="text-zinc-100">
-                {wallets.filter((w) => w.tokenBalance > 0).length}
-              </strong>{" "}
-              holding wallets. This action cannot be undone.
-            </p>
+            <div className="rounded-md px-4 py-3 text-sm text-zinc-400 leading-relaxed" style={{ background: "rgba(248,113,113,0.05)", border: "1px solid rgba(248,113,113,0.12)" }}>
+              This will dump{" "}
+              <span className="font-bold text-zinc-100">100%</span> of tokens from{" "}
+              <span className="font-bold text-zinc-100">{wallets.filter((w) => w.tokenBalance > 0).length}</span>{" "}
+              holding wallets simultaneously. This action{" "}
+              <span className="text-red-400 font-semibold">cannot be undone</span>.
+            </div>
           ) : (
-            <div className="space-y-1 font-mono text-xs">
+            <div className="rounded-md px-4 py-3 space-y-1 font-mono text-xs max-h-40 overflow-y-auto" style={{ background: "rgba(13,17,24,0.8)", border: "1px solid rgba(28,38,56,0.8)" }}>
               {results.map((r, i) => (
-                <div
-                  key={i}
-                  className={r.startsWith("✓") ? "text-green-400" : "text-red-400"}
-                >
-                  {r}
-                </div>
+                <div key={i} style={{ color: r.startsWith("✓") ? "#4ade80" : "#f87171" }}>{r}</div>
               ))}
             </div>
           )}
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={loading}>
-            {done ? "Close" : "Cancel"}
-          </Button>
-          {!done && (
-            <Button variant="destructive" onClick={handleSellAll} disabled={loading}>
-              {loading ? "Selling..." : "Confirm Sell All"}
+
+          {/* Footer */}
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={onClose} disabled={loading} className="text-zinc-400">
+              {done ? "Close" : "Cancel"}
             </Button>
-          )}
-        </DialogFooter>
+            {!done && (
+              <Button
+                variant="destructive"
+                onClick={handleSellAll}
+                disabled={loading}
+                className="gap-2 font-bold"
+              >
+                <BombIcon className="h-4 w-4" />
+                {loading ? "Nuking..." : "Confirm Nuke"}
+              </Button>
+            )}
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -287,22 +297,18 @@ export default function ManagePage() {
   const wallets = useStore((s) => s.wallets);
   const trades = useStore((s) => s.trades);
   const launch = useStore((s) => s.launch);
+  const launches = useStore((s) => s.launches);
   const tokenPrice = useStore((s) => s.tokenPrice);
   const activeTokenMint = useStore((s) => s.activeTokenMint);
   const refreshBalances = useStore((s) => s.refreshBalances);
   const setTokenPrice = useStore((s) => s.setTokenPrice);
+  const addTrade = useStore((s) => s.addTrade);
+  const updateWallet = useStore((s) => s.updateWallet);
+  const tokenMeta = useStore((s) => s.tokenMeta);
+  const setTokenMeta = useStore((s) => s.setTokenMeta);
 
-  const [tradeWallet, setTradeWallet] = useState<WalletInfo | null>(null);
-  const [tradeMode, setTradeMode] = useState<"buy" | "sell" | null>(null);
   const [sellAllOpen, setSellAllOpen] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const handleRefresh = async () => {
-    if (refreshing) return;
-    setRefreshing(true);
-    await refreshBalances();
-    setRefreshing(false);
-  };
+  const [loadingKey, setLoadingKey] = useState<string | null>(null);
 
   const { tokenConfig, bundleConfig } = launch;
   const devWalletId = bundleConfig.devWalletId;
@@ -312,16 +318,36 @@ export default function ManagePage() {
     ? wallets.filter((w) => bundleConfig.selectedWalletIds.includes(w.id))
     : wallets;
 
-  const totalPnlSol = bundleWallets.reduce((acc, w) => {
-    if (tokenPrice && w.avgBuyPrice > 0) {
-      return acc + (tokenPrice.price - w.avgBuyPrice) * w.tokenBalance;
-    }
+  // PNL: sells add SOL, buys (including bundle buys recorded at launch) subtract SOL
+  const totalPnlSol = trades.reduce((acc, t) => {
+    if (t.type === "sell") return acc + (t.solAmount ?? 0);
+    if (t.type === "buy") return acc - (t.solAmount ?? 0);
     return acc;
   }, 0);
   const totalPnlUsd = totalPnlSol * (tokenPrice?.solPrice ?? 0);
 
   useEffect(() => {
     refreshBalances();
+    if (activeTokenMint && (!tokenMeta || !tokenMeta.image)) {
+      // Use the stored launch record first — it has the direct logoUri already
+      const record = launches.find((l) => l.mintAddress === activeTokenMint);
+      if (record?.logoUri) {
+        setTokenMeta({ name: record.name, symbol: record.symbol, image: record.logoUri });
+      } else {
+        fetch(`/api/token-meta?mint=${activeTokenMint}`)
+          .then((r) => r.ok ? r.json() : null)
+          .then((d) => {
+            if (d?.name || d?.symbol || d?.image) {
+              setTokenMeta({
+                name: d.name ?? "",
+                symbol: d.symbol ?? "",
+                image: d.image ? `/api/token-image?url=${encodeURIComponent(d.image)}` : "",
+              });
+            }
+          })
+          .catch(() => {});
+      }
+    }
     const interval = setInterval(async () => {
       await refreshBalances();
       if (activeTokenMint) {
@@ -338,9 +364,40 @@ export default function ManagePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTokenMint]);
 
-  const openTrade = (wallet: WalletInfo, mode: "buy" | "sell") => {
-    setTradeWallet(wallet);
-    setTradeMode(mode);
+  const quickTrade = async (wallet: WalletInfo, mode: "buy" | "sell", value: number) => {
+    const key = `${wallet.id}-${mode}-${value}`;
+    setLoadingKey(key);
+    try {
+      const endpoint = mode === "buy" ? "/api/trade/buy" : "/api/trade/sell";
+      const body = mode === "buy"
+        ? { walletAddress: wallet.address, privateKey: wallet.privateKey, mintAddress: activeTokenMint, solAmount: value }
+        : { walletAddress: wallet.address, privateKey: wallet.privateKey, mintAddress: activeTokenMint, percentage: value };
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Trade failed");
+      addTrade({
+        walletAddress: wallet.address,
+        type: mode,
+        solAmount: data.solAmount,
+        tokenAmount: data.tokenAmount,
+        price: data.price,
+        txSig: data.txSig,
+        timestamp: new Date(),
+        status: "confirmed",
+      });
+      updateWallet(wallet.id, {
+        solBalance: data.newSolBalance ?? wallet.solBalance,
+        tokenBalance: data.newTokenBalance ?? wallet.tokenBalance,
+      });
+    } catch (err: any) {
+      console.error("Trade failed:", err.message);
+    } finally {
+      setLoadingKey(null);
+    }
   };
 
   const copyMint = () => {
@@ -348,221 +405,264 @@ export default function ManagePage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="flex flex-col flex-1 min-h-0 max-w-7xl w-full mx-auto px-3 sm:px-6 py-5">
       {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between mb-6 gap-4 flex-wrap">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-bold text-zinc-100">
-              {tokenConfig.name || "Token"}{" "}
-              <span className="text-zinc-500 font-normal text-lg">
-                ({tokenConfig.symbol || "—"})
-              </span>
-            </h1>
-            <Badge
-              variant={
-                tokenConfig.tokenType === "Mayhem Mode"
-                  ? "mayhem"
-                  : tokenConfig.tokenType === "Cashback"
-                  ? "cashback"
-                  : "agent"
-              }
-            >
-              {tokenConfig.tokenType || "—"}
-            </Badge>
+      <div className="flex items-center justify-between mb-4 gap-6 flex-wrap flex-shrink-0">
+        {/* Left: logo + token info */}
+        <div className="flex items-center gap-4">
+          <div
+            className="w-14 h-14 rounded-md flex-shrink-0 overflow-hidden"
+            style={{ border: "1px solid rgba(28,38,56,0.8)", background: "rgba(28,38,56,0.5)" }}
+          >
+            {tokenMeta?.image && (
+              <img
+                src={tokenMeta.image}
+                alt="token logo"
+                className="w-full h-full object-cover"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              />
+            )}
           </div>
-
-          {activeTokenMint && (
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs text-zinc-500">
-                {truncateAddress(activeTokenMint, 10)}
-              </span>
-              <button onClick={copyMint} className="text-zinc-500 hover:text-zinc-300">
-                <Copy className="h-3.5 w-3.5" />
-              </button>
-              <a
-                href={`https://pump.fun/${activeTokenMint}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300"
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-2xl font-bold text-zinc-100">
+                {tokenMeta?.name || tokenConfig.name || "Token"}{" "}
+                <span className="text-zinc-500 font-normal text-lg">
+                  ({tokenMeta?.symbol || tokenConfig.symbol || "—"})
+                </span>
+              </h1>
+              <Badge
+                variant={
+                  tokenConfig.tokenType === "Mayhem Mode"
+                    ? "mayhem"
+                    : tokenConfig.tokenType === "Cashback"
+                    ? "cashback"
+                    : "agent"
+                }
               >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
+                {tokenConfig.tokenType || "—"}
+              </Badge>
             </div>
-          )}
-
-          {/* Live PnL */}
-          <div className="flex items-center gap-3">
-            <div className={`flex items-center gap-1 text-sm font-semibold ${pnlColor(totalPnlSol)}`}>
-              {totalPnlSol >= 0 ? (
-                <TrendingUp className="h-4 w-4" />
-              ) : (
-                <TrendingDown className="h-4 w-4" />
-              )}
-              Overall PnL:{" "}
-              {totalPnlSol >= 0 ? "+" : ""}
-              {formatSol(totalPnlSol, 4)} SOL ({totalPnlSol >= 0 ? "+" : ""}
-              {formatUsd(totalPnlUsd)})
-            </div>
-            {tokenPrice && (
-              <span className="text-xs font-semibold" style={{ color: "#4f83ff" }}>
-                MCap: ${Math.round(tokenPrice.mcap).toLocaleString("en-US")}
-              </span>
+            {activeTokenMint && (
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs text-zinc-500">
+                  {truncateAddress(activeTokenMint, 10)}
+                </span>
+                <button onClick={copyMint} className="text-zinc-500 hover:text-zinc-300">
+                  <Copy className="h-3.5 w-3.5" />
+                </button>
+                <a
+                  href={`https://pump.fun/${activeTokenMint}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </div>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleRefresh} className="gap-1.5">
-            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
+        {/* PNL Card */}
+        <div
+          className="flex flex-col gap-0.5 px-4 py-1.5 rounded-md flex-shrink-0 mr-auto"
+          style={{ background: "rgba(13,17,24,0.8)", border: "1px solid rgba(28,38,56,0.8)", minWidth: "148px" }}
+        >
+          <span className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: "rgba(100,116,139,0.7)" }}>
+            Total P&amp;L
+          </span>
+          <div className="flex items-center gap-1.5">
+            {totalPnlSol >= 0
+              ? <TrendingUp className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "#4ade80" }} />
+              : <TrendingDown className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "#f87171" }} />}
+            <span
+              className="text-sm font-bold tabular-nums"
+              style={{ color: totalPnlSol >= 0 ? "#4ade80" : "#f87171" }}
+            >
+              {totalPnlSol >= 0 ? "+" : ""}{formatSol(Math.abs(totalPnlSol), 3)} SOL
+            </span>
+          </div>
+          <span className="text-[11px] tabular-nums" style={{ color: "rgba(100,116,139,0.6)" }}>
+            {totalPnlUsd >= 0 ? "+" : "-"}{formatUsd(Math.abs(totalPnlUsd))}
+          </span>
+        </div>
+
+        {/* Right: Sell All */}
+        <div className="flex items-center gap-4">
           <Button
             variant="destructive"
-            size="sm"
+            size="default"
             onClick={() => setSellAllOpen(true)}
-            className="gap-1.5"
+            className="gap-2 self-stretch"
           >
-            <ArrowUpRight className="h-3.5 w-3.5" />
-            Sell All Wallets
+            <BombIcon className="h-4 w-4" />
+            NUKE
           </Button>
         </div>
       </div>
 
-      {/* ── Wallet Table ─────────────────────────────────────────────────────── */}
-      <div className="rounded-md border border-zinc-800 bg-zinc-900 overflow-hidden mb-6">
-        <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-zinc-100">
-            Wallet Positions ({bundleWallets.length})
-          </h2>
-          {tokenPrice && (
-            <span className="text-xs text-zinc-500">
-              Current price: {tokenPrice.price.toFixed(10)} SOL
-            </span>
-          )}
+      {/* ── Main grid: chart + tx left, wallet table right ───────────────────── */}
+      <div className="flex gap-4 flex-1 min-h-0">
+
+        {/* Left column: chart + tx history */}
+        <div className="flex flex-col gap-4 min-w-0 min-h-0" style={{ flex: "1 1 0", width: "50%" }}>
+
+          {/* DEX Screener chart */}
+          <div className="rounded-md overflow-hidden flex-1 min-h-0" style={{ background: "rgba(13,17,24,0.8)", border: "1px solid rgba(28,38,56,0.8)" }}>
+            {activeTokenMint ? (
+              <iframe
+                src={`https://dexscreener.com/solana/${activeTokenMint}?embed=1&theme=dark&trades=0&info=0&interval=1`}
+                className="w-full"
+                style={{ border: "none", height: "calc(100% + 40px)", display: "block" }}
+                title="DEX Screener"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-zinc-500 text-sm">
+                No token selected
+              </div>
+            )}
+          </div>
+
+          {/* Transaction history */}
+          <div className="flex-shrink-0 flex flex-col" style={{ maxHeight: "220px" }}>
+            <div className="flex items-center gap-2 mb-2 mt-2 flex-shrink-0">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Transaction History</span>
+              {trades.length > 0 && (
+                <span
+                  className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                  style={{ background: "rgba(79,131,255,0.1)", color: "#7aa3ff", border: "1px solid rgba(79,131,255,0.2)" }}
+                >
+                  {trades.length}
+                </span>
+              )}
+            </div>
+            <div className="overflow-y-auto">
+              <ActivityLog trades={trades} maxItems={100} ticker={tokenMeta?.symbol || tokenConfig.symbol} />
+            </div>
+          </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-zinc-800 text-left">
-                {["Wallet", "SOL Balance", "Token Balance", "Avg Buy Price", "Current Value", "PnL", "Actions"].map(
-                  (h) => (
-                    <th key={h} className="px-4 py-2.5 text-xs font-medium text-zinc-500">
-                      {h}
-                    </th>
-                  )
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-800">
-              {bundleWallets.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-zinc-500 text-sm">
-                    No wallets loaded.
-                  </td>
-                </tr>
-              ) : (
-                bundleWallets.map((w) => {
-                  const currentValue = tokenPrice
-                    ? tokenPrice.price * w.tokenBalance
-                    : 0;
-                  const pnl =
-                    tokenPrice && w.avgBuyPrice > 0
-                      ? (tokenPrice.price - w.avgBuyPrice) * w.tokenBalance
-                      : 0;
-                  return (
-                    <tr key={w.id} className="hover:bg-zinc-800/40 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="h-2.5 w-2.5 rounded-full flex-shrink-0"
-                            style={{ background: w.color }}
-                          />
-                          <span className="font-mono text-sm text-zinc-200">
-                            {truncateAddress(w.address, 6)}
-                          </span>
-                          {w.id === devWalletId && (
-                            <Crown className="h-3 w-3 flex-shrink-0" style={{ color: "#f59e0b" }} />
-                          )}
-                          <button
-                            onClick={() => navigator.clipboard.writeText(w.address)}
-                            className="text-zinc-600 hover:text-zinc-400"
-                          >
-                            <Copy className="h-3 w-3" />
-                          </button>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-zinc-300">
-                        {formatSol(w.solBalance, 4)}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-zinc-300">
-                        {w.tokenBalance > 0
-                          ? formatNumber(w.tokenBalance, 0)
-                          : "—"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-zinc-400">
-                        {w.avgBuyPrice > 0
-                          ? w.avgBuyPrice.toFixed(10)
-                          : "—"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-zinc-300">
-                        {tokenPrice && w.tokenBalance > 0
-                          ? `${formatSol(currentValue, 5)} SOL`
-                          : "—"}
-                      </td>
-                      <td className={`px-4 py-3 text-sm font-medium ${pnlColor(pnl)}`}>
-                        {w.avgBuyPrice > 0 && tokenPrice
-                          ? `${pnl >= 0 ? "+" : ""}${formatSol(pnl, 5)} SOL`
-                          : "—"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="success"
-                            className="h-7 px-2.5 text-xs gap-1"
-                            onClick={() => openTrade(w, "buy")}
-                          >
-                            <ArrowDownLeft className="h-3 w-3" />
-                            BUY
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            className="h-7 px-2.5 text-xs gap-1"
-                            onClick={() => openTrade(w, "sell")}
-                            disabled={w.tokenBalance === 0}
-                          >
-                            <ArrowUpRight className="h-3 w-3" />
-                            SELL
-                          </Button>
-                        </div>
+        {/* Right column: wallet positions */}
+        <div className="min-w-0 flex flex-col" style={{ flex: "1 1 0", width: "50%" }}>
+          <div className="rounded-md overflow-hidden flex flex-col flex-1" style={{ background: "rgba(13,17,24,0.8)", border: "1px solid rgba(28,38,56,0.8)" }}>
+
+            <div className="overflow-x-auto overflow-y-auto flex-1">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left" style={{ borderBottom: "1px solid rgba(28,38,56,0.8)" }}>
+                    {["Wallet", "SOL", "Tokens", "Value", "Actions"].map((h) => (
+                      <th key={h} className="px-3 py-2 text-[9px] font-semibold uppercase tracking-widest" style={{ color: "rgba(100,116,139,0.7)" }}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {bundleWallets.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-sm">
+                        No wallets loaded.
                       </td>
                     </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                  ) : (
+                    bundleWallets.map((w) => {
+                      const currentValue = tokenPrice ? tokenPrice.price * w.tokenBalance : 0;
+                      return (
+                        <tr
+                          key={w.id}
+                          className="transition-all group"
+                          style={{ borderBottom: "1px solid rgba(28,38,56,0.5)" }}
+                          onMouseEnter={(e) => ((e.currentTarget as HTMLTableRowElement).style.background = "rgba(79,131,255,0.04)")}
+                          onMouseLeave={(e) => ((e.currentTarget as HTMLTableRowElement).style.background = "transparent")}
+                        >
+                          <td className="px-3 py-2.5">
+                            <div className="flex items-center gap-1.5">
+                              {w.id === devWalletId && (
+                                <Crown className="h-2.5 w-2.5 flex-shrink-0" style={{ color: "#f59e0b" }} />
+                              )}
+                              <span className="font-mono font-bold text-[11px] text-zinc-400">
+                                {truncateAddress(w.address, 3)}
+                              </span>
+                              <button
+                                onClick={() => navigator.clipboard.writeText(w.address)}
+                                className="text-zinc-700 hover:text-zinc-400 transition-colors opacity-0 group-hover:opacity-100"
+                              >
+                                <Copy className="h-2.5 w-2.5" />
+                              </button>
+                            </div>
+                          </td>
+                          <td className="px-3 py-2.5 text-[11px] font-bold tabular-nums text-zinc-400">
+                            {formatSol(w.solBalance, 4)}
+                          </td>
+                          <td className="px-3 py-2.5 text-[11px] font-bold tabular-nums text-zinc-400">
+                            {w.tokenBalance > 0 ? formatNumber(w.tokenBalance, 0) : "0"}
+                          </td>
+                          <td className="px-3 py-2.5 text-[11px] font-bold tabular-nums" style={{ color: w.tokenBalance > 0 ? "#94a3b8" : "rgba(100,116,139,0.6)" }}>
+                            {tokenPrice && w.tokenBalance > 0 ? formatUsd(currentValue * tokenPrice.solPrice) : "$0"}
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <div className="flex gap-1.5 items-center">
+                              <div className="flex gap-1">
+                                {([0.5, 1, 2] as const).map((sol) => {
+                                  const key = `${w.id}-buy-${sol}`;
+                                  const busy = loadingKey === key;
+                                  return (
+                                    <button
+                                      key={sol}
+                                      disabled={!!loadingKey}
+                                      onClick={() => quickTrade(w, "buy", sol)}
+                                      className="text-[10px] font-bold px-2 py-1 rounded transition-all disabled:opacity-40 tabular-nums"
+                                      style={{
+                                        background: busy ? "rgba(74,222,128,0.2)" : "rgba(74,222,128,0.07)",
+                                        border: "1px solid rgba(74,222,128,0.2)",
+                                        color: "#4ade80",
+                                        minWidth: "28px",
+                                      }}
+                                    >
+                                      {busy ? "…" : `${sol}`}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              <div className="w-px h-4 flex-shrink-0" style={{ background: "rgba(28,38,56,0.8)" }} />
+                              <div className="flex gap-1">
+                                {([10, 25, 50, 100] as const).map((pct) => {
+                                  const key = `${w.id}-sell-${pct}`;
+                                  const busy = loadingKey === key;
+                                  return (
+                                    <button
+                                      key={pct}
+                                      disabled={!!loadingKey || w.tokenBalance === 0}
+                                      onClick={() => quickTrade(w, "sell", pct)}
+                                      className="text-[10px] font-bold px-2 py-1 rounded transition-all disabled:opacity-40 tabular-nums"
+                                      style={{
+                                        background: busy ? "rgba(248,113,113,0.2)" : "rgba(248,113,113,0.07)",
+                                        border: "1px solid rgba(248,113,113,0.2)",
+                                        color: "#f87171",
+                                        minWidth: "32px",
+                                      }}
+                                    >
+                                      {busy ? "…" : `${pct}%`}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* ── Activity Log ─────────────────────────────────────────────────────── */}
-      <div>
-        <h2 className="text-sm font-semibold text-zinc-300 mb-3">Transaction History</h2>
-        <ActivityLog trades={trades} maxItems={100} />
       </div>
 
       {/* ── Modals ───────────────────────────────────────────────────────────── */}
-      <TradeModal
-        wallet={tradeWallet}
-        mode={tradeMode}
-        onClose={() => {
-          setTradeWallet(null);
-          setTradeMode(null);
-        }}
-      />
       <SellAllModal open={sellAllOpen} onClose={() => setSellAllOpen(false)} />
     </div>
   );

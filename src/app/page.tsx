@@ -1,11 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, RefreshCw, Rocket, Wallet, Sparkles } from "lucide-react";
+import { Plus, RefreshCw, Rocket, Wallet, Sparkles, Zap, Coins, ArrowDownToLine } from "lucide-react";
 import { useStore } from "@/store";
 import StatsBar from "@/components/StatsBar";
 import WalletTable from "@/components/WalletTable";
 import ImportWalletsModal from "@/components/ImportWalletsModal";
+import GenerateWalletsModal from "@/components/GenerateWalletsModal";
+import WithdrawModal from "@/components/WithdrawModal";
+import FundModal from "@/components/FundModal";
 import { Button } from "@/components/ui/button";
 
 export default function DashboardPage() {
@@ -15,6 +18,9 @@ export default function DashboardPage() {
   const setActiveTokenMint = useStore((s) => s.setActiveTokenMint);
 
   const [refreshing, setRefreshing] = useState(false);
+  const [generateModalOpen, setGenerateModalOpen] = useState(false);
+  const [fundModalOpen, setFundModalOpen] = useState(false);
+  const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -56,10 +62,8 @@ export default function DashboardPage() {
             <h1 className="text-lg sm:text-2xl font-bold text-zinc-100 tracking-tight">Dashboard</h1>
             {wallets.length > 0 && (
               <div
-                className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider"
+                className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider"
                 style={{
-                  background: "rgba(79,131,255,0.08)",
-                  border: "1px solid rgba(79,131,255,0.2)",
                   color: "#4f83ff",
                 }}
               >
@@ -75,29 +79,138 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Refresh */}
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs transition-all duration-200 disabled:opacity-50 ${
-              refreshing
-                ? "text-[#4f83ff] scale-95"
-                : "text-zinc-500 hover:text-zinc-200"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all duration-200 disabled:opacity-50 ${
+              refreshing ? "scale-95" : ""
             }`}
             style={{
-              border: refreshing ? "1px solid rgba(79,131,255,0.4)" : "1px solid rgba(63,63,70,0.25)",
-              boxShadow: refreshing ? "0 0 10px rgba(79,131,255,0.15)" : "none",
+              border: "1px solid rgba(79,131,255,0.35)",
+              color: refreshing ? "#4f83ff" : "#93b4ff",
+              background: refreshing ? "rgba(79,131,255,0.1)" : "rgba(79,131,255,0.06)",
+              boxShadow: refreshing
+                ? "0 0 12px rgba(79,131,255,0.25), inset 0 0 8px rgba(79,131,255,0.06)"
+                : "0 0 8px rgba(79,131,255,0.1)",
+            }}
+            onMouseEnter={(e) => {
+              if (!refreshing) {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(79,131,255,0.12)";
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 14px rgba(79,131,255,0.3)";
+                (e.currentTarget as HTMLButtonElement).style.color = "#b8cfff";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!refreshing) {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(79,131,255,0.06)";
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 8px rgba(79,131,255,0.1)";
+                (e.currentTarget as HTMLButtonElement).style.color = "#93b4ff";
+              }
             }}
           >
             <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshing ? "animate-spin" : ""}`} />
             <span className="hidden sm:block">Refresh</span>
           </button>
+
+          {/* Generate Wallets */}
+          <button
+            onClick={() => setGenerateModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all duration-200"
+            style={{
+              border: "1px solid rgba(79,131,255,0.4)",
+              color: "#93b4ff",
+              background: "rgba(79,131,255,0.08)",
+              boxShadow: "0 0 8px rgba(79,131,255,0.15)",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(79,131,255,0.14)";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 16px rgba(79,131,255,0.3)";
+              (e.currentTarget as HTMLButtonElement).style.color = "#b8cfff";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(79,131,255,0.08)";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 8px rgba(79,131,255,0.15)";
+              (e.currentTarget as HTMLButtonElement).style.color = "#93b4ff";
+            }}
+          >
+            <Zap className="h-3.5 w-3.5" />
+            <span className="hidden sm:block">Generate Wallets</span>
+          </button>
+
+          {/* Import Wallets */}
           <button
             onClick={() => setImportModalOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs text-zinc-500 hover:text-zinc-200 transition-colors"
-            style={{ border: "1px solid rgba(63,63,70,0.25)" }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all duration-200"
+            style={{
+              border: "1px solid rgba(79,131,255,0.4)",
+              color: "#93b4ff",
+              background: "rgba(79,131,255,0.08)",
+              boxShadow: "0 0 8px rgba(79,131,255,0.15)",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(79,131,255,0.14)";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 16px rgba(79,131,255,0.3)";
+              (e.currentTarget as HTMLButtonElement).style.color = "#b8cfff";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(79,131,255,0.08)";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 8px rgba(79,131,255,0.15)";
+              (e.currentTarget as HTMLButtonElement).style.color = "#93b4ff";
+            }}
           >
             <Plus className="h-3.5 w-3.5" />
             <span className="hidden sm:block">Import Wallets</span>
+          </button>
+
+          {/* Fund */}
+          <button
+            onClick={() => setFundModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all duration-200"
+            style={{
+              border: "1px solid rgba(79,131,255,0.4)",
+              color: "#93b4ff",
+              background: "rgba(79,131,255,0.08)",
+              boxShadow: "0 0 8px rgba(79,131,255,0.15)",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(79,131,255,0.14)";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 16px rgba(79,131,255,0.3)";
+              (e.currentTarget as HTMLButtonElement).style.color = "#b8cfff";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(79,131,255,0.08)";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 8px rgba(79,131,255,0.15)";
+              (e.currentTarget as HTMLButtonElement).style.color = "#93b4ff";
+            }}
+          >
+            <Coins className="h-3.5 w-3.5" />
+            <span className="hidden sm:block">Fund</span>
+          </button>
+
+          {/* Withdraw */}
+          <button
+            onClick={() => setWithdrawModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all duration-200"
+            style={{
+              border: "1px solid rgba(79,131,255,0.4)",
+              color: "#93b4ff",
+              background: "rgba(79,131,255,0.08)",
+              boxShadow: "0 0 8px rgba(79,131,255,0.15)",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(79,131,255,0.14)";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 16px rgba(79,131,255,0.3)";
+              (e.currentTarget as HTMLButtonElement).style.color = "#b8cfff";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(79,131,255,0.08)";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 8px rgba(79,131,255,0.15)";
+              (e.currentTarget as HTMLButtonElement).style.color = "#93b4ff";
+            }}
+          >
+            <ArrowDownToLine className="h-3.5 w-3.5" />
+            <span className="hidden sm:block">Withdraw</span>
           </button>
         </div>
       </div>
@@ -111,7 +224,7 @@ export default function DashboardPage() {
       <div className="flex flex-col lg:flex-row gap-3 sm:gap-5 min-h-0 flex-1">
 
         {/* Wallet panel */}
-        <div className="flex flex-col min-h-0 flex-1 min-h-[300px]">
+        <div className="flex flex-col flex-1 min-h-[300px]">
 
           {wallets.length === 0 ? (
             <div
@@ -259,6 +372,9 @@ export default function DashboardPage() {
       </div>
 
       <ImportWalletsModal open={importModalOpen} onClose={() => setImportModalOpen(false)} />
+      <GenerateWalletsModal open={generateModalOpen} onClose={() => setGenerateModalOpen(false)} />
+      <WithdrawModal open={withdrawModalOpen} onClose={() => setWithdrawModalOpen(false)} />
+      <FundModal open={fundModalOpen} onClose={() => setFundModalOpen(false)} />
     </div>
   );
 }

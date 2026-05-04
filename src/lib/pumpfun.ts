@@ -29,7 +29,7 @@ import {
   getBondingCurveV2PDA,
   calculateBuyAmount,
   calculateSellAmount,
-  getFeeRecipient,
+  getGlobalState,
   getBondingCurveData,
   priorityFeeIx,
   computeUnitLimitIx,
@@ -240,12 +240,13 @@ export async function buildBuyIx(
 ): Promise<{ instructions: TransactionInstruction[]; tokenAmount: bigint }> {
   const tokenProgram = isToken2022 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID;
 
-  const [curveData, feeRecipient] = await Promise.all([
+  const [curveData, globalState] = await Promise.all([
     getBondingCurveData(connection, mint),
-    getFeeRecipient(connection),
+    getGlobalState(connection),
   ]);
   if (!curveData) throw new Error("Bonding curve not found");
 
+  const { feeRecipient, buybackFeeRecipient } = globalState;
   const { tokenAmount, maxSolCost } = calculateBuyAmount(solAmount, curveData, slippageBps);
 
   const [bondingCurve] = getBondingCurvePDA(mint);
@@ -286,7 +287,8 @@ export async function buildBuyIx(
       { pubkey: userVolumeAccumulator, isSigner: false, isWritable: true },
       { pubkey: FEE_CONFIG, isSigner: false, isWritable: false },
       { pubkey: FEE_PROGRAM, isSigner: false, isWritable: false },
-      { pubkey: bondingCurveV2, isSigner: false, isWritable: false },
+      { pubkey: bondingCurveV2, isSigner: false, isWritable: true },
+      { pubkey: buybackFeeRecipient, isSigner: false, isWritable: true },
     ],
     data,
   });
@@ -316,13 +318,14 @@ export async function buildSellIx(
   tokenAmount: bigint,
   slippageBps = 500
 ): Promise<{ instructions: TransactionInstruction[]; minSolOut: bigint }> {
-  const [curveData, feeRecipient, tokenProgram] = await Promise.all([
+  const [curveData, globalState, tokenProgram] = await Promise.all([
     getBondingCurveData(connection, mint),
-    getFeeRecipient(connection),
+    getGlobalState(connection),
     getMintTokenProgram(connection, mint),
   ]);
   if (!curveData) throw new Error("Bonding curve not found");
 
+  const { feeRecipient, buybackFeeRecipient } = globalState;
   const { minSolOut } = calculateSellAmount(tokenAmount, curveData, slippageBps);
 
   const [bondingCurve] = getBondingCurvePDA(mint);
@@ -361,6 +364,7 @@ export async function buildSellIx(
     baseKeys.push({ pubkey: userVolumeAccumulator, isSigner: false, isWritable: true });
   }
   baseKeys.push({ pubkey: bondingCurveV2, isSigner: false, isWritable: false });
+  baseKeys.push({ pubkey: buybackFeeRecipient, isSigner: false, isWritable: true });
 
   const sellIx = new TransactionInstruction({
     programId: PUMPFUN_PROGRAM_ID,
@@ -468,7 +472,7 @@ export async function buildBuyIxFromCurve(
   const tokenProgram = isToken2022 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID;
   const { tokenAmount, maxSolCost } = calculateBuyAmount(solAmount, curveData, slippageBps);
 
-  const feeRecipient = await getFeeRecipient(connection);
+  const { feeRecipient, buybackFeeRecipient } = await getGlobalState(connection);
 
   const [bondingCurve] = getBondingCurvePDA(mint);
   const associatedBondingCurve = await getAssociatedTokenAddress(mint, bondingCurve, true, tokenProgram);
@@ -511,7 +515,8 @@ export async function buildBuyIxFromCurve(
       { pubkey: userVolumeAccumulator, isSigner: false, isWritable: true },
       { pubkey: FEE_CONFIG, isSigner: false, isWritable: false },
       { pubkey: FEE_PROGRAM, isSigner: false, isWritable: false },
-      { pubkey: bondingCurveV2, isSigner: false, isWritable: false },
+      { pubkey: bondingCurveV2, isSigner: false, isWritable: true },
+      { pubkey: buybackFeeRecipient, isSigner: false, isWritable: true },
     ],
     data,
   });

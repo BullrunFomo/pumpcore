@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { BookOpen, Send, Activity } from "lucide-react";
+import { FileText, Send, Activity } from "lucide-react";
 
 export default function Footer() {
   const [latency, setLatency] = useState<number | null>(null);
@@ -39,17 +39,17 @@ export default function Footer() {
           <span className="relative flex h-2 w-2">
             <span
               className="absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping"
-              style={{ background: alive ? "#4ade80" : "#f87171" }}
+              style={{ background: alive ? "#4f83ff" : "#f87171" }}
             />
             <span
               className="relative inline-flex rounded-full h-2 w-2"
               style={{
-                background: alive ? "#4ade80" : "#f87171",
-                boxShadow: alive ? "0 0 6px #4ade80" : "0 0 6px #f87171",
+                background: alive ? "#4f83ff" : "#f87171",
+                boxShadow: alive ? "0 0 6px #4f83ff" : "0 0 6px #f87171",
               }}
             />
           </span>
-          <span className="text-[11px] font-medium" style={{ color: alive ? "#4ade80" : "#f87171" }}>
+          <span className="text-[11px] font-medium" style={{ color: alive ? "#4f83ff" : "#f87171" }}>
             {alive ? "All Services Live" : "Service Degraded"}
           </span>
         </div>
@@ -88,7 +88,7 @@ export default function Footer() {
           },
           {
             href: "/docs",
-            icon: <BookOpen className="h-3.5 w-3.5" />,
+            icon: <FileText className="h-3.5 w-3.5" />,
             label: "Docs",
           },
         ].map((item, i) => (

@@ -1,13 +1,12 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Rocket, Copy, Rss } from "lucide-react";
+import { LayoutDashboard, Rocket, Rss } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/copytrade", label: "Copytrade", icon: Copy },
-  { href: "/xfeed", label: "X Feed", icon: Rss },
+{ href: "/xfeed", label: "Feed", icon: Rss },
   { href: "/launch", label: "Launch", icon: Rocket },
 ];
 
@@ -29,6 +28,12 @@ export default function Navbar() {
           <span className="text-base font-bold tracking-widest uppercase hidden md:block" style={{ color: "#4f83ff" }}>
             BUNDLEX
           </span>
+          <span
+            className="hidden md:block text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded"
+            style={{ background: "rgba(79,131,255,0.12)", border: "1px solid rgba(79,131,255,0.35)", color: "#4f83ff" }}
+          >
+            v1.0
+          </span>
         </Link>
 
         {/* Nav links */}
@@ -40,7 +45,7 @@ export default function Navbar() {
                 key={href}
                 href={href}
                 className={cn(
-                  "h-full flex items-center gap-1.5 px-2 sm:px-3 text-xs tracking-wider uppercase transition-all border-b-2",
+                  "h-full flex items-center gap-1.5 px-2 sm:px-3 text-xs font-bold tracking-wider uppercase transition-all border-b-2",
                   active
                     ? "border-b-[#4f83ff] text-[#4f83ff]"
                     : "border-b-transparent text-zinc-500 hover:text-zinc-200"

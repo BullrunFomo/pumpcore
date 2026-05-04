@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import { Keypair, sendAndConfirmTransaction, Transaction } from "@solana/web3.js";
-import { getConnection, getTokenBalance, keypairFromPrivateKey } from "@/lib/solana";
+import { Connection, Keypair, PublicKey, sendAndConfirmTransaction, Transaction } from "@solana/web3.js";
+import { getConnection, getBondingCurveData, getTokenBalance, keypairFromPrivateKey } from "@/lib/solana";
 import {
   buildCreateTokenIx,
   buildCreateTokenV2Ix,
@@ -11,6 +11,67 @@ import {
 import { uploadMetadata } from "@/lib/ipfs";
 import { executeAtomicLaunchBundle, executeStaggerBuy } from "@/lib/jito";
 import { SniperGuard } from "@/lib/sniper-guard";
+
+// ─── Auto-sell Helpers ────────────────────────────────────────────────────────
+
+let _cachedSolPrice = 180;
+let _lastSolPriceFetch = 0;
+
+async function getSolPrice(): Promise<number> {
+  const now = Date.now();
+  if (now - _lastSolPriceFetch < 30_000) return _cachedSolPrice;
+  try {
+    const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd");
+    const data = await res.json();
+    _cachedSolPrice = data?.solana?.usd ?? _cachedSolPrice;
+    _lastSolPriceFetch = now;
+  } catch {}
+  return _cachedSolPrice;
+}
+
+async function doAutoSell(
+  controller: ReadableStreamDefaultController,
+  connection: Connection,
+  mint: PublicKey,
+  wallets: { address: string; privateKey: string }[],
+  pct: number
+) {
+  log(controller, `Executing auto-sell (${Math.round(pct * 100)}% of each position)...`, "info");
+  for (const w of wallets) {
+    try {
+      const kp = keypairFromPrivateKey(w.privateKey);
+      const balance = await getTokenBalance(connection, kp.publicKey, mint);
+      if (balance <= 0) continue;
+      const amount = balance * pct;
+      const result = await executeSell(connection, kp, mint, amount);
+      log(controller, `Sold ${amount.toFixed(2)} tokens → ${result.solReceived.toFixed(4)} SOL`, "success", result.txSig, w.address);
+    } catch (err: any) {
+      log(controller, `Auto-sell failed for ${w.address.slice(0, 8)}: ${err.message}`, "error", undefined, w.address);
+    }
+  }
+  log(controller, "Auto-sell complete.", "success");
+}
+
+async function waitForMcap(
+  connection: Connection,
+  mint: PublicKey,
+  targetUsd: number,
+  timeoutMs: number
+): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    try {
+      const [curveData, solPrice] = await Promise.all([getBondingCurveData(connection, mint), getSolPrice()]);
+      if (curveData) {
+        const priceInSol = (Number(curveData.virtualSolReserves) / 1e9) / (Number(curveData.virtualTokenReserves) / 1e6);
+        const mcap = priceInSol * solPrice * 1_000_000_000;
+        if (mcap >= targetUsd) return true;
+      }
+    } catch {}
+    await new Promise((r) => setTimeout(r, 5_000));
+  }
+  return false;
+}
 
 // ─── SSE Helpers ──────────────────────────────────────────────────────────────
 
@@ -125,17 +186,20 @@ export async function POST(req: NextRequest) {
 
         // Dev buy uses INITIAL_CURVE — the known state right after token creation.
         // This runs as part of tx[0] in the bundle alongside the create instruction.
-        const { instructions: devBuyIxs } = await buildBuyIxFromCurve(
-          connection,
-          creatorKeypair,
-          mintPubkey,
-          bundleConfig.solPerWallet,
-          INITIAL_CURVE,
-          500,
-          isToken2022
-        );
-
-        const createAndDevBuyIxs = [...createIxs, ...devBuyIxs];
+        const devSolAmount: number = creatorWallet.solAmount ?? 0.1;
+        const createAndDevBuyIxs = [...createIxs];
+        if (devSolAmount > 0) {
+          const { instructions: devBuyIxs } = await buildBuyIxFromCurve(
+            connection,
+            creatorKeypair,
+            mintPubkey,
+            devSolAmount,
+            INITIAL_CURVE,
+            500,
+            isToken2022
+          );
+          createAndDevBuyIxs.push(...devBuyIxs);
+        }
         const bundleWallets = bundleConfig.selectedWallets.slice(1); // all wallets except dev
         let stopped = false;
 
@@ -151,6 +215,7 @@ export async function POST(req: NextRequest) {
               creatorKeypair,
               mintKeypair: mintKp,
               bundleWallets,
+              devSolAmount,
               solPerWallet: bundleConfig.solPerWallet,
               tokenCreator: creatorKeypair.publicKey,
               mint: mintPubkey,
@@ -235,12 +300,23 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // ── Step 4: Auto-sell setup ───────────────────────────────────────────
+        // ── Step 4: Auto-sell ─────────────────────────────────────────────────
         if (autoSell.enabled && !stopped) {
+          const sellWallets: { address: string; privateKey: string }[] = bundleConfig.selectedWallets;
+          const pct = Math.min(100, Math.max(1, autoSell.sellPct)) / 100;
+
           if (autoSell.mode === "time") {
-            log(controller, `Auto-sell scheduled in ${autoSell.timeSeconds}s`, "info");
+            log(controller, `Auto-sell: waiting ${autoSell.timeSeconds}s then selling ${autoSell.sellPct}%...`, "info");
+            await new Promise((r) => setTimeout(r, autoSell.timeSeconds * 1_000));
+            await doAutoSell(controller, connection, mintPubkey, sellWallets, pct);
           } else {
-            log(controller, `Auto-sell MCap target: $${autoSell.mcapTarget.toLocaleString()}`, "info");
+            log(controller, `Auto-sell: watching for $${autoSell.mcapTarget.toLocaleString()} MCap (30 min timeout)...`, "info");
+            const hit = await waitForMcap(connection, mintPubkey, autoSell.mcapTarget, 30 * 60 * 1_000);
+            if (hit) {
+              await doAutoSell(controller, connection, mintPubkey, sellWallets, pct);
+            } else {
+              log(controller, "Auto-sell: MCap target not reached within 30 minutes — skipped.", "warn");
+            }
           }
         }
 

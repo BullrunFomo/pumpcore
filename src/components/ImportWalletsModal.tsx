@@ -56,8 +56,8 @@ export default function ImportWalletsModal({ open, onClose }: ImportWalletsModal
         className="max-w-lg"
         style={{
           background: "rgba(9,9,11,0.97)",
-          border: "1px solid rgba(63,63,70,0.5)",
-          boxShadow: "0 0 0 1px rgba(79,131,255,0.08), 0 24px 48px rgba(0,0,0,0.5)",
+          border: "1px solid rgba(79,131,255,0.3)",
+          boxShadow: "0 0 0 1px rgba(79,131,255,0.1), 0 0 40px rgba(79,131,255,0.12), 0 24px 48px rgba(0,0,0,0.5)",
         }}
       >
         {/* Top glow line */}

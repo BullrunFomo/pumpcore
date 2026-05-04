@@ -6,8 +6,7 @@ import { cn } from "@/lib/utils";
 const STEPS = [
   { n: 1, label: "Token" },
   { n: 2, label: "Bundle" },
-  { n: 3, label: "Settings" },
-  { n: 4, label: "Launch" },
+  { n: 3, label: "Launch" },
 ];
 
 interface Props {

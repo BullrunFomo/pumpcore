@@ -1,16 +1,17 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
-function timeAgo(ms: string | number): string {
-  const diff = Date.now() - (typeof ms === "number" ? ms : new Date(ms).getTime());
-  const s = Math.floor(diff / 1000);
-  if (s < 60) return `${s}s ago`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  const d = Math.floor(h / 24);
-  return `${d}d ago`;
+function formatFundingDate(ms: string | number): string {
+  const d = new Date(typeof ms === "number" ? ms : ms);
+  const now = new Date();
+  const sameDay =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+  const time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (sameDay) return `Today, ${time}`;
+  const month = d.toLocaleString("default", { month: "short" });
+  return `${month} ${d.getDate()}, ${time}`;
 }
 
 function SolanaLogo({ className }: { className?: string }) {
@@ -79,35 +80,56 @@ export default function WalletTable({ wallets }: WalletTableProps) {
     failed: "bg-red-400",
   };
 
-  // ── Funding data ────────────────────────────────────────────────────────────
-  type FundingMap = Record<string, { sourceLabel: string | null; timestamp: number | null; amountSol: number }>;
-  const [funding, setFunding] = useState<FundingMap>({});
+  // ── Funding data (persisted in store) ──────────────────────────────────────
+  const walletFunding = useStore((s) => s.walletFunding);
+  const mergeWalletFunding = useStore((s) => s.mergeWalletFunding);
+  // Tracks addresses retried this session so we don't loop on genuine empty results
+  const retriedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!wallets.length) return;
-    const addresses = wallets.map((w) => w.address).join(",");
-    fetch(`/api/funding?addresses=${addresses}`)
+    // Include addresses that:
+    //  1. Have never been fetched, OR
+    //  2. Were fetched but returned no data AND haven't been retried this session yet
+    //     (handles stale empty results from before the pagination fix)
+    const unfetched = wallets
+      .filter((w) => {
+        const f = walletFunding[w.address];
+        if (!f?.fetched) return true;
+        if (f.sourceLabel === null && f.timestamp === null && !retriedRef.current.has(w.address)) return true;
+        return false;
+      })
+      .map((w) => w.address);
+    if (!unfetched.length) return;
+
+    // Mark all of them as retried so this session won't retry again
+    unfetched.forEach((a) => retriedRef.current.add(a));
+
+    fetch(`/api/funding?addresses=${unfetched.join(",")}`)
       .then((r) => r.json())
       .then((data) => {
-        const map: FundingMap = {};
-        for (const f of data.funding ?? []) {
-          map[f.address] = { sourceLabel: f.sourceLabel, timestamp: f.timestamp, amountSol: f.amountSol };
+        const update: Record<string, import("@/types").WalletFundingRecord> = {};
+        // Build a lookup from the API response
+        const byAddress: Record<string, any> = {};
+        for (const f of data.funding ?? []) byAddress[f.address] = f;
+
+        for (const addr of unfetched) {
+          const f = byAddress[addr];
+          update[addr] = {
+            sourceAddress: f?.sourceAddress ?? null,
+            sourceLabel: f?.sourceLabel ?? null,
+            timestamp: f?.timestamp ?? null,
+            amountSol: f?.amountSol ?? 0,
+            fetched: true,
+          };
         }
-        setFunding(map);
+        mergeWalletFunding(update);
       })
       .catch(() => {});
-  // re-fetch only when wallet set changes
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallets.map((w) => w.address).join(",")]);
 
-  // Tick every 30s to keep relative timestamps fresh
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 30_000);
-    return () => clearInterval(id);
-  }, []);
-
-  const totalSol = wallets.reduce((s, w) => s + w.solBalance, 0);
+const totalSol = wallets.reduce((s, w) => s + w.solBalance, 0);
 
   return (
     <div
@@ -121,7 +143,7 @@ export default function WalletTable({ wallets }: WalletTableProps) {
       <div
         className="shrink-0 grid items-center text-[10px] font-semibold uppercase tracking-widest text-zinc-500 px-3 py-2"
         style={{
-          gridTemplateColumns: "28px 1fr 1fr 1fr 36px",
+          gridTemplateColumns: "28px 1fr 1fr 1fr 1fr 36px",
           borderBottom: "1px solid rgba(28,38,56,0.8)",
           background: "rgba(9,13,20,0.5)",
         }}
@@ -142,6 +164,7 @@ export default function WalletTable({ wallets }: WalletTableProps) {
           <ArrowUpDown className="h-2.5 w-2.5 opacity-50" />
         </button>
         <span>Funding</span>
+        <span>Funding Date</span>
         <div />
       </div>
 
@@ -150,9 +173,9 @@ export default function WalletTable({ wallets }: WalletTableProps) {
         {sorted.map((w, i) => (
           <div
             key={w.id}
-            className="grid items-center px-3 py-1.5 group hover:bg-white/[0.02] transition-colors cursor-default"
+            className="grid items-center px-3 py-0.5 mx-2 group hover:bg-white/[0.02] transition-colors cursor-default"
             style={{
-              gridTemplateColumns: "28px 1fr 1fr 1fr 36px",
+              gridTemplateColumns: "28px 1fr 1fr 1fr 1fr 36px",
               borderBottom:
                 i < sorted.length - 1
                   ? "1px solid rgba(28,38,56,0.6)"
@@ -171,7 +194,7 @@ export default function WalletTable({ wallets }: WalletTableProps) {
               </span>
               <button
                 onClick={() => navigator.clipboard.writeText(w.address)}
-                className="shrink-0 text-zinc-600 hover:text-zinc-300 transition-colors opacity-0 group-hover:opacity-100"
+                className="shrink-0 text-zinc-500 hover:text-zinc-300 transition-colors opacity-0 group-hover:opacity-100"
               >
                 <Copy className="h-3 w-3" />
               </button>
@@ -186,27 +209,28 @@ export default function WalletTable({ wallets }: WalletTableProps) {
               </span>
             </div>
 
-            {/* Funding */}
-            <div className="flex flex-col gap-0.5 min-w-0">
-              {funding[w.address] ? (
-                <>
-                  <span className="text-xs text-zinc-200 truncate">
-                    {funding[w.address].sourceLabel ?? "—"}
-                  </span>
-                  <span className="text-[10px] text-zinc-500 tabular-nums">
-                    {funding[w.address].timestamp ? timeAgo(funding[w.address].timestamp!) : "—"}
-                  </span>
-                </>
-              ) : (
-                <span className="text-xs text-zinc-600">—</span>
-              )}
+            {/* Funding source */}
+            <div className="min-w-0">
+              <span className="text-xs text-zinc-200 truncate block">
+                {walletFunding[w.address]?.sourceLabel ?? <span className="text-zinc-600">—</span>}
+              </span>
+            </div>
+
+            {/* Funding date */}
+            <div className="min-w-0">
+              <span className="text-xs text-zinc-400 tabular-nums">
+                {walletFunding[w.address]?.timestamp
+                  ? formatFundingDate(walletFunding[w.address].timestamp!)
+                  : <span className="text-zinc-600">—</span>
+                }
+              </span>
             </div>
 
             {/* Delete */}
             <div className="flex items-center justify-center">
               <button
                 onClick={() => removeWallet(w.id)}
-                className="text-zinc-700 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                className="text-zinc-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
@@ -220,7 +244,7 @@ export default function WalletTable({ wallets }: WalletTableProps) {
         <div
           className="shrink-0 grid items-center px-3 py-2 text-xs"
           style={{
-            gridTemplateColumns: "28px 1fr 1fr 1fr 36px",
+            gridTemplateColumns: "28px 1fr 1fr 1fr 1fr 36px",
             borderTop: "1px solid rgba(28,38,56,0.8)",
             background: "rgba(9,13,20,0.5)",
           }}
@@ -233,6 +257,7 @@ export default function WalletTable({ wallets }: WalletTableProps) {
               {formatSol(totalSol, 3)}
             </span>
           </div>
+          <div />
           <div />
           <div />
         </div>

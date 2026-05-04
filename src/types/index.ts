@@ -1,3 +1,15 @@
+// ─── Wallet Funding ───────────────────────────────────────────────────────────
+
+export interface WalletFundingRecord {
+  sourceAddress: string | null;
+  sourceLabel: string | null;
+  timestamp: number | null; // ms
+  amountSol: number;
+  // True once we've attempted a fetch — prevents repeated API calls for wallets
+  // where no funding transaction was found on-chain.
+  fetched: boolean;
+}
+
 // ─── Wallet ───────────────────────────────────────────────────────────────────
 
 export interface WalletInfo {
@@ -41,6 +53,7 @@ export interface BundleConfig {
   jitoTipSol: number;
   launchType: LaunchType;
   staggerDelayMs: number;
+  walletBuyAmounts: Record<string, number>;
 }
 
 // ─── Optional Settings ────────────────────────────────────────────────────────
@@ -51,6 +64,7 @@ export type SniperAction = "stop" | "sell-all";
 export interface AutoSellConfig {
   enabled: boolean;
   mode: AutoSellMode;
+  sellPct: number;
   timeSeconds: number;
   mcapTarget: number;
 }

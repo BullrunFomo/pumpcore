@@ -137,6 +137,7 @@ export async function sendJitoBundle(
 export interface BundleWallet {
   address: string;
   privateKey: string;
+  solAmount?: number;
 }
 
 export interface ClassicBundleParams {
@@ -261,6 +262,7 @@ export interface AtomicLaunchParams {
   creatorKeypair: Keypair;
   mintKeypair: Keypair;
   bundleWallets: BundleWallet[];
+  devSolAmount: number;
   solPerWallet: number;
   tokenCreator: PublicKey;
   mint: PublicKey;
@@ -284,7 +286,7 @@ export async function executeAtomicLaunchBundle(
 ): Promise<{ bundleId: string; results: { address: string; tokenAmount: number }[] }> {
   const {
     connection, createAndDevBuyIxs, creatorKeypair, mintKeypair,
-    bundleWallets, solPerWallet, tokenCreator, mint,
+    bundleWallets, devSolAmount, solPerWallet, tokenCreator, mint,
     tipLamports = JITO_TIP_LAMPORTS, slippageBps = 500, isToken2022 = false,
   } = params;
 
@@ -311,15 +313,17 @@ export async function executeAtomicLaunchBundle(
     };
   }
 
-  const curveAfterDevBuy = predictCurveAfterBuy(initialCurveWithCreator, solPerWallet);
+  const curveAfterDevBuy = predictCurveAfterBuy(initialCurveWithCreator, devSolAmount);
 
   type BuyEntry = { ixs: TransactionInstruction[]; keypair: Keypair; address: string; tokenAmount: number };
   const buyEntries: BuyEntry[] = [];
 
   for (const w of bundleWallets) {
+    const walletSol = w.solAmount ?? solPerWallet;
+    if (walletSol <= 0) continue;
     const keypair = keypairFromPrivateKey(w.privateKey);
     const { instructions: ixs, tokenAmount } = await buildBuyIxFromCurve(
-      connection, keypair, mint, solPerWallet, curveAfterDevBuy, slippageBps, isToken2022
+      connection, keypair, mint, walletSol, curveAfterDevBuy, slippageBps, isToken2022
     );
     buyEntries.push({ ixs, keypair, address: w.address, tokenAmount: Number(tokenAmount) / 1e6 });
     onProgress(`Prepared buy for ${w.address.slice(0, 8)}...`, "info", undefined, w.address);
@@ -337,7 +341,7 @@ export async function executeAtomicLaunchBundle(
   const RENT_BUFFER = 0.005 * LAMPORTS_PER_SOL;
   {
     const creatorBalance = await connection.getBalance(creatorKeypair.publicKey);
-    const creatorNeed = tipLamports + Math.round(solPerWallet * LAMPORTS_PER_SOL) + RENT_BUFFER;
+    const creatorNeed = tipLamports + Math.round(devSolAmount * LAMPORTS_PER_SOL) + RENT_BUFFER;
     if (creatorBalance < creatorNeed) {
       throw new Error(
         `Creator wallet has ${(creatorBalance / LAMPORTS_PER_SOL).toFixed(4)} SOL but needs at least ` +
@@ -345,8 +349,10 @@ export async function executeAtomicLaunchBundle(
       );
     }
     for (const entry of buyEntries) {
+      const entryWallet = bundleWallets.find((w) => w.address === entry.address);
+      const entrySol = entryWallet?.solAmount ?? solPerWallet;
       const bal = await connection.getBalance(entry.keypair.publicKey);
-      const need = Math.round(solPerWallet * LAMPORTS_PER_SOL) + RENT_BUFFER;
+      const need = Math.round(entrySol * LAMPORTS_PER_SOL) + RENT_BUFFER;
       if (bal < need) {
         onProgress(
           `Warning: wallet ${entry.address.slice(0, 8)} has ${(bal / LAMPORTS_PER_SOL).toFixed(4)} SOL, ` +
@@ -542,79 +548,6 @@ export async function executeAtomicLaunchBundle(
   );
 }
 
-// ─── Parallel Buy (all wallets simultaneously, no bundle API) ─────────────────
-
-export async function executeParallelBuy(
-  params: ClassicBundleParams,
-  onProgress: (msg: string, level?: string, txSig?: string, walletAddr?: string) => void
-): Promise<{ results: { address: string; tokenAmount: number }[] }> {
-  const { connection, mint, wallets, solPerWallet, slippageBps = 500, isToken2022 = false } = params;
-
-  if (wallets.length === 0) return { results: [] };
-
-  onProgress(`Building ${wallets.length} buy transactions...`, "info");
-
-  // Build all buy instructions concurrently (requires bonding curve to exist on-chain)
-  const entries = await Promise.all(
-    wallets.map(async (w) => {
-      const keypair = keypairFromPrivateKey(w.privateKey);
-      const { instructions, tokenAmount } = await buildBuyIx(
-        connection, keypair, mint, solPerWallet, slippageBps, isToken2022
-      );
-      return { keypair, instructions, tokenAmount: Number(tokenAmount) / 1e6, address: w.address };
-    })
-  );
-
-  // One shared blockhash — maximises chance of all landing in the same block
-  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-
-  // Build and sign every transaction
-  const signedTxs = entries.map(({ keypair, instructions }) => {
-    const tx = new Transaction();
-    tx.add(priorityFeeIx(300_000));
-    tx.add(computeUnitLimitIx(300_000));
-    tx.add(...instructions);
-    tx.recentBlockhash = blockhash;
-    tx.feePayer = keypair.publicKey;
-    tx.sign(keypair);
-    return tx;
-  });
-
-  // Fire all at once
-  onProgress(`Sending ${signedTxs.length} buy transactions simultaneously...`, "info");
-  const sendResults = await Promise.allSettled(
-    signedTxs.map((tx) =>
-      connection.sendRawTransaction(tx.serialize(), { skipPreflight: true, maxRetries: 3 })
-    )
-  );
-
-  // Confirm all that were accepted
-  const results = await Promise.allSettled(
-    sendResults.map(async (sent, i) => {
-      const { address, tokenAmount } = entries[i];
-      if (sent.status === "rejected") {
-        onProgress(`✗ Send failed: ${address.slice(0, 8)} — ${sent.reason?.message}`, "error", undefined, address);
-        return { address, tokenAmount: 0 };
-      }
-      const sig = sent.value;
-      try {
-        await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "confirmed");
-        onProgress(`✓ Buy confirmed — ${tokenAmount.toLocaleString()} tokens`, "success", sig, address);
-        return { address, tokenAmount };
-      } catch (err: any) {
-        onProgress(`✗ Confirm failed: ${address.slice(0, 8)} — ${err.message}`, "error", sig, address);
-        return { address, tokenAmount: 0 };
-      }
-    })
-  );
-
-  return {
-    results: results.map((r, i) =>
-      r.status === "fulfilled" ? r.value : { address: entries[i].address, tokenAmount: 0 }
-    ),
-  };
-}
-
 // ─── Stagger Buy ──────────────────────────────────────────────────────────────
 
 export async function executeStaggerBuy(
@@ -641,6 +574,11 @@ export async function executeStaggerBuy(
       keypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(w.privateKey)));
     }
 
+    const walletSol = w.solAmount ?? solPerWallet;
+    if (walletSol <= 0) {
+      onProgress(`[${i + 1}/${wallets.length}] Skipping ${w.address.slice(0, 8)} (buy amount is 0)`, "info", undefined, w.address);
+      continue;
+    }
     onProgress(`[${i + 1}/${wallets.length}] Buying for ${w.address.slice(0, 8)}...`, "info", undefined, w.address);
 
     try {
@@ -648,7 +586,7 @@ export async function executeStaggerBuy(
         connection,
         keypair,
         mint,
-        solPerWallet,
+        walletSol,
         slippageBps,
         isToken2022
       );

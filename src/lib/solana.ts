@@ -192,11 +192,22 @@ export interface BondingCurveData {
   creator: PublicKey;
 }
 
-// Global account layout: discriminator(8) + initialized(1) + authority(32) + fee_recipient(32) + ...
-export async function getFeeRecipient(connection: Connection): Promise<PublicKey> {
+export async function getGlobalState(connection: Connection): Promise<{
+  feeRecipient: PublicKey;
+  buybackFeeRecipient: PublicKey;
+}> {
   const accountInfo = await connection.getAccountInfo(PUMPFUN_GLOBAL);
   if (!accountInfo) throw new Error("Pump.fun global account not found");
-  const feeRecipient = new PublicKey(accountInfo.data.subarray(41, 73));
+  const data = accountInfo.data;
+  // fee_recipient: discriminator(8) + initialized(1) + authority(32) = offset 41
+  const feeRecipient = new PublicKey(data.subarray(41, 73));
+  // buyback_fee_recipient: verified by searching a real buy tx — offset 741
+  const buybackFeeRecipient = new PublicKey(data.subarray(741, 773));
+  return { feeRecipient, buybackFeeRecipient };
+}
+
+export async function getFeeRecipient(connection: Connection): Promise<PublicKey> {
+  const { feeRecipient } = await getGlobalState(connection);
   return feeRecipient;
 }
 

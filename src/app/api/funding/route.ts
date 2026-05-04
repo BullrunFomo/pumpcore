@@ -42,57 +42,57 @@ export interface FundingInfo {
 async function fetchFundingForAddress(address: string, apiKey: string): Promise<FundingInfo> {
   const empty: FundingInfo = { address, sourceAddress: null, sourceLabel: null, timestamp: null, amountSol: 0 };
 
-  // Helius returns transactions newest-first. Paginate until exhausted to find
-  // the oldest incoming SOL transfer (= first ever funding of this wallet).
-  const PAGE_SIZE = 100;
-  const MAX_PAGES = 10; // cap at 1000 txs to avoid excessive calls
-
-  let oldest: { sourceAddress: string; timestamp: number; amountSol: number } | null = null;
-  let before: string | undefined = undefined;
+  // We want the OLDEST inbound SOL transfer — that's the original funding, not a recent
+  // sell-proceeds deposit from an AMM. Helius returns newest-first, so we paginate up to
+  // MAX_PAGES and keep overwriting the result; the last match found is the oldest.
+  const MAX_PAGES = 3;
+  let before: string | undefined;
+  let oldest: FundingInfo | null = null;
 
   for (let page = 0; page < MAX_PAGES; page++) {
+    if (page > 0) await new Promise((r) => setTimeout(r, 200));
+
     const url =
       `https://api.helius.xyz/v0/addresses/${address}/transactions` +
-      `?api-key=${apiKey}&limit=${PAGE_SIZE}` +
+      `?api-key=${apiKey}&limit=100` +
       (before ? `&before=${before}` : "");
 
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) break;
+    let txs: any[];
+    try {
+      let res = await fetch(url, { cache: "no-store" });
+      if (res.status === 429) {
+        await new Promise((r) => setTimeout(r, 1_500));
+        res = await fetch(url, { cache: "no-store" });
+      }
+      if (!res.ok) break;
+      txs = await res.json();
+      if (!Array.isArray(txs) || txs.length === 0) break;
+    } catch {
+      break;
+    }
 
-    const txs: any[] = await res.json();
-    if (!Array.isArray(txs) || txs.length === 0) break;
-
+    // Scan newest→oldest; keep overwriting so `oldest` ends up as the earliest inbound
     for (const tx of txs) {
       const transfers: { fromUserAccount: string; toUserAccount: string; amount: number }[] =
         tx.nativeTransfers ?? [];
-
       const incoming = transfers.find((t) => t.toUserAccount === address && t.amount > 0);
       if (!incoming) continue;
-
-      // This is older than anything we've seen so far (list is newest-first)
       oldest = {
+        address,
         sourceAddress: incoming.fromUserAccount,
-        timestamp: tx.timestamp ? tx.timestamp * 1000 : 0,
+        sourceLabel: labelAddress(incoming.fromUserAccount),
+        timestamp: tx.timestamp ? tx.timestamp * 1000 : null,
         amountSol: incoming.amount / 1_000_000_000,
       };
     }
 
-    // If fewer results than page size, we've reached the beginning of history
-    if (txs.length < PAGE_SIZE) break;
+    // Fewer than 100 results means we've seen the full history — stop paginating
+    if (txs.length < 100) break;
 
-    // Cursor for the next (older) page
     before = txs[txs.length - 1].signature;
   }
 
-  if (!oldest) return empty;
-
-  return {
-    address,
-    sourceAddress: oldest.sourceAddress,
-    sourceLabel: labelAddress(oldest.sourceAddress),
-    timestamp: oldest.timestamp,
-    amountSol: oldest.amountSol,
-  };
+  return oldest ?? empty;
 }
 
 export async function GET(req: NextRequest) {
@@ -106,9 +106,12 @@ export async function GET(req: NextRequest) {
 
   const addresses = param.split(",").filter(Boolean);
 
-  const funding = await Promise.all(
-    addresses.map((addr) => fetchFundingForAddress(addr, apiKey))
-  );
+  // Sequential with a small delay to avoid Helius rate limits.
+  const funding: FundingInfo[] = [];
+  for (const addr of addresses) {
+    funding.push(await fetchFundingForAddress(addr, apiKey));
+    if (addresses.length > 1) await new Promise((r) => setTimeout(r, 120));
+  }
 
   return NextResponse.json({ funding });
 }

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
@@ -31,6 +31,12 @@ const LOG_COLORS: Record<LaunchLogEntry["level"], string> = {
   warn: "#fbbf24",
 };
 
+const cardStyle = {
+  background: "rgba(14,20,32,0.92)",
+  border: "1px solid rgba(79,131,255,0.3)",
+  boxShadow: "0 0 0 1px rgba(79,131,255,0.1), 0 0 40px rgba(79,131,255,0.12), 0 24px 48px rgba(0,0,0,0.5)",
+};
+
 export default function Step4ReviewLaunch() {
   const router = useRouter();
   const launch = useStore((s) => s.launch);
@@ -42,8 +48,8 @@ export default function Step4ReviewLaunch() {
   const setActiveTokenMint = useStore((s) => s.setActiveTokenMint);
   const updateTokenConfig = useStore((s) => s.updateTokenConfig);
   const addLaunch = useStore((s) => s.addLaunch);
+  const addTrade = useStore((s) => s.addTrade);
   const logEndRef = useRef<HTMLDivElement>(null);
-  const [, setSseActive] = useState(false);
 
   const { tokenConfig, bundleConfig, autoSell, sniperGuard } = launch;
   const selectedWallets = wallets.filter((w) =>
@@ -57,7 +63,6 @@ export default function Step4ReviewLaunch() {
   const handleLaunch = async () => {
     if (launch.isLaunching) return;
     setLaunching(true);
-    setSseActive(true);
 
     try {
       const formData = new FormData();
@@ -76,11 +81,10 @@ export default function Step4ReviewLaunch() {
             tokenType: tokenConfig.tokenType,
           },
           bundleConfig: {
-            // Dev wallet always first so route.ts picks it as creator
             selectedWallets: [
               ...selectedWallets.filter((w) => w.id === bundleConfig.devWalletId),
               ...selectedWallets.filter((w) => w.id !== bundleConfig.devWalletId),
-            ].map((w) => ({ address: w.address, privateKey: w.privateKey })),
+            ].map((w) => ({ address: w.address, privateKey: w.privateKey, solAmount: bundleConfig.walletBuyAmounts[w.id] ?? 0.1 })),
             devWalletId: bundleConfig.devWalletId,
             solPerWallet: bundleConfig.solPerWallet,
             jitoTipSol: bundleConfig.jitoTipSol,
@@ -125,7 +129,6 @@ export default function Step4ReviewLaunch() {
               } else if (event.type === "complete") {
                 setLaunched(true);
                 setLaunching(false);
-                setSseActive(false);
                 if (event.mintAddress) {
                   setActiveTokenMint(event.mintAddress);
                   updateTokenConfig({ mintAddress: event.mintAddress });
@@ -136,12 +139,28 @@ export default function Step4ReviewLaunch() {
                     logoUri: tokenConfig.logoUri,
                     launchedAt: new Date().toISOString(),
                   });
+                  // Record each bundle wallet's buy so PNL is accurate
+                  const now = new Date();
+                  for (const w of selectedWallets) {
+                    const solAmount = bundleConfig.walletBuyAmounts[w.id] ?? bundleConfig.solPerWallet;
+                    if (solAmount > 0) {
+                      addTrade({
+                        walletAddress: w.address,
+                        type: "buy",
+                        solAmount,
+                        tokenAmount: 0,
+                        price: 0,
+                        txSig: "bundle",
+                        timestamp: now,
+                        status: "confirmed",
+                      });
+                    }
+                  }
                 }
                 setTimeout(() => router.push("/manage"), 1500);
               } else if (event.type === "error") {
                 addLaunchLog({ level: "error", message: event.message });
                 setLaunching(false);
-                setSseActive(false);
               }
             } catch {}
           }
@@ -150,45 +169,52 @@ export default function Step4ReviewLaunch() {
     } catch (err: any) {
       addLaunchLog({ level: "error", message: err.message || "Launch failed" });
       setLaunching(false);
-      setSseActive(false);
     }
   };
 
-  const cardStyle = {
-    background: "rgba(24,24,27,0.8)",
-    border: "1px solid rgba(63,63,70,0.25)",
-  };
+  const totalSol = selectedWallets.reduce(
+    (sum, w) => sum + (bundleConfig.walletBuyAmounts[w.id] ?? 0),
+    0
+  );
 
-  const totalSol = selectedWallets.length * bundleConfig.solPerWallet;
-
-  // ~0.006 SOL buffer per wallet: priority fee + ATA creation + tx fee
   const MIN_BUFFER = 0.006;
   const insufficientWallets = selectedWallets.filter(
-    (w) => w.solBalance < bundleConfig.solPerWallet + MIN_BUFFER
+    (w) => w.solBalance < (bundleConfig.walletBuyAmounts[w.id] ?? 0) + MIN_BUFFER
   );
 
   return (
     <div className="space-y-4">
       {/* Review card */}
-      <div className="rounded-md p-5 space-y-4" style={cardStyle}>
-        <div className="flex items-center gap-2">
-          <div className="h-px flex-1 bg-zinc-800" />
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
-            Review Configuration
-          </span>
-          <div className="h-px flex-1 bg-zinc-800" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-zinc-600 mb-0.5">Token</div>
-            <div className="text-zinc-100 font-semibold">
-              {tokenConfig.name}{" "}
-              <span className="text-zinc-500 font-normal">({tokenConfig.symbol})</span>
+      <div className="relative rounded-lg overflow-hidden" style={cardStyle}>
+        <div className="absolute top-0 left-0 right-0 h-px z-10" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(79,131,255,0.6) 50%, transparent 100%)" }} />
+        {/* Token hero */}
+        <div
+          className="px-6 py-5 grid grid-cols-2 gap-x-8 items-center"
+          style={{ borderBottom: "1px solid rgba(28,38,56,0.8)", background: "rgba(7,10,18,0.5)" }}
+        >
+          <div className="flex items-center gap-5 min-w-0">
+            {tokenConfig.logoUri ? (
+              <img
+                src={tokenConfig.logoUri}
+                alt={tokenConfig.symbol}
+                className="h-16 w-16 rounded-lg object-cover shrink-0"
+                style={{ border: "1px solid rgba(28,38,56,0.9)" }}
+              />
+            ) : (
+              <div
+                className="h-16 w-16 rounded-lg shrink-0 flex items-center justify-center text-2xl font-bold text-zinc-600"
+                style={{ background: "rgba(28,38,56,0.6)", border: "1px solid rgba(28,38,56,0.9)" }}
+              >
+                {tokenConfig.symbol?.[0] ?? "?"}
+              </div>
+            )}
+            <div className="min-w-0">
+              <div className="text-xl font-bold text-zinc-100 leading-tight truncate">{tokenConfig.name}</div>
+              <div className="text-sm text-zinc-500 font-mono mt-0.5">${tokenConfig.symbol}</div>
             </div>
           </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-zinc-600 mb-0.5">Type</div>
+          <div className="flex flex-col items-start gap-1.5">
+            <div className="text-[10px] uppercase tracking-wider text-zinc-600">Token Type</div>
             <Badge
               variant={
                 tokenConfig.tokenType === "Mayhem Mode"
@@ -203,124 +229,121 @@ export default function Step4ReviewLaunch() {
               {tokenConfig.tokenType}
             </Badge>
           </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-zinc-600 mb-0.5">Launch Mode</div>
-            <div className="text-zinc-300 text-sm">
-              {bundleConfig.launchType === "classic"
-                ? "Classic Bundle (Jito)"
-                : `Stagger (${bundleConfig.staggerDelayMs}ms)`}
-            </div>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-zinc-600 mb-0.5">Buy</div>
-            <div className="text-zinc-300 text-sm">
-              {selectedWallets.length}w ×{" "}
-              <span style={{ color: "#4f83ff" }}>
-                {formatSol(bundleConfig.solPerWallet, 3)} SOL
-              </span>{" "}
-              ={" "}
-              <span className="font-bold text-zinc-100">
-                {formatSol(totalSol, 3)} SOL
-              </span>
-            </div>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-zinc-600 mb-0.5">Auto-Sell</div>
-            <div className="text-zinc-300 text-sm">
-              {autoSell.enabled
-                ? autoSell.mode === "time"
-                  ? `${autoSell.timeSeconds}s after launch`
-                  : `$${autoSell.mcapTarget.toLocaleString()} MCap`
-                : <span className="text-zinc-600">Disabled</span>}
-            </div>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-zinc-600 mb-0.5">Sniper Guard</div>
-            <div className="text-zinc-300 text-sm">
-              {sniperGuard.enabled
-                ? `>${sniperGuard.solThreshold} SOL → ${sniperGuard.action === "stop" ? "Stop" : "Sell All"}`
-                : <span className="text-zinc-600">Disabled</span>}
-            </div>
-          </div>
         </div>
 
-        {/* Insufficient balance warning */}
-        {insufficientWallets.length > 0 && (
-          <div
-            className="rounded p-3 flex items-start gap-2"
-            style={{
-              background: "rgba(239,68,68,0.07)",
-              border: "1px solid rgba(239,68,68,0.3)",
-            }}
-          >
-            <AlertTriangle className="h-3.5 w-3.5 text-red-400 flex-shrink-0 mt-0.5" />
-            <div className="text-xs text-red-300 space-y-0.5">
-              <div className="font-semibold">
-                {insufficientWallets.length} wallet{insufficientWallets.length !== 1 ? "s" : ""} may have insufficient SOL
+        {/* Config grid */}
+        <div className="px-6 py-5 space-y-4">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-zinc-600 mb-1">Launch Mode</div>
+              <div className="text-zinc-200 text-sm font-medium">
+                {bundleConfig.launchType === "classic"
+                  ? "Classic Bundle (Jito)"
+                  : `Stagger (${bundleConfig.staggerDelayMs}ms)`}
               </div>
-              <div className="text-red-400/70">
-                Each wallet needs at least{" "}
-                <span className="text-red-300 font-medium">
-                  {formatSol(bundleConfig.solPerWallet + MIN_BUFFER, 4)} SOL
-                </span>{" "}
-                ({formatSol(bundleConfig.solPerWallet, 3)} buy + ~{formatSol(MIN_BUFFER, 3)} fees).
-                Low-balance wallets will be skipped.
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-zinc-600 mb-1">Buy</div>
+              <div className="text-sm">
+                {(() => {
+                  const amounts = selectedWallets.map((w) => bundleConfig.walletBuyAmounts[w.id] ?? 0);
+                  const allSame = amounts.length > 0 && amounts.every((a) => a === amounts[0]);
+                  return allSame ? (
+                    <>
+                      <span className="text-zinc-400">{selectedWallets.length}w × </span>
+                      <span style={{ color: "#4f83ff" }} className="font-semibold">
+                        {formatSol(amounts[0], 3)} SOL
+                      </span>
+                      <span className="text-zinc-500"> = </span>
+                      <span className="font-bold text-zinc-100">{formatSol(totalSol, 3)} SOL</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-zinc-400">{selectedWallets.length}w = </span>
+                      <span className="font-bold text-zinc-100">{formatSol(totalSol, 3)} SOL</span>
+                      <span className="text-zinc-500 text-xs"> (varied)</span>
+                    </>
+                  );
+                })()}
               </div>
-              <div className="flex flex-wrap gap-1 pt-0.5">
-                {insufficientWallets.map((w) => (
-                  <span
-                    key={w.id}
-                    className="font-mono text-[10px] px-1.5 py-0.5 rounded"
-                    style={{
-                      background: "rgba(239,68,68,0.12)",
-                      border: "1px solid rgba(239,68,68,0.25)",
-                      color: "#f87171",
-                    }}
-                  >
-                    {w.address.slice(0, 6)}…{" "}
-                    <span style={{ color: "#ef4444" }}>
-                      {formatSol(w.solBalance, 4)} SOL
-                    </span>
-                  </span>
-                ))}
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-zinc-600 mb-1">Auto-Sell</div>
+              <div className="text-sm font-medium">
+                {autoSell.enabled
+                  ? <span className="text-zinc-200">{autoSell.mode === "time"
+                      ? `${autoSell.sellPct}% every ${autoSell.timeSeconds}s`
+                      : `${autoSell.sellPct}% at $${autoSell.mcapTarget.toLocaleString()}`}</span>
+                  : <span className="text-zinc-600">Disabled</span>}
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-zinc-600 mb-1">Sniper Guard</div>
+              <div className="text-sm font-medium">
+                {sniperGuard.enabled
+                  ? <span className="text-zinc-200">{`>${sniperGuard.solThreshold} SOL → ${sniperGuard.action === "stop" ? "Stop" : "Sell All"}`}</span>
+                  : <span className="text-zinc-600">Disabled</span>}
               </div>
             </div>
           </div>
-        )}
 
-        {/* Wallet chips */}
-        <div>
-          <div className="text-[10px] uppercase tracking-wider text-zinc-600 mb-2">
-            Participating Wallets
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {selectedWallets.map((w) => {
-              const isDev = w.id === bundleConfig.devWalletId;
-              return (
-                <div
-                  key={w.id}
-                  className="flex items-center gap-1.5 rounded px-2 py-1"
-                  style={{
-                    background: isDev ? "rgba(234,179,8,0.08)" : "rgba(9,9,11,0.7)",
-                    border: `1px solid ${isDev ? "rgba(234,179,8,0.4)" : "rgba(63,63,70,0.25)"}`,
-                  }}
-                >
-                  {isDev && <Crown className="h-3 w-3 text-yellow-500 flex-shrink-0" />}
-                  <div
-                    className="h-1.5 w-1.5 rounded-full"
-                    style={{ background: w.color, boxShadow: `0 0 4px ${w.color}` }}
-                  />
-                  <span className="font-mono text-[11px] text-zinc-400">
-                    {truncateAddress(w.address, 4)}
-                  </span>
-                  {isDev && (
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-yellow-600">
-                      Dev
-                    </span>
-                  )}
+          {/* Insufficient balance warning */}
+          {insufficientWallets.length > 0 && (
+            <div
+              className="rounded p-3 flex items-start gap-2"
+              style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.3)" }}
+            >
+              <AlertTriangle className="h-3.5 w-3.5 text-red-400 flex-shrink-0 mt-0.5" />
+              <div className="text-xs text-red-300 space-y-0.5">
+                <div className="font-semibold">
+                  {insufficientWallets.length} wallet{insufficientWallets.length !== 1 ? "s" : ""} may have insufficient SOL
                 </div>
-              );
-            })}
+                <div className="text-red-400/70">
+                  Each wallet needs its buy amount + ~{formatSol(MIN_BUFFER, 3)} SOL for fees.
+                  Low-balance wallets will be skipped.
+                </div>
+                <div className="flex flex-wrap gap-1 pt-0.5">
+                  {insufficientWallets.map((w) => (
+                    <span
+                      key={w.id}
+                      className="font-mono text-[10px] px-1.5 py-0.5 rounded"
+                      style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171" }}
+                    >
+                      {w.address.slice(0, 6)}…{" "}
+                      <span style={{ color: "#ef4444" }}>{formatSol(w.solBalance, 4)} SOL</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Wallet chips */}
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-zinc-600 mb-2">Participating Wallets</div>
+            <div className="flex items-center gap-2">
+              {(() => {
+                const devWallet = selectedWallets.find((w) => w.id === bundleConfig.devWalletId);
+                const othersCount = selectedWallets.length - (devWallet ? 1 : 0);
+                return (
+                  <>
+                    {devWallet && (
+                      <div
+                        className="flex items-center gap-1.5 rounded px-2 py-1"
+                        style={{ background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.4)" }}
+                      >
+                        <Crown className="h-3 w-3 text-yellow-500 flex-shrink-0" />
+                        <span className="font-mono text-[11px] text-zinc-300">{truncateAddress(devWallet.address, 4)}</span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-yellow-600">Dev</span>
+                      </div>
+                    )}
+                    {othersCount > 0 && (
+                      <span className="text-xs font-semibold" style={{ color: "#4f83ff" }}>+ {othersCount} wallet{othersCount !== 1 ? "s" : ""}</span>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
           </div>
         </div>
       </div>
@@ -328,12 +351,13 @@ export default function Step4ReviewLaunch() {
       {/* Launch log */}
       {(launch.logs.length > 0 || launch.isLaunching) && (
         <div
-          className="rounded-md overflow-hidden"
-          style={{ border: "1px solid rgba(63,63,70,0.25)" }}
+          className="relative rounded-lg overflow-hidden"
+          style={cardStyle}
         >
+          <div className="absolute top-0 left-0 right-0 h-px z-10" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(79,131,255,0.6) 50%, transparent 100%)" }} />
           <div
             className="flex items-center justify-between px-4 py-2.5"
-            style={{ background: "rgba(9,9,11,0.9)", borderBottom: "1px solid rgba(63,63,70,0.25)" }}
+            style={{ background: "rgba(7,10,18,0.95)", borderBottom: "1px solid rgba(28,38,56,0.8)" }}
           >
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-red-500" />
@@ -382,7 +406,7 @@ export default function Step4ReviewLaunch() {
       )}
 
       <div className="flex justify-between items-center pt-1">
-        <Button variant="outline" onClick={() => setLaunchStep(3)} disabled={launch.isLaunching}>
+        <Button variant="outline" size="lg" onClick={() => setLaunchStep(2)} disabled={launch.isLaunching}>
           ← Back
         </Button>
 

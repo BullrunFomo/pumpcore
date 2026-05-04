@@ -35,6 +35,3 @@ export function pnlColor(pnl: number): string {
   return "text-gray-400";
 }
 
-export function sleep(ms: number) {
-  return new Promise((res) => setTimeout(res, ms));
-}

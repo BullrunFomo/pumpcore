@@ -13,8 +13,11 @@ const nextConfig: NextConfig = {
     "@grpc/grpc-js",
     "@grpc/proto-loader",
   ],
-  // Turbopack config (Next.js 16 default)
-  turbopack: {},
+  turbopack: {
+    resolveAlias: {
+      tailwindcss: "c:/Users/bullr/Desktop/Bundler/node_modules/tailwindcss",
+    },
+  },
 };
 
 export default nextConfig;

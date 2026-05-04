@@ -11,13 +11,9 @@ const buttonVariants = cva(
         default:
           "bg-transparent border border-[#4f83ff] text-[#4f83ff] shadow-[0_0_8px_rgba(79,131,255,0.35),inset_0_0_8px_rgba(79,131,255,0.06)] hover:bg-[#4f83ff]/10 hover:shadow-[0_0_14px_rgba(79,131,255,0.5),inset_0_0_10px_rgba(79,131,255,0.08)]",
         destructive:
-          "bg-transparent border border-red-500 text-red-400 shadow-[0_0_8px_rgba(239,68,68,0.3)] hover:bg-red-500/10 hover:shadow-[0_0_14px_rgba(239,68,68,0.45)]",
+          "bg-red-500/15 border border-red-500 text-red-400 shadow-[0_0_8px_rgba(239,68,68,0.3)] hover:bg-red-500/25 hover:shadow-[0_0_14px_rgba(239,68,68,0.45)]",
         outline:
           "border border-zinc-700 bg-transparent text-zinc-300 hover:border-zinc-500 hover:text-zinc-100",
-        secondary:
-          "bg-zinc-800 text-zinc-100 hover:bg-zinc-700",
-        ghost: "text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100",
-        link: "text-[#4f83ff] underline-offset-4 hover:underline",
         success:
           "bg-transparent border border-green-500 text-green-400 shadow-[0_0_8px_rgba(34,197,94,0.3)] hover:bg-green-500/10 hover:shadow-[0_0_14px_rgba(34,197,94,0.4)]",
       },

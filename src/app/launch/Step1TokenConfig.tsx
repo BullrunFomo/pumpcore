@@ -112,14 +112,19 @@ export default function Step1TokenConfig() {
   const canContinue = tokenConfig.name.trim() && tokenConfig.symbol.trim();
 
   const inputCls =
-    "w-full rounded bg-[rgba(9,9,11,0.6)] border border-zinc-700/70 text-zinc-200 text-sm px-3 py-2.5 outline-none transition-colors placeholder:text-zinc-600 focus:border-zinc-500";
+    "w-full rounded-md bg-[rgba(7,10,18,0.7)] border border-[rgba(28,38,56,0.9)] text-zinc-200 text-sm px-3 py-2.5 outline-none transition-colors placeholder:text-zinc-600 focus:border-[rgba(79,131,255,0.5)] focus:shadow-[0_0_0_1px_rgba(79,131,255,0.15)]";
 
   return (
     <div className="space-y-4">
       <div
-        className="rounded-md p-5 space-y-4"
-        style={{ background: "rgba(18,18,20,0.9)", border: "1px solid rgba(63,63,70,0.25)" }}
+        className="relative rounded-lg p-5 space-y-4 overflow-hidden"
+        style={{
+          background: "rgba(14,20,32,0.92)",
+          border: "1px solid rgba(79,131,255,0.3)",
+          boxShadow: "0 0 0 1px rgba(79,131,255,0.1), 0 0 40px rgba(79,131,255,0.12), 0 24px 48px rgba(0,0,0,0.5)",
+        }}
       >
+        <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(79,131,255,0.6) 50%, transparent 100%)" }} />
         {/* Name + Symbol row */}
         <div className="grid grid-cols-2 gap-4">
           <Field
@@ -163,12 +168,11 @@ export default function Step1TokenConfig() {
           <div className="flex gap-3">
             {/* Drop zone */}
             <div
-              className="flex-1 rounded flex flex-col items-center justify-center gap-2 py-5 cursor-pointer transition-all"
+              className="flex-1 rounded-md flex flex-col items-center justify-center gap-2 py-5 cursor-pointer transition-all"
               style={{
-                background: dragOver
-                  ? "rgba(79,131,255,0.06)"
-                  : "rgba(9,9,11,0.5)",
-                border: `1px solid ${dragOver ? "rgba(79,131,255,0.4)" : "rgba(63,63,70,0.25)"}`,
+                background: dragOver ? "rgba(79,131,255,0.06)" : "rgba(7,10,18,0.7)",
+                border: `1px solid ${dragOver ? "rgba(79,131,255,0.4)" : "rgba(28,38,56,0.9)"}`,
+                boxShadow: dragOver ? "0 0 16px rgba(79,131,255,0.1)" : "none",
               }}
               onClick={() => fileRef.current?.click()}
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -192,8 +196,8 @@ export default function Step1TokenConfig() {
                 <img
                   src={preview}
                   alt="preview"
-                  className="h-full w-28 object-cover rounded"
-                  style={{ border: "1px solid rgba(63,63,70,0.25)", minHeight: "100px" }}
+                  className="h-full w-28 object-cover rounded-md"
+                  style={{ border: "1px solid rgba(28,38,56,0.9)", minHeight: "100px" }}
                 />
                 <button
                   className="absolute top-1 right-1 rounded-full bg-black/70 p-0.5 text-zinc-400 hover:text-red-400 transition-colors"
@@ -247,16 +251,17 @@ export default function Step1TokenConfig() {
 
       {/* Token Type */}
       <div
-        className="rounded-md p-5"
-        style={{ background: "rgba(18,18,20,0.9)", border: "1px solid rgba(63,63,70,0.25)" }}
+        className="relative rounded-lg p-5 overflow-hidden"
+        style={{
+          background: "rgba(14,20,32,0.92)",
+          border: "1px solid rgba(79,131,255,0.3)",
+          boxShadow: "0 0 0 1px rgba(79,131,255,0.1), 0 0 40px rgba(79,131,255,0.12), 0 24px 48px rgba(0,0,0,0.5)",
+        }}
       >
-        <div className="flex items-center gap-2 mb-4">
-          <div className="h-px flex-1 bg-zinc-800" />
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
-            Token Type
-          </span>
-          <div className="h-px flex-1 bg-zinc-800" />
-        </div>
+        <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(79,131,255,0.6) 50%, transparent 100%)" }} />
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-4 text-center">
+          Token Type
+        </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {TOKEN_TYPES.map((t) => {
             const selected = tokenConfig.tokenType === t.value;
@@ -264,23 +269,23 @@ export default function Step1TokenConfig() {
               <button
                 key={t.value}
                 onClick={() => updateTokenConfig({ tokenType: t.value })}
-                className="p-4 rounded text-left transition-all duration-200"
+                className="p-4 rounded-md text-left transition-all duration-200"
                 style={{
-                  background: selected ? `rgba(${hexToRgb(t.color)},0.08)` : "rgba(9,9,11,0.5)",
-                  border: `1px solid ${selected ? t.color + "60" : "rgba(63,63,70,0.25)"}`,
-                  boxShadow: selected ? `0 0 16px ${t.glow}` : "none",
+                  background: selected ? `rgba(${hexToRgb(t.color)},0.07)` : "rgba(7,10,18,0.7)",
+                  border: `1px solid ${selected ? t.color + "55" : "rgba(28,38,56,0.9)"}`,
+                  boxShadow: selected ? `0 0 20px ${t.glow}, inset 0 0 20px rgba(${hexToRgb(t.color)},0.03)` : "none",
                 }}
               >
-                <div className="mb-2.5" style={{ color: selected ? t.color : "#71717a" }}>
+                <div className="mb-2.5" style={{ color: selected ? t.color : "#3f3f46" }}>
                   {t.icon}
                 </div>
                 <div
                   className="text-sm font-semibold mb-1"
-                  style={{ color: selected ? t.color : "#d4d4d8" }}
+                  style={{ color: selected ? t.color : "#a1a1aa" }}
                 >
                   {t.label}
                 </div>
-                <div className="text-xs text-zinc-500">{t.desc}</div>
+                <div className="text-xs" style={{ color: selected ? `${t.color}99` : "#52525b" }}>{t.desc}</div>
               </button>
             );
           })}

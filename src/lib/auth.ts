@@ -9,10 +9,6 @@ export function saveAccessKey(key: string): void {
   localStorage.setItem(AUTH_STORAGE_KEY, key)
 }
 
-export function clearAccessKey(): void {
-  localStorage.removeItem(AUTH_STORAGE_KEY)
-}
-
 export function getAccountStoreName(): string {
   if (typeof window === 'undefined') return 'bundlex-default'
   const key = localStorage.getItem(AUTH_STORAGE_KEY)

@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
-  BookOpen, Wallet, Rocket, BarChart2, Copy, Shield, Zap,
-  ChevronRight, Info, AlertTriangle, CheckCircle2, XCircle,
-  Clock, TrendingUp, TrendingDown, Minus, ArrowUpRight,
-  Layers, Settings, Eye, RefreshCw, Activity,
+  BookOpen, Wallet, Rocket, BarChart2, Shield, Zap,
+  ChevronRight, Info, AlertTriangle,
+  Clock, TrendingUp,
+  Layers, Settings, RefreshCw, Activity,
 } from "lucide-react";
 
 // ─── TOC sections ────────────────────────────────────────────────────────────
@@ -20,8 +20,6 @@ const sections = [
   { id: "auto-sell",       label: "Auto-Sell",         icon: Zap },
   { id: "sniper-guard",    label: "Sniper Guard",      icon: Shield },
   { id: "manage",          label: "Manage Positions",  icon: Settings },
-  { id: "copytrade",       label: "Copytrade",         icon: Copy },
-  { id: "legend",          label: "Legend",            icon: Eye },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -134,27 +132,35 @@ function Code({ children }: { children: React.ReactNode }) {
 export default function DocsPage() {
   const [activeSection, setActiveSection] = useState("overview");
   const contentRef = useRef<HTMLDivElement>(null);
+  const scrollingRef = useRef(false);
 
   useEffect(() => {
-    const el = contentRef.current;
-    if (!el) return;
+    const container = contentRef.current;
+    if (!container) return;
     const handler = () => {
+      if (scrollingRef.current) return;
+      const scrollTop = container.scrollTop;
       for (let i = sections.length - 1; i >= 0; i--) {
         const anchor = document.getElementById(sections[i].id);
-        if (anchor && anchor.getBoundingClientRect().top <= 80) {
+        if (anchor && anchor.offsetTop - 100 <= scrollTop) {
           setActiveSection(sections[i].id);
           return;
         }
       }
       setActiveSection("overview");
     };
-    el.addEventListener("scroll", handler, { passive: true });
-    return () => el.removeEventListener("scroll", handler);
+    container.addEventListener("scroll", handler, { passive: true });
+    return () => container.removeEventListener("scroll", handler);
   }, []);
 
   function scrollTo(id: string) {
-    const el = document.getElementById(id);
-    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const container = contentRef.current;
+    const anchor = document.getElementById(id);
+    if (!container || !anchor) return;
+    setActiveSection(id);
+    scrollingRef.current = true;
+    container.scrollTo({ top: anchor.offsetTop - 80, behavior: "smooth" });
+    setTimeout(() => { scrollingRef.current = false; }, 800);
   }
 
   return (
@@ -162,36 +168,34 @@ export default function DocsPage() {
       <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex gap-8 items-start">
 
         {/* ── Sidebar TOC ───────────────────────────────────────────────── */}
-        <aside className="hidden lg:flex flex-col w-52 shrink-0 sticky top-4">
-          <div
-            className="rounded-xl p-3"
-            style={{ background: "rgba(13,17,24,0.8)", border: "1px solid rgba(28,38,56,0.8)" }}
-          >
-            <p className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest px-2 mb-3">
-              Contents
-            </p>
-            <nav className="flex flex-col gap-0.5">
-              {sections.map(({ id, label, icon: Icon }) => {
-                const active = activeSection === id;
-                return (
-                  <button
-                    key={id}
-                    onClick={() => scrollTo(id)}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-left transition-all"
-                    style={{
-                      background: active ? "rgba(79,131,255,0.1)" : "transparent",
-                      color: active ? "#4f83ff" : "#52525b",
-                      border: active ? "1px solid rgba(79,131,255,0.2)" : "1px solid transparent",
-                    }}
-                  >
-                    <Icon className="w-3 h-3 shrink-0" />
-                    {label}
-                    {active && <ChevronRight className="w-3 h-3 ml-auto shrink-0" />}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
+        <aside className="hidden lg:flex flex-col w-48 shrink-0 sticky top-4 gap-1">
+          <p className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mb-2 pl-3">
+            Contents
+          </p>
+          {sections.map(({ id, label, icon: Icon }) => {
+            const active = activeSection === id;
+            return (
+              <button
+                key={id}
+                onClick={() => scrollTo(id)}
+                className="flex items-center gap-2.5 pl-3 pr-2 py-1.5 rounded-r-md text-xs text-left transition-all duration-150 mr-4"
+                style={{
+                  color: active ? "#c4d4ff" : "#52525b",
+                  background: active ? "rgba(79,131,255,0.07)" : "transparent",
+                  borderLeft: active ? "2px solid #4f83ff" : "2px solid transparent",
+                }}
+                onMouseEnter={(e) => {
+                  if (!active) (e.currentTarget as HTMLButtonElement).style.color = "#a1a1aa";
+                }}
+                onMouseLeave={(e) => {
+                  if (!active) (e.currentTarget as HTMLButtonElement).style.color = "#52525b";
+                }}
+              >
+                <Icon className="w-3 h-3 shrink-0" style={{ color: active ? "#4f83ff" : "#3f3f46" }} />
+                <span className={active ? "font-medium" : ""}>{label}</span>
+              </button>
+            );
+          })}
         </aside>
 
         {/* ── Main content ──────────────────────────────────────────────── */}
@@ -546,147 +550,6 @@ export default function DocsPage() {
               >
                 PnL (SOL) = (currentPrice − avgBuyPrice) × tokenBalance<br />
                 PnL (USD) = PnL (SOL) × SOL/USD
-              </div>
-            </Card>
-          </section>
-
-          {/* ── COPYTRADE ── */}
-          <section>
-            <SectionAnchor id="copytrade" />
-            <Card>
-              <SectionTitle icon={Copy}>Copytrade</SectionTitle>
-              <p className="text-sm text-zinc-400 leading-relaxed mb-3">
-                The Copytrade feature monitors a target wallet address for on-chain buy activity and
-                mirrors those trades across your imported wallets in real time.
-              </p>
-              <div
-                className="flex items-center gap-2 rounded-lg px-4 py-3"
-                style={{ background: "rgba(234,179,8,0.05)", border: "1px solid rgba(234,179,8,0.2)" }}
-              >
-                <AlertTriangle className="w-4 h-4 shrink-0 text-yellow-500" />
-                <span className="text-xs text-zinc-400">This feature is currently in development and not yet active.</span>
-              </div>
-            </Card>
-          </section>
-
-          {/* ── LEGEND ── */}
-          <section>
-            <SectionAnchor id="legend" />
-            <Card>
-              <SectionTitle icon={Eye}>Legend</SectionTitle>
-
-              {/* Wallet status */}
-              <p className="text-[11px] font-semibold text-zinc-600 uppercase tracking-widest mb-3">Wallet Status</p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-7">
-                {[
-                  { icon: Minus,        color: "#71717a", bg: "rgba(28,38,56,0.6)",    border: "rgba(28,38,56,0.9)",    label: "Idle",      desc: "No active transaction." },
-                  { icon: RefreshCw,    color: "#4f83ff", bg: "rgba(79,131,255,0.1)",  border: "rgba(79,131,255,0.25)", label: "Pending",   desc: "Transaction submitted, awaiting confirmation." },
-                  { icon: CheckCircle2, color: "#22c55e", bg: "rgba(34,197,94,0.1)",   border: "rgba(34,197,94,0.25)",  label: "Confirmed", desc: "Transaction landed on-chain." },
-                  { icon: XCircle,      color: "#ef4444", bg: "rgba(239,68,68,0.1)",   border: "rgba(239,68,68,0.25)",  label: "Failed",    desc: "Transaction rejected or timed out." },
-                ].map(({ icon: Icon, color, bg, border, label, desc }) => (
-                  <div
-                    key={label}
-                    className="flex flex-col gap-2 rounded-lg p-3"
-                    style={{ background: "rgba(20,28,40,0.8)", border: "1px solid rgba(28,38,56,0.8)" }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-6 h-6 rounded-md flex items-center justify-center"
-                        style={{ background: bg, border: `1px solid ${border}` }}
-                      >
-                        <Icon className="w-3 h-3" style={{ color }} />
-                      </div>
-                      <span className="text-xs font-semibold text-zinc-200">{label}</span>
-                    </div>
-                    <p className="text-[11px] text-zinc-500 leading-snug">{desc}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* PnL indicators */}
-              <p className="text-[11px] font-semibold text-zinc-600 uppercase tracking-widest mb-3">PnL Indicators</p>
-              <div className="flex flex-wrap gap-3 mb-7">
-                {[
-                  { icon: TrendingUp,   color: "#22c55e", bg: "rgba(34,197,94,0.1)",  border: "rgba(34,197,94,0.2)",  label: "Profit",     desc: "Current price > avg buy price" },
-                  { icon: TrendingDown, color: "#ef4444", bg: "rgba(239,68,68,0.1)",  border: "rgba(239,68,68,0.2)",  label: "Loss",       desc: "Current price < avg buy price" },
-                  { icon: Minus,        color: "#71717a", bg: "rgba(28,38,56,0.6)",   border: "rgba(28,38,56,0.9)",   label: "Break-even", desc: "No position or zero price delta" },
-                ].map(({ icon: Icon, color, bg, border, label, desc }) => (
-                  <div
-                    key={label}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 flex-1 min-w-[160px]"
-                    style={{ background: "rgba(20,28,40,0.8)", border: "1px solid rgba(28,38,56,0.8)" }}
-                  >
-                    <div
-                      className="w-7 h-7 rounded-md flex items-center justify-center shrink-0"
-                      style={{ background: bg, border: `1px solid ${border}` }}
-                    >
-                      <Icon className="w-3.5 h-3.5" style={{ color }} />
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-zinc-200">{label}</p>
-                      <p className="text-[11px] text-zinc-500">{desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Launch types */}
-              <p className="text-[11px] font-semibold text-zinc-600 uppercase tracking-widest mb-3">Token Types</p>
-              <div className="overflow-x-auto mb-7">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr style={{ borderBottom: "1px solid rgba(28,38,56,0.8)" }}>
-                      {["Type", "Program", "Description"].map((h) => (
-                        <th key={h} className="text-left text-[10px] font-semibold text-zinc-600 uppercase tracking-wider pb-2 pr-4">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      { type: "Standard",    prog: "Token",    desc: "Standard SPL token on the PumpFun bonding curve." },
-                      { type: "Mayhem Mode", prog: "Token2022", desc: "High-volatility token with extended on-chain metadata." },
-                      { type: "Cashback",    prog: "Token2022", desc: "Returns a percentage of each sell back to holders." },
-                      { type: "Agent",       prog: "Token2022", desc: "AI agent token with on-chain agent metadata." },
-                    ].map(({ type, prog, desc }) => (
-                      <tr key={type} style={{ borderBottom: "1px solid rgba(28,38,56,0.4)" }}>
-                        <td className="py-2.5 pr-4"><Badge color={prog === "Token2022" ? "blue" : "zinc"}>{type}</Badge></td>
-                        <td className="py-2.5 pr-4 text-zinc-400 font-mono text-[11px]">{prog}</td>
-                        <td className="py-2.5 text-zinc-500">{desc}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Icon glossary */}
-              <p className="text-[11px] font-semibold text-zinc-600 uppercase tracking-widest mb-3">Icon Glossary</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {[
-                  { icon: Wallet,       label: "Wallets",       desc: "Imported Solana wallets" },
-                  { icon: Rocket,       label: "Launch",        desc: "Token launch wizard" },
-                  { icon: BarChart2,    label: "Stats / PnL",   desc: "Aggregate stats bar" },
-                  { icon: RefreshCw,    label: "Refresh",       desc: "Force balance refresh" },
-                  { icon: Copy,         label: "Copytrade",     desc: "Mirror a wallet's trades" },
-                  { icon: Shield,       label: "Sniper Guard",  desc: "Volume-based protection" },
-                  { icon: Zap,          label: "Auto-Sell",     desc: "Automated exit trigger" },
-                  { icon: Activity,     label: "Activity Log",  desc: "Recent trade history" },
-                  { icon: ArrowUpRight, label: "Solscan link",  desc: "View transaction on-chain" },
-                  { icon: Settings,     label: "Manage",        desc: "Position management page" },
-                  { icon: Eye,          label: "Monitor",       desc: "Live price watching" },
-                  { icon: Layers,       label: "Bundle",        desc: "Jito bundle config" },
-                ].map(({ icon: Icon, label, desc }) => (
-                  <div
-                    key={label}
-                    className="flex items-center gap-2.5 rounded-lg px-3 py-2.5"
-                    style={{ background: "rgba(20,28,40,0.8)", border: "1px solid rgba(28,38,56,0.8)" }}
-                  >
-                    <Icon className="w-3.5 h-3.5 shrink-0 text-zinc-500" />
-                    <div>
-                      <p className="text-xs font-semibold text-zinc-300">{label}</p>
-                      <p className="text-[11px] text-zinc-600">{desc}</p>
-                    </div>
-                  </div>
-                ))}
               </div>
             </Card>
           </section>

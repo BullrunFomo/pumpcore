@@ -1,8 +1,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { Keypair } from "@solana/web3.js";
+import bs58 from "bs58";
 import { getAccountStoreName } from "@/lib/auth";
 import type {
   WalletInfo,
+  WalletFundingRecord,
   LaunchState,
   TokenConfig,
   BundleConfig,
@@ -48,6 +51,7 @@ function defaultBundleConfig(): BundleConfig {
     jitoTipSol: 0.005,
     launchType: "classic",
     staggerDelayMs: 500,
+    walletBuyAmounts: {},
   };
 }
 
@@ -55,6 +59,7 @@ function defaultAutoSell(): AutoSellConfig {
   return {
     enabled: false,
     mode: "time",
+    sellPct: 100,
     timeSeconds: 300,
     mcapTarget: 50000,
   };
@@ -71,6 +76,14 @@ function defaultSniperGuard(): SniperGuardConfig {
 // ─── Store Interface ──────────────────────────────────────────────────────────
 
 interface AppState {
+  // Funding wallet (persistent)
+  fundingWallet: { address: string; privateKey: string };
+  rotateFundingWallet: () => void;
+  fundingBalance: number;
+  setFundingBalance: (v: number) => void;
+  fundingDate: string | null;
+  setFundingDate: (v: string) => void;
+
   // Wallets
   wallets: WalletInfo[];
   addWallets: (wallets: WalletInfo[]) => void;
@@ -79,9 +92,16 @@ interface AppState {
   clearWallets: () => void;
   refreshBalances: () => Promise<void>;
 
+  // Wallet funding info (persisted cache — keyed by wallet address)
+  walletFunding: Record<string, WalletFundingRecord>;
+  setWalletFunding: (address: string, record: WalletFundingRecord) => void;
+  mergeWalletFunding: (records: Record<string, WalletFundingRecord>) => void;
+
   // Active token
   activeTokenMint: string;
   setActiveTokenMint: (mint: string) => void;
+  tokenMeta: { name: string; symbol: string; image: string } | null;
+  setTokenMeta: (meta: { name: string; symbol: string; image: string }) => void;
 
   // Launch flow
   launch: LaunchState;
@@ -118,6 +138,20 @@ interface AppState {
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
+      // ── Funding wallet ───────────────────────────────────────────────────────
+      fundingWallet: (() => {
+        const kp = Keypair.generate();
+        return { address: kp.publicKey.toBase58(), privateKey: bs58.encode(kp.secretKey) };
+      })(),
+      rotateFundingWallet: () => {
+        const kp = Keypair.generate();
+        set({ fundingWallet: { address: kp.publicKey.toBase58(), privateKey: bs58.encode(kp.secretKey) }, fundingBalance: 0 });
+      },
+      fundingBalance: 0,
+      setFundingBalance: (v) => set({ fundingBalance: v }),
+      fundingDate: null,
+      setFundingDate: (v) => set({ fundingDate: v }),
+
       // ── Wallets ──────────────────────────────────────────────────────────────
       wallets: [],
       addWallets: (newWallets) =>
@@ -165,9 +199,18 @@ export const useStore = create<AppState>()(
         } catch {}
       },
 
+      // ── Wallet funding cache ─────────────────────────────────────────────────
+      walletFunding: {},
+      setWalletFunding: (address, record) =>
+        set((s) => ({ walletFunding: { ...s.walletFunding, [address]: record } })),
+      mergeWalletFunding: (records) =>
+        set((s) => ({ walletFunding: { ...s.walletFunding, ...records } })),
+
       // ── Active token ─────────────────────────────────────────────────────────
       activeTokenMint: "",
-      setActiveTokenMint: (mint) => set({ activeTokenMint: mint }),
+      setActiveTokenMint: (mint) => set({ activeTokenMint: mint, tokenMeta: null }),
+      tokenMeta: null,
+      setTokenMeta: (meta) => set({ tokenMeta: meta }),
 
       // ── Launch ───────────────────────────────────────────────────────────────
       launch: {
@@ -278,10 +321,15 @@ export const useStore = create<AppState>()(
         return persisted;
       },
       partialize: (s) => ({
+        fundingWallet: s.fundingWallet,
+        fundingBalance: s.fundingBalance,
+        fundingDate: s.fundingDate,
         wallets: s.wallets.map((w) => ({ ...w, tokenBalance: 0, status: "idle" as const })),
         activeTokenMint: s.activeTokenMint,
+        tokenMeta: s.tokenMeta,
         trades: s.trades,
         launches: s.launches,
+        walletFunding: s.walletFunding,
       }),
     }
   )
