@@ -12,9 +12,8 @@ import { truncateAddress, formatSol } from "@/lib/utils";
 import type { LaunchType, AutoSellMode, SniperAction } from "@/types";
 
 const cardStyle = {
-  background: "rgba(14,20,32,0.92)",
-  border: "1px solid rgba(79,131,255,0.3)",
-  boxShadow: "0 0 0 1px rgba(79,131,255,0.1), 0 0 40px rgba(79,131,255,0.12), 0 24px 48px rgba(0,0,0,0.5)",
+  background: "rgba(13,17,24,0.8)",
+  border: "1px solid rgba(28,38,56,0.8)",
 };
 
 
@@ -78,8 +77,7 @@ export default function Step2BundleConfig() {
     <div className="space-y-4">
 
       {/* Toolbar */}
-      <div className="relative rounded-lg px-4 py-3 flex items-center gap-3 overflow-hidden" style={cardStyle}>
-        <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(79,131,255,0.6) 50%, transparent 100%)" }} />
+      <div className="rounded-lg px-4 py-3 flex items-center gap-3" style={cardStyle}>
         {/* Launch mode */}
         <div className="flex items-center gap-1.5">
           {([
@@ -207,15 +205,14 @@ export default function Step2BundleConfig() {
           onClick={(e) => { if (e.target === e.currentTarget) setAutoSellOpen(false); }}
         >
           <div
-            className="relative rounded-lg w-full max-w-sm mx-4 overflow-hidden"
+            className="rounded-lg w-full max-w-sm mx-4"
             style={{
-              background: "rgba(14,20,32,0.92)",
-              border: "1px solid rgba(79,131,255,0.3)",
-              boxShadow: "0 0 0 1px rgba(79,131,255,0.1), 0 0 40px rgba(79,131,255,0.12), 0 24px 48px rgba(0,0,0,0.5)",
+              background: "rgba(13,17,24,0.95)",
+              border: "1px solid rgba(28,38,56,0.8)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
             }}
           >
-            <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(79,131,255,0.6) 50%, transparent 100%)" }} />
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(79,131,255,0.15)]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(28,38,56,0.8)]">
               <div className="flex items-center gap-3">
                 <Timer className="h-4 w-4" style={{ color: autoSell.enabled ? "#4f83ff" : "#3f3f46" }} />
                 <span className="text-sm font-semibold text-zinc-100">Auto-Sell</span>
@@ -315,15 +312,14 @@ export default function Step2BundleConfig() {
           onClick={(e) => { if (e.target === e.currentTarget) setSniperOpen(false); }}
         >
           <div
-            className="relative rounded-lg w-full max-w-sm mx-4 overflow-hidden"
+            className="rounded-lg w-full max-w-sm mx-4"
             style={{
-              background: "rgba(14,20,32,0.92)",
-              border: "1px solid rgba(79,131,255,0.3)",
-              boxShadow: "0 0 0 1px rgba(79,131,255,0.1), 0 0 40px rgba(79,131,255,0.12), 0 24px 48px rgba(0,0,0,0.5)",
+              background: "rgba(13,17,24,0.95)",
+              border: "1px solid rgba(28,38,56,0.8)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
             }}
           >
-            <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(79,131,255,0.6) 50%, transparent 100%)" }} />
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(79,131,255,0.15)]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(28,38,56,0.8)]">
               <div className="flex items-center gap-3">
                 <Shield className="h-4 w-4" style={{ color: sniperGuard.enabled ? "#ff6060" : "#3f3f46" }} />
                 <span className="text-sm font-semibold text-zinc-100">Sniper Guard</span>
@@ -387,8 +383,7 @@ export default function Step2BundleConfig() {
       )}
 
       {/* Wallet list */}
-      <div className="relative rounded-lg p-5 overflow-hidden" style={cardStyle}>
-        <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(79,131,255,0.6) 50%, transparent 100%)" }} />
+      <div className="rounded-lg p-5" style={cardStyle}>
         {/* Header row */}
         <div className="grid items-center px-1 mb-2" style={{ gridTemplateColumns: "28px 1fr 84px 90px 80px" }}>
           <div />

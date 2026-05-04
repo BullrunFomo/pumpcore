@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { RefreshCw, Search, BookImage, Siren, Globe } from "lucide-react";
+import { RefreshCw, Search, BookImage, Siren, Globe, Rocket } from "lucide-react";
+import QuickLaunchModal from "@/components/QuickLaunchModal";
 
 function XLogo({ className }: { className?: string }) {
   return (
@@ -30,6 +31,13 @@ const PANEL_STYLE: React.CSSProperties = {
   background: "rgba(13,17,24,0.85)",
   border: "1px solid rgba(28,38,56,0.85)",
 };
+
+const X_PANEL_STYLE: React.CSSProperties = {
+  background: "rgba(13,17,24,0.85)",
+  border: "1px solid rgba(79,131,255,0.2)",
+};
+const X_SEP = "1px solid rgba(79,131,255,0.15)";
+
 
 const CARD_HOVER_BG = "rgba(255,255,255,0.025)";
 
@@ -100,9 +108,9 @@ function XFeedPanel() {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex flex-col h-full min-h-0 rounded no-scrollbar" style={X_PANEL_STYLE}>
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-2 mb-3">
+      <div className="shrink-0 flex items-center gap-2 px-4 py-3" style={{ borderBottom: X_SEP }}>
         <div
           className="flex items-center justify-center w-6 h-6 rounded"
           style={{ background: "rgba(79,131,255,0.1)", border: "1px solid rgba(79,131,255,0.2)" }}
@@ -133,33 +141,28 @@ function XFeedPanel() {
       </div>
 
       {/* Search bar */}
-      <div className="shrink-0 flex gap-2 mb-3 h-8">
-        <div className="flex flex-1 items-center gap-2 px-3 rounded" style={PANEL_STYLE}>
-          <Search className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
-          <input
-            type="text"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            placeholder="Search query…"
-            className="flex-1 bg-transparent text-xs text-zinc-200 placeholder-zinc-600 outline-none"
-          />
-        </div>
+      <div className="shrink-0 flex items-center px-4 h-10" style={{ borderBottom: X_SEP }}>
+        <Search className="h-3.5 w-3.5 text-[#4f83ff] shrink-0 mr-2" />
+        <input
+          type="text"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          placeholder="Search query…"
+          className="flex-1 bg-transparent text-xs text-zinc-200 placeholder-zinc-600 outline-none"
+        />
+        <div className="shrink-0 w-px self-stretch mx-3" style={{ background: "rgba(79,131,255,0.2)" }} />
         <button
           onClick={handleSearch}
-          className="px-3 rounded text-[11px] font-semibold transition-all"
-          style={{
-            background: "rgba(79,131,255,0.14)",
-            border: "1px solid rgba(79,131,255,0.4)",
-            color: "#93b4ff",
-          }}
+          className="shrink-0 text-[12px] font-semibold transition-opacity hover:opacity-80"
+          style={{ color: "#7aa3ff" }}
         >
           Search
         </button>
       </div>
 
       {/* Feed */}
-      <div className="flex-1 min-h-0 overflow-y-auto rounded no-scrollbar" style={PANEL_STYLE}>
+      <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
         {loading && (
           <div className="p-4 flex flex-col gap-4">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -272,7 +275,7 @@ function XFeedPanel() {
 
 // ─── KYM Feed Panel ───────────────────────────────────────────────────────────
 
-function KYMFeedPanel() {
+function KYMFeedPanel({ onLaunch }: { onLaunch: (url: string, image?: string | null) => void }) {
   const [section, setSection] = useState<"submissions" | "confirmed">("confirmed");
   const [entries, setEntries] = useState<KYMEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -309,9 +312,9 @@ function KYMFeedPanel() {
   }, [load]);
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex flex-col h-full min-h-0 rounded" style={X_PANEL_STYLE}>
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-2 mb-3">
+      <div className="shrink-0 flex items-center gap-2 px-4 py-3" style={{ borderBottom: X_SEP }}>
         <div
           className="flex items-center justify-center w-6 h-6 rounded"
           style={{ background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.25)" }}
@@ -335,8 +338,8 @@ function KYMFeedPanel() {
 
       {/* Toggle */}
       <div
-        className="shrink-0 flex mb-3 h-8 rounded overflow-hidden"
-        style={{ border: "1px solid rgba(139,92,246,0.2)", background: "rgba(13,17,24,0.6)" }}
+        className="shrink-0 flex h-10 overflow-hidden"
+        style={{ borderBottom: X_SEP, background: "rgba(13,17,24,0.6)" }}
       >
         {(["confirmed", "submissions"] as const).map((s) => (
           <button
@@ -346,7 +349,7 @@ function KYMFeedPanel() {
             style={{
               background: section === s ? "rgba(139,92,246,0.18)" : "transparent",
               color: section === s ? "#c4b5fd" : "rgba(161,161,170,0.5)",
-              borderRight: s === "submissions" ? "1px solid rgba(139,92,246,0.2)" : "none",
+              borderRight: s === "confirmed" ? "1px solid rgba(139,92,246,0.2)" : "none",
             }}
           >
             {s}
@@ -355,7 +358,7 @@ function KYMFeedPanel() {
       </div>
 
       {/* Feed */}
-      <div className="flex-1 min-h-0 overflow-y-auto rounded no-scrollbar" style={PANEL_STYLE}>
+      <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
         {loading && (
           <div className="p-3 flex flex-col gap-3">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -390,7 +393,7 @@ function KYMFeedPanel() {
             href={entry.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 px-3 py-2.5 transition-colors"
+            className="flex items-center gap-3 px-3 py-3 transition-colors"
             style={{
               background: hoveredUrl === entry.url ? CARD_HOVER_BG : "transparent",
               borderBottom: idx < entries.length - 1 ? "1px solid rgba(28,38,56,0.55)" : "none",
@@ -402,7 +405,7 @@ function KYMFeedPanel() {
               <img
                 src={entry.thumbnail}
                 alt={entry.title}
-                className="w-10 h-10 rounded object-cover shrink-0"
+                className="w-20 h-14 rounded object-cover shrink-0"
                 style={{ border: "1px solid rgba(28,38,56,0.8)" }}
                 onError={(e) => {
                   const el = e.currentTarget as HTMLImageElement;
@@ -411,18 +414,46 @@ function KYMFeedPanel() {
               />
             ) : (
               <div
-                className="w-10 h-10 rounded shrink-0 flex items-center justify-center text-[9px] font-bold"
+                className="w-20 h-14 rounded shrink-0 flex items-center justify-center text-[9px] font-bold"
                 style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)", color: "#a78bfa" }}
               >
                 KYM
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-medium text-zinc-200 leading-tight line-clamp-2">{entry.title}</p>
-              {entry.date && (
-                <p className="text-[10px] text-zinc-600 mt-0.5">{entry.date}</p>
-              )}
+              <p className="text-[13px] font-medium text-zinc-200 leading-tight line-clamp-2">{entry.title}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                {relativeTime(entry.date) && (
+                  <span className="text-[10px] text-zinc-500">
+                    <span className="text-zinc-500">added </span>{relativeTime(entry.date)}
+                  </span>
+                )}
+                {relativeTime(entry.updatedDate) && (
+                  <span className="text-[10px] text-zinc-500">
+                    <span className="text-zinc-500">· updated </span>{relativeTime(entry.updatedDate)}
+                  </span>
+                )}
+              </div>
             </div>
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onLaunch(entry.url, entry.thumbnail); }}
+              className="shrink-0 flex items-center justify-center w-8 h-8 rounded transition-all"
+              style={{
+                background: "rgba(139,92,246,0.1)",
+                border: "1px solid rgba(139,92,246,0.25)",
+                color: "#a78bfa",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(139,92,246,0.22)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(139,92,246,0.5)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(139,92,246,0.1)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(139,92,246,0.25)";
+              }}
+            >
+              <Rocket className="h-3.5 w-3.5" />
+            </button>
           </a>
         ))}
       </div>
@@ -432,7 +463,7 @@ function KYMFeedPanel() {
 
 // ─── Dexerto Feed Panel ───────────────────────────────────────────────────────
 
-function DexertoFeedPanel() {
+function DexertoFeedPanel({ onLaunch }: { onLaunch: (url: string, image?: string | null) => void }) {
   const [articles, setArticles] = useState<DexertoArticle[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -466,9 +497,9 @@ function DexertoFeedPanel() {
   }, [load]);
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex flex-col h-full min-h-0 rounded" style={X_PANEL_STYLE}>
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-2 mb-3">
+      <div className="shrink-0 flex items-center gap-2 px-4 py-3" style={{ borderBottom: X_SEP }}>
         <div
           className="flex items-center justify-center w-6 h-6 rounded"
           style={{ background: "rgba(234,179,8,0.1)", border: "1px solid rgba(234,179,8,0.2)" }}
@@ -494,35 +525,32 @@ function DexertoFeedPanel() {
       {/* Category filters */}
       {articles.length > 0 && (() => {
         const cats = Array.from(new Set(articles.map(a => a.category).filter(Boolean))) as string[];
+        const all = [null, ...cats] as (string | null)[];
         return (
-          <div className="shrink-0 flex items-center gap-1 mb-2 h-8 overflow-x-auto no-scrollbar">
-            <button
-              onClick={() => setActiveCategory(null)}
-              className="px-2 h-full rounded text-[9px] font-bold uppercase tracking-wider transition-all shrink-0"
-              style={{
-                background: activeCategory === null ? "rgba(234,179,8,0.18)" : "rgba(234,179,8,0.05)",
-                color: activeCategory === null ? "#facc15" : "rgba(250,204,21,0.45)",
-                border: `1px solid ${activeCategory === null ? "rgba(234,179,8,0.35)" : "rgba(234,179,8,0.12)"}`,
-              }}
-            >All</button>
-            {cats.map(cat => (
+          <div
+            className="shrink-0 flex h-10 overflow-x-auto no-scrollbar"
+            style={{ borderBottom: X_SEP, background: "rgba(13,17,24,0.6)" }}
+          >
+            {all.map((cat, i) => (
               <button
-                key={cat}
-                onClick={() => setActiveCategory(c => c === cat ? null : cat)}
-                className="px-2 h-full rounded text-[9px] font-bold uppercase tracking-wider transition-all shrink-0"
+                key={cat ?? "__all__"}
+                onClick={() => setActiveCategory(cat)}
+                className="flex-1 text-[10px] font-semibold uppercase tracking-wider transition-all shrink-0"
                 style={{
-                  background: activeCategory === cat ? "rgba(234,179,8,0.18)" : "rgba(234,179,8,0.05)",
+                  background: activeCategory === cat ? "rgba(234,179,8,0.18)" : "transparent",
                   color: activeCategory === cat ? "#facc15" : "rgba(250,204,21,0.45)",
-                  border: `1px solid ${activeCategory === cat ? "rgba(234,179,8,0.35)" : "rgba(234,179,8,0.12)"}`,
+                  borderRight: i < all.length - 1 ? "1px solid rgba(79,131,255,0.15)" : "none",
                 }}
-              >{cat}</button>
+              >
+                {cat ?? "All"}
+              </button>
             ))}
           </div>
         );
       })()}
 
       {/* Feed */}
-      <div className="flex-1 min-h-0 overflow-y-auto rounded no-scrollbar" style={PANEL_STYLE}>
+      <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
         {loading && (
           <div className="p-3 flex flex-col gap-3">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -558,7 +586,7 @@ function DexertoFeedPanel() {
             href={article.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex gap-3 px-3 py-3 transition-colors"
+            className="flex items-center gap-3 px-3 py-3 transition-colors"
             style={{
               background: hoveredUrl === article.url ? CARD_HOVER_BG : "transparent",
               borderBottom: idx < arr.length - 1 ? "1px solid rgba(28,38,56,0.55)" : "none",
@@ -591,13 +619,32 @@ function DexertoFeedPanel() {
                   {article.category}
                 </span>
               )}
-              <p className="text-[11px] font-medium text-zinc-200 leading-tight line-clamp-2">{article.title}</p>
+              <p className="text-[13px] font-medium text-zinc-200 leading-tight line-clamp-2">{article.title}</p>
               <div className="flex items-center gap-2 mt-1">
                 {relativeTime(article.publishedAt) && (
-                  <p className="text-[10px] text-zinc-500">{relativeTime(article.publishedAt)}</p>
+                  <p className="text-[11px] text-zinc-500">{relativeTime(article.publishedAt)}</p>
                 )}
               </div>
             </div>
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onLaunch(article.url, article.image); }}
+              className="shrink-0 flex items-center justify-center w-8 h-8 rounded transition-all"
+              style={{
+                background: "rgba(234,179,8,0.08)",
+                border: "1px solid rgba(234,179,8,0.2)",
+                color: "#facc15",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(234,179,8,0.18)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(234,179,8,0.45)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(234,179,8,0.08)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(234,179,8,0.2)";
+              }}
+            >
+              <Rocket className="h-3.5 w-3.5" />
+            </button>
           </a>
         ))}
       </div>
@@ -608,8 +655,10 @@ function DexertoFeedPanel() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function XFeedPage() {
+  const [launchTarget, setLaunchTarget] = useState<{ url: string; image?: string | null } | null>(null);
+
   return (
-    <div className="flex flex-col flex-1 min-h-0 px-3 py-3 sm:px-6 sm:py-5 max-w-[1400px] w-full mx-auto">
+    <div className="flex flex-col flex-1 min-h-0 px-3 py-3 sm:px-6 sm:py-5 w-full">
       {/* Page header */}
       <div className="shrink-0 mb-4">
         <h1 className="text-lg sm:text-2xl font-bold text-zinc-100 tracking-tight">Feed</h1>
@@ -624,14 +673,18 @@ export default function XFeedPage() {
         </div>
 
         <div className="flex flex-col min-h-[500px] lg:flex-1 lg:min-h-0">
-          <KYMFeedPanel />
+          <KYMFeedPanel onLaunch={(url, image) => setLaunchTarget({ url, image })} />
         </div>
 
         <div className="flex flex-col min-h-[500px] lg:flex-1 lg:min-h-0">
-          <DexertoFeedPanel />
+          <DexertoFeedPanel onLaunch={(url, image) => setLaunchTarget({ url, image })} />
         </div>
 
       </div>
+
+      {launchTarget && (
+        <QuickLaunchModal prefillUrl={launchTarget.url} prefillImage={launchTarget.image} onClose={() => setLaunchTarget(null)} />
+      )}
     </div>
   );
 }

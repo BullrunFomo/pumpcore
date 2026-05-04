@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
-import { Copy, Trash2, Circle } from "lucide-react";
+import { Trash2, Circle } from "lucide-react";
+import CopyButton from "./CopyButton";
 import type { WalletInfo } from "@/types";
 import { truncateAddress, formatSol, pnlColor } from "@/lib/utils";
 import { useStore } from "@/store";
@@ -27,10 +28,6 @@ export default function WalletCard({ wallet, tokenPrice }: WalletCardProps) {
       ? (tokenPrice - wallet.avgBuyPrice) * wallet.tokenBalance
       : 0;
 
-  const copyAddress = () => {
-    navigator.clipboard.writeText(wallet.address);
-  };
-
   return (
     <div
       className="relative rounded-md border border-zinc-800 bg-zinc-900 p-4 hover:border-zinc-700 transition-colors"
@@ -46,12 +43,11 @@ export default function WalletCard({ wallet, tokenPrice }: WalletCardProps) {
         <span className="font-mono text-sm text-zinc-100">
           {truncateAddress(wallet.address, 6)}
         </span>
-        <button
-          onClick={copyAddress}
+        <CopyButton
+          text={wallet.address}
           className="text-zinc-500 hover:text-zinc-300 transition-colors"
-        >
-          <Copy className="h-3.5 w-3.5" />
-        </button>
+          iconClassName="h-3.5 w-3.5"
+        />
       </div>
 
       {/* Balances */}

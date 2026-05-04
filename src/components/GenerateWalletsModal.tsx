@@ -366,7 +366,7 @@ export default function GenerateWalletsModal({
                     className="shrink-0 text-zinc-600 hover:text-zinc-200 transition-colors"
                   >
                     {copiedIndex === i
-                      ? <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />
+                      ? <CheckCircle2 className="h-3.5 w-3.5 text-green-400" style={{ animation: "check-pop 0.25s ease forwards" }} />
                       : <Copy className="h-3.5 w-3.5" />
                     }
                   </button>
@@ -385,7 +385,9 @@ export default function GenerateWalletsModal({
                   background: "rgba(0,0,0,0.2)",
                 }}
               >
-                {copiedAll ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                {copiedAll
+                  ? <CheckCircle2 className="h-3.5 w-3.5" style={{ animation: "check-pop 0.25s ease forwards" }} />
+                  : <Copy className="h-3.5 w-3.5" />}
                 {copiedAll ? "Copied!" : "Copy All"}
               </button>
               <button

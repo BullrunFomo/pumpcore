@@ -127,6 +127,8 @@ interface AppState {
   // Price
   tokenPrice: TokenPrice | null;
   setTokenPrice: (p: TokenPrice) => void;
+  priceHistory: Array<{ time: number; price: number }>; // SOL per token, unix seconds
+  clearPriceHistory: () => void;
 
   // UI
   importModalOpen: boolean;
@@ -208,7 +210,7 @@ export const useStore = create<AppState>()(
 
       // ── Active token ─────────────────────────────────────────────────────────
       activeTokenMint: "",
-      setActiveTokenMint: (mint) => set({ activeTokenMint: mint, tokenMeta: null }),
+      setActiveTokenMint: (mint) => set({ activeTokenMint: mint, tokenMeta: null, priceHistory: [] }),
       tokenMeta: null,
       setTokenMeta: (meta) => set({ tokenMeta: meta }),
 
@@ -301,7 +303,15 @@ export const useStore = create<AppState>()(
 
       // ── Price ────────────────────────────────────────────────────────────────
       tokenPrice: null,
-      setTokenPrice: (p) => set({ tokenPrice: p }),
+      setTokenPrice: (p) => set((s) => ({
+        tokenPrice: p,
+        priceHistory: [
+          ...s.priceHistory,
+          { time: Math.floor(Date.now() / 1000), price: p.price },
+        ].slice(-2000),
+      })),
+      priceHistory: [],
+      clearPriceHistory: () => set({ priceHistory: [] }),
 
       // ── UI ───────────────────────────────────────────────────────────────────
       importModalOpen: false,

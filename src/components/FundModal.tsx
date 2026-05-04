@@ -298,7 +298,9 @@ export default function FundModal({ open, onClose }: FundModalProps) {
                         border: `1px solid ${copiedAddress ? "rgba(74,222,128,0.3)" : "rgba(79,131,255,0.2)"}`,
                       }}
                     >
-                      {copiedAddress ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" style={{ color: "#93b4ff" }} />}
+                      {copiedAddress
+                        ? <Check className="h-3 w-3 text-green-400" style={{ animation: "check-pop 0.25s ease forwards" }} />
+                        : <Copy className="h-3 w-3" style={{ color: "#93b4ff" }} />}
                     </button>
                   </div>
                 </div>

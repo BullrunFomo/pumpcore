@@ -32,9 +32,8 @@ const LOG_COLORS: Record<LaunchLogEntry["level"], string> = {
 };
 
 const cardStyle = {
-  background: "rgba(14,20,32,0.92)",
-  border: "1px solid rgba(79,131,255,0.3)",
-  boxShadow: "0 0 0 1px rgba(79,131,255,0.1), 0 0 40px rgba(79,131,255,0.12), 0 24px 48px rgba(0,0,0,0.5)",
+  background: "rgba(13,17,24,0.8)",
+  border: "1px solid rgba(28,38,56,0.8)",
 };
 
 export default function Step4ReviewLaunch() {
@@ -185,8 +184,7 @@ export default function Step4ReviewLaunch() {
   return (
     <div className="space-y-4">
       {/* Review card */}
-      <div className="relative rounded-lg overflow-hidden" style={cardStyle}>
-        <div className="absolute top-0 left-0 right-0 h-px z-10" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(79,131,255,0.6) 50%, transparent 100%)" }} />
+      <div className="rounded-lg overflow-hidden" style={cardStyle}>
         {/* Token hero */}
         <div
           className="px-6 py-5 grid grid-cols-2 gap-x-8 items-center"
@@ -351,10 +349,9 @@ export default function Step4ReviewLaunch() {
       {/* Launch log */}
       {(launch.logs.length > 0 || launch.isLaunching) && (
         <div
-          className="relative rounded-lg overflow-hidden"
+          className="rounded-lg overflow-hidden"
           style={cardStyle}
         >
-          <div className="absolute top-0 left-0 right-0 h-px z-10" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(79,131,255,0.6) 50%, transparent 100%)" }} />
           <div
             className="flex items-center justify-between px-4 py-2.5"
             style={{ background: "rgba(7,10,18,0.95)", borderBottom: "1px solid rgba(28,38,56,0.8)" }}

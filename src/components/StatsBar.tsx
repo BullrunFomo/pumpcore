@@ -1,5 +1,6 @@
 "use client";
-import { TrendingUp, Wallet, Zap, Copy } from "lucide-react";
+import { TrendingUp, Wallet, Zap } from "lucide-react";
+import CopyButton from "./CopyButton";
 import { useStore } from "@/store";
 import { formatSol, formatUsd, truncateAddress } from "@/lib/utils";
 
@@ -17,10 +18,6 @@ export default function StatsBar() {
   }, 0);
   const totalPnlUsd = totalPnlSol * (tokenPrice?.solPrice ?? 0);
   const isPositive = totalPnlSol >= 0;
-
-  const copyMint = () => {
-    if (activeTokenMint) navigator.clipboard.writeText(activeTokenMint);
-  };
 
   return (
     <div
@@ -116,12 +113,11 @@ export default function StatsBar() {
                 <span className="font-mono text-base font-bold text-[#4f83ff]">
                   {truncateAddress(activeTokenMint, 6)}
                 </span>
-                <button
-                  onClick={copyMint}
+                <CopyButton
+                  text={activeTokenMint}
                   className="text-zinc-500 hover:text-zinc-200 transition-colors"
-                >
-                  <Copy className="h-3 w-3" />
-                </button>
+                  iconClassName="h-3 w-3"
+                />
               </div>
               {tokenPrice && (
                 <div className="text-xs font-semibold mt-0.5" style={{ color: "#4f83ff" }}>

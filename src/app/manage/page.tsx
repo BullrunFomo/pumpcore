@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import {
-  Copy,
   Crown,
   ExternalLink,
   TrendingUp,
@@ -10,12 +9,14 @@ import {
   ArrowUpRight,
   AlertTriangle,
 } from "lucide-react";
+import CopyButton from "@/components/CopyButton";
 import { useStore } from "@/store";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ActivityLog from "@/components/ActivityLog";
+import TokenChart from "@/components/TokenChart";
 import BombIcon from "@/components/icons/BombIcon";
 import {
   Dialog,
@@ -400,10 +401,6 @@ export default function ManagePage() {
     }
   };
 
-  const copyMint = () => {
-    if (activeTokenMint) navigator.clipboard.writeText(activeTokenMint);
-  };
-
   return (
     <div className="flex flex-col flex-1 min-h-0 max-w-7xl w-full mx-auto px-3 sm:px-6 py-5">
       {/* ── Header ──────────────────────────────────────────────────────────── */}
@@ -448,9 +445,11 @@ export default function ManagePage() {
                 <span className="font-mono text-xs text-zinc-500">
                   {truncateAddress(activeTokenMint, 10)}
                 </span>
-                <button onClick={copyMint} className="text-zinc-500 hover:text-zinc-300">
-                  <Copy className="h-3.5 w-3.5" />
-                </button>
+                <CopyButton
+                  text={activeTokenMint ?? ""}
+                  className="text-zinc-500 hover:text-zinc-300"
+                  iconClassName="h-3.5 w-3.5"
+                />
                 <a
                   href={`https://pump.fun/${activeTokenMint}`}
                   target="_blank"
@@ -508,15 +507,10 @@ export default function ManagePage() {
         {/* Left column: chart + tx history */}
         <div className="flex flex-col gap-4 min-w-0 min-h-0" style={{ flex: "1 1 0", width: "50%" }}>
 
-          {/* DEX Screener chart */}
+          {/* Token chart */}
           <div className="rounded-md overflow-hidden flex-1 min-h-0" style={{ background: "rgba(13,17,24,0.8)", border: "1px solid rgba(28,38,56,0.8)" }}>
             {activeTokenMint ? (
-              <iframe
-                src={`https://dexscreener.com/solana/${activeTokenMint}?embed=1&theme=dark&trades=0&info=0&interval=1`}
-                className="w-full"
-                style={{ border: "none", height: "calc(100% + 40px)", display: "block" }}
-                title="DEX Screener"
-              />
+              <TokenChart mint={activeTokenMint} />
             ) : (
               <div className="flex items-center justify-center h-full text-zinc-500 text-sm">
                 No token selected
@@ -584,12 +578,11 @@ export default function ManagePage() {
                               <span className="font-mono font-bold text-[11px] text-zinc-400">
                                 {truncateAddress(w.address, 3)}
                               </span>
-                              <button
-                                onClick={() => navigator.clipboard.writeText(w.address)}
-                                className="text-zinc-700 hover:text-zinc-400 transition-colors opacity-0 group-hover:opacity-100"
-                              >
-                                <Copy className="h-2.5 w-2.5" />
-                              </button>
+                              <CopyButton
+                                text={w.address}
+                                className="text-zinc-500 hover:text-zinc-300 transition-colors opacity-0 group-hover:opacity-100"
+                                iconClassName="h-2.5 w-2.5"
+                              />
                             </div>
                           </td>
                           <td className="px-3 py-2.5 text-[11px] font-bold tabular-nums text-zinc-400">

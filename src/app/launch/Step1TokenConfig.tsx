@@ -117,14 +117,12 @@ export default function Step1TokenConfig() {
   return (
     <div className="space-y-4">
       <div
-        className="relative rounded-lg p-5 space-y-4 overflow-hidden"
+        className="rounded-lg p-5 space-y-4"
         style={{
-          background: "rgba(14,20,32,0.92)",
-          border: "1px solid rgba(79,131,255,0.3)",
-          boxShadow: "0 0 0 1px rgba(79,131,255,0.1), 0 0 40px rgba(79,131,255,0.12), 0 24px 48px rgba(0,0,0,0.5)",
+          background: "rgba(13,17,24,0.8)",
+          border: "1px solid rgba(28,38,56,0.8)",
         }}
       >
-        <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(79,131,255,0.6) 50%, transparent 100%)" }} />
         {/* Name + Symbol row */}
         <div className="grid grid-cols-2 gap-4">
           <Field
@@ -251,14 +249,12 @@ export default function Step1TokenConfig() {
 
       {/* Token Type */}
       <div
-        className="relative rounded-lg p-5 overflow-hidden"
+        className="rounded-lg p-5"
         style={{
-          background: "rgba(14,20,32,0.92)",
-          border: "1px solid rgba(79,131,255,0.3)",
-          boxShadow: "0 0 0 1px rgba(79,131,255,0.1), 0 0 40px rgba(79,131,255,0.12), 0 24px 48px rgba(0,0,0,0.5)",
+          background: "rgba(13,17,24,0.8)",
+          border: "1px solid rgba(28,38,56,0.8)",
         }}
       >
-        <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(79,131,255,0.6) 50%, transparent 100%)" }} />
         <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-4 text-center">
           Token Type
         </p>

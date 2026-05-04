@@ -44,7 +44,8 @@ function SolanaLogo({ className }: { className?: string }) {
     </svg>
   );
 }
-import { Copy, Trash2, ArrowUpDown } from "lucide-react";
+import { Trash2, ArrowUpDown } from "lucide-react";
+import CopyButton from "./CopyButton";
 import type { WalletInfo } from "@/types";
 import { truncateAddress, formatSol } from "@/lib/utils";
 import { useStore } from "@/store";
@@ -192,12 +193,11 @@ const totalSol = wallets.reduce((s, w) => s + w.solBalance, 0);
               <span className="font-mono text-xs text-zinc-200 truncate">
                 {truncateAddress(w.address, 4)}
               </span>
-              <button
-                onClick={() => navigator.clipboard.writeText(w.address)}
+              <CopyButton
+                text={w.address}
                 className="shrink-0 text-zinc-500 hover:text-zinc-300 transition-colors opacity-0 group-hover:opacity-100"
-              >
-                <Copy className="h-3 w-3" />
-              </button>
+                iconClassName="h-3 w-3"
+              />
             </div>
 
 
