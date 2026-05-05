@@ -75,7 +75,7 @@ export default function DashboardPage() {
             )}
           </div>
           <p className="text-xs text-zinc-600 mt-0.5">
-            Manage and monitor your wallets
+            Manage and monitor<br className="sm:hidden" /> your wallets
           </p>
         </div>
         <div className="flex items-center gap-2">

@@ -13,10 +13,8 @@ export default function LaunchPage() {
       <div className="flex flex-col flex-1 min-h-0 w-full max-w-4xl mx-auto px-3 sm:px-6 py-3 sm:py-5 overflow-y-auto no-scrollbar">
         {/* Header */}
         <div className="shrink-0 mb-4">
-          <h1 className="text-xl font-bold text-white tracking-tight">Launch a Token</h1>
-          <p className="text-xs text-zinc-500 mt-0.5">
-            Deploy and bundle-buy your PumpFun token in one flow.
-          </p>
+          <h1 className="text-lg sm:text-2xl font-bold text-zinc-100 tracking-tight">Launch a Token</h1>
+          <p className="text-xs text-zinc-600 mt-0.5">Deploy and bundle-buy your PumpFun token in one flow.</p>
         </div>
 
         <div className="shrink-0">

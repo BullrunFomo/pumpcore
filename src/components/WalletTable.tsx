@@ -134,12 +134,13 @@ const totalSol = wallets.reduce((s, w) => s + w.solBalance, 0);
 
   return (
     <div
-      className="flex flex-col min-h-0 flex-1 rounded-md overflow-hidden"
+      className="flex flex-col min-h-0 flex-1 rounded-md overflow-x-auto"
       style={{
         background: "rgba(13,17,24,0.8)",
         border: "1px solid rgba(28,38,56,0.8)",
       }}
     >
+    <div className="min-w-[560px] flex flex-col flex-1 min-h-0">
       {/* Table header */}
       <div
         className="shrink-0 grid items-center text-[10px] font-semibold uppercase tracking-widest text-zinc-500 px-3 py-2"
@@ -262,6 +263,7 @@ const totalSol = wallets.reduce((s, w) => s + w.solBalance, 0);
           <div />
         </div>
       )}
+    </div>
     </div>
   );
 }

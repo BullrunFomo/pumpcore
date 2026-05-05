@@ -74,7 +74,7 @@ export default function Step2BundleConfig() {
     <div className="space-y-4">
 
       {/* Toolbar */}
-      <div className="rounded-lg px-4 py-3 flex items-center gap-3" style={cardStyle}>
+      <div className="rounded-lg px-3 sm:px-4 py-3 flex items-center flex-wrap gap-2 sm:gap-3" style={cardStyle}>
         {/* Launch mode */}
         <div className="flex items-center gap-1.5">
           {([
@@ -158,8 +158,8 @@ export default function Step2BundleConfig() {
         {/* Stagger delay inline */}
         {bundleConfig.launchType === "stagger" && (
           <>
-            <div className="w-px h-5 bg-zinc-800 mx-1" />
-            <div className="flex items-center gap-3 flex-1">
+            <div className="hidden sm:block w-px h-5 bg-zinc-800 mx-1" />
+            <div className="flex items-center gap-3 w-full sm:flex-1">
               <span className="text-[10px] text-zinc-500 uppercase tracking-wider shrink-0">Delay</span>
               <Slider
                 min={0}
@@ -287,7 +287,7 @@ export default function Step2BundleConfig() {
       {/* Wallet list */}
       <div className="rounded-lg p-5" style={cardStyle}>
         {/* Header row */}
-        <div className="grid items-center px-1 mb-2" style={{ gridTemplateColumns: "28px 1fr 84px 90px 80px" }}>
+        <div className="grid items-center px-1 mb-2 grid-cols-[28px_1fr_80px_70px] sm:grid-cols-[28px_1fr_84px_90px_80px]">
           <div />
           <button
             onClick={toggleAll}
@@ -295,7 +295,7 @@ export default function Step2BundleConfig() {
           >
             {bundleConfig.selectedWalletIds.length === wallets.length ? "Deselect All" : "Select All"}
           </button>
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600 text-right pr-12">Supply</span>
+          <span className="hidden sm:block text-[10px] font-semibold uppercase tracking-wider text-zinc-600 text-right pr-12">Supply</span>
           <div className="flex items-center justify-end gap-1 pr-2">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Buy (SOL)</span>
             <button
@@ -337,9 +337,8 @@ export default function Step2BundleConfig() {
                   <div
                     key={w.id}
                     onClick={() => toggleWallet(w.id)}
-                    className="grid items-center px-1 py-1.5 cursor-pointer"
+                    className="grid items-center px-1 py-1.5 cursor-pointer grid-cols-[28px_1fr_80px_70px] sm:grid-cols-[28px_1fr_84px_90px_80px]"
                     style={{
-                      gridTemplateColumns: "28px 1fr 84px 90px 80px",
                       borderBottom: i < wallets.length - 1 ? "1px solid rgba(28,38,56,0.6)" : "none",
                     }}
                   >
@@ -362,7 +361,7 @@ export default function Step2BundleConfig() {
                         {isDev && <span className="text-[9px] font-bold uppercase tracking-wider">Dev</span>}
                       </button>
                     </div>
-                    <span className="text-xs tabular-nums text-right pr-12" style={{ color: supplyPct !== null ? "#a1a1aa" : "#3f3f46" }}>
+                    <span className="hidden sm:block text-xs tabular-nums text-right pr-12" style={{ color: supplyPct !== null ? "#a1a1aa" : "#3f3f46" }}>
                       {supplyPct !== null ? `${supplyPct.toFixed(1)}%` : "0%"}
                     </span>
                     <div className="pr-2" onClick={(e) => e.stopPropagation()}>
@@ -394,11 +393,8 @@ export default function Step2BundleConfig() {
         )}
 
         <div
-          className="mt-4 pt-3 grid items-center text-xs"
-          style={{
-            gridTemplateColumns: "28px 1fr 84px 90px 80px",
-            borderTop: "1px solid rgba(28,38,56,0.9)",
-          }}
+          className="mt-4 pt-3 grid items-center text-xs grid-cols-[28px_1fr_80px_70px] sm:grid-cols-[28px_1fr_84px_90px_80px]"
+          style={{ borderTop: "1px solid rgba(28,38,56,0.9)" }}
         >
           <div />
           <span className="text-zinc-600 text-[10px] uppercase tracking-wider px-2">
@@ -406,7 +402,7 @@ export default function Step2BundleConfig() {
               ? `${bundleConfig.selectedWalletIds.length} selected`
               : `${wallets.length} wallets`}
           </span>
-          <span className="text-xs font-semibold tabular-nums text-right pr-12 text-zinc-300">
+          <span className="hidden sm:block text-xs font-semibold tabular-nums text-right pr-12 text-zinc-300">
             {bundleConfig.selectedWalletIds.length > 0 ? "100%" : "0%"}
           </span>
           <span className="text-xs font-semibold pr-2 tabular-nums text-right text-zinc-300">

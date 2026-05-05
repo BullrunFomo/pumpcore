@@ -76,6 +76,9 @@ export default function StatsBar() {
           </div>
         </div>
 
+        {/* Row separator — mobile only */}
+        <div className="col-span-2 sm:hidden h-px mx-4" style={{ background: "rgba(28,38,56,0.9)" }} />
+
         {/* Wallets */}
         <div className="px-5 py-4 relative before:absolute before:left-0 before:top-3 before:bottom-3 before:w-px before:bg-[rgba(28,38,56,0.9)]">
           <div className="flex items-center gap-2 mb-2.5">

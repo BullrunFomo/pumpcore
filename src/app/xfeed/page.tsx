@@ -654,29 +654,71 @@ function DexertoFeedPanel({ onLaunch }: { onLaunch: (url: string, image?: string
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+type FeedTab = "x" | "kym" | "viral";
+
+const FEED_TABS: { id: FeedTab; label: string }[] = [
+  { id: "x", label: "X Feed" },
+  { id: "kym", label: "KYM Feed" },
+  { id: "viral", label: "Viral News" },
+];
+
 export default function XFeedPage() {
   const [launchTarget, setLaunchTarget] = useState<{ url: string; image?: string | null } | null>(null);
+  const [activeTab, setActiveTab] = useState<FeedTab>("viral");
 
   return (
     <div className="flex flex-col flex-1 min-h-0 px-3 py-3 sm:px-6 sm:py-5 w-full">
       {/* Page header */}
-      <div className="shrink-0 mb-4">
+      <div className="shrink-0 mb-3">
         <h1 className="text-lg sm:text-2xl font-bold text-zinc-100 tracking-tight">Feed</h1>
         <p className="text-xs text-zinc-600 mt-0.5">Live X feed, latest memes and viral news.</p>
       </div>
 
-      {/* Layout: 3 equal columns */}
+      {/* Mobile tab selector — hidden on lg+ */}
+      <div
+        className="lg:hidden shrink-0 flex mb-3 rounded overflow-hidden"
+        style={{ border: "1px solid rgba(28,38,56,0.85)", background: "rgba(13,17,24,0.85)" }}
+      >
+        {FEED_TABS.map((tab, i) => {
+          const active = activeTab === tab.id;
+          const accentColor =
+            tab.id === "x" ? "rgba(79,131,255,1)" :
+            tab.id === "kym" ? "rgba(139,92,246,1)" :
+            "rgba(234,179,8,1)";
+          const accentBg =
+            tab.id === "x" ? "rgba(79,131,255,0.14)" :
+            tab.id === "kym" ? "rgba(139,92,246,0.14)" :
+            "rgba(234,179,8,0.14)";
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className="flex-1 py-2 text-[11px] font-semibold uppercase tracking-wider transition-all"
+              style={{
+                background: active ? accentBg : "transparent",
+                color: active ? accentColor : "rgba(161,161,170,0.5)",
+                borderRight: i < FEED_TABS.length - 1 ? "1px solid rgba(28,38,56,0.85)" : "none",
+                borderBottom: active ? `2px solid ${accentColor}` : "2px solid transparent",
+              }}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Layout: stacked on mobile (one tab at a time), 3 columns on lg+ */}
       <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4">
 
-        <div className="flex flex-col min-h-[500px] lg:flex-1 lg:min-h-0">
+        <div className={`flex flex-col min-h-[500px] lg:flex-1 lg:min-h-0 ${activeTab !== "x" ? "hidden lg:flex" : ""}`}>
           <XFeedPanel />
         </div>
 
-        <div className="flex flex-col min-h-[500px] lg:flex-1 lg:min-h-0">
+        <div className={`flex flex-col min-h-[500px] lg:flex-1 lg:min-h-0 ${activeTab !== "kym" ? "hidden lg:flex" : ""}`}>
           <KYMFeedPanel onLaunch={(url, image) => setLaunchTarget({ url, image })} />
         </div>
 
-        <div className="flex flex-col min-h-[500px] lg:flex-1 lg:min-h-0">
+        <div className={`flex flex-col min-h-[500px] lg:flex-1 lg:min-h-0 ${activeTab !== "viral" ? "hidden lg:flex" : ""}`}>
           <DexertoFeedPanel onLaunch={(url, image) => setLaunchTarget({ url, image })} />
         </div>
 
