@@ -239,8 +239,8 @@ export default function QuickLaunchModal({ prefillUrl, prefillImage, prefillName
                 <input type="text" placeholder="Token name" value={name} maxLength={32}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full px-3 py-2 text-sm outline-none rounded ql-input" style={INPUT} />
-                <input type="text" placeholder="TICKER" value={symbol} maxLength={13}
-                  onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                <input type="text" placeholder="Ticker" value={symbol} maxLength={13}
+                  onChange={(e) => setSymbol(e.target.value)}
                   className="w-full px-3 py-2 text-sm outline-none rounded font-mono ql-input" style={INPUT} />
               </div>
             </div>

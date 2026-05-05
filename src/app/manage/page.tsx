@@ -314,10 +314,15 @@ export default function ManagePage() {
   const { tokenConfig, bundleConfig } = launch;
   const devWalletId = bundleConfig.devWalletId;
 
-  // Only show wallets that participated in the bundle
-  const bundleWallets = bundleConfig.selectedWalletIds.length > 0
+  // Only show wallets that participated in the bundle, dev wallet first
+  const bundleWallets = (bundleConfig.selectedWalletIds.length > 0
     ? wallets.filter((w) => bundleConfig.selectedWalletIds.includes(w.id))
-    : wallets;
+    : wallets
+  ).slice().sort((a, b) => {
+    if (a.id === devWalletId) return -1;
+    if (b.id === devWalletId) return 1;
+    return 0;
+  });
 
   // PNL: sells add SOL, buys (including bundle buys recorded at launch) subtract SOL
   const totalPnlSol = trades.reduce((acc, t) => {

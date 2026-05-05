@@ -360,7 +360,7 @@ export default function Step4ReviewLaunch() {
             )}
           </div>
           <div
-            className="p-4 font-mono text-xs space-y-1.5 max-h-60 overflow-y-auto"
+            className="p-4 font-mono text-xs space-y-1.5 max-h-52 overflow-y-auto"
             style={{ background: "rgba(5,5,8,0.95)" }}
           >
             {launch.logs.map((log) => (

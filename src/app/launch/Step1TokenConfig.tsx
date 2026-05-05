@@ -148,7 +148,7 @@ export default function Step1TokenConfig() {
               placeholder="$BDX"
               value={tokenConfig.symbol}
               maxLength={SYMBOL_MAX}
-              onChange={(e) => updateTokenConfig({ symbol: e.target.value.toUpperCase() })}
+              onChange={(e) => updateTokenConfig({ symbol: e.target.value })}
             />
           </Field>
         </div>

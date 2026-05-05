@@ -221,7 +221,7 @@ export default function DashboardPage() {
               </Button>
             </div>
           ) : (
-            <WalletTable wallets={wallets} devWalletId={devWalletId} />
+            <WalletTable wallets={wallets} />
           )}
         </div>
 

@@ -38,6 +38,18 @@ const X_PANEL_STYLE: React.CSSProperties = {
 };
 const X_SEP = "1px solid rgba(79,131,255,0.15)";
 
+const KYM_PANEL_STYLE: React.CSSProperties = {
+  background: "rgba(13,10,20,0.90)",
+  border: "1px solid rgba(139,92,246,0.28)",
+};
+const KYM_SEP = "1px solid rgba(139,92,246,0.18)";
+
+const VIRAL_PANEL_STYLE: React.CSSProperties = {
+  background: "rgba(20,17,10,0.90)",
+  border: "1px solid rgba(234,179,8,0.28)",
+};
+const VIRAL_SEP = "1px solid rgba(234,179,8,0.18)";
+
 
 const CARD_HOVER_BG = "rgba(255,255,255,0.025)";
 
@@ -312,9 +324,9 @@ function KYMFeedPanel({ onLaunch }: { onLaunch: (url: string, image?: string | n
   }, [load]);
 
   return (
-    <div className="flex flex-col h-full min-h-0 rounded" style={X_PANEL_STYLE}>
+    <div className="flex flex-col h-full min-h-0 rounded" style={KYM_PANEL_STYLE}>
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-2 px-4 py-3" style={{ borderBottom: X_SEP }}>
+      <div className="shrink-0 flex items-center gap-2 px-4 py-3" style={{ borderBottom: KYM_SEP }}>
         <div
           className="flex items-center justify-center w-6 h-6 rounded"
           style={{ background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.25)" }}
@@ -339,7 +351,7 @@ function KYMFeedPanel({ onLaunch }: { onLaunch: (url: string, image?: string | n
       {/* Toggle */}
       <div
         className="shrink-0 flex h-10 overflow-hidden"
-        style={{ borderBottom: X_SEP, background: "rgba(13,17,24,0.6)" }}
+        style={{ borderBottom: KYM_SEP, background: "rgba(13,10,20,0.6)" }}
       >
         {(["confirmed", "submissions"] as const).map((s) => (
           <button
@@ -498,9 +510,9 @@ function DexertoFeedPanel({ onLaunch }: { onLaunch: (url: string, image?: string
   }, [load]);
 
   return (
-    <div className="flex flex-col h-full min-h-0 rounded" style={X_PANEL_STYLE}>
+    <div className="flex flex-col h-full min-h-0 rounded" style={VIRAL_PANEL_STYLE}>
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-2 px-4 py-3" style={{ borderBottom: X_SEP }}>
+      <div className="shrink-0 flex items-center gap-2 px-4 py-3" style={{ borderBottom: VIRAL_SEP }}>
         <div
           className="flex items-center justify-center w-6 h-6 rounded"
           style={{ background: "rgba(234,179,8,0.1)", border: "1px solid rgba(234,179,8,0.2)" }}
@@ -529,7 +541,7 @@ function DexertoFeedPanel({ onLaunch }: { onLaunch: (url: string, image?: string
         const all = [null, ...cats] as (string | null)[];
         const scroll = () => catScrollRef.current?.scrollBy({ left: 120, behavior: "smooth" });
         return (
-          <div className="shrink-0 flex h-10 relative" style={{ borderBottom: X_SEP, background: "rgba(13,17,24,0.6)" }}>
+          <div className="shrink-0 flex h-10 relative" style={{ borderBottom: VIRAL_SEP, background: "rgba(20,17,10,0.6)" }}>
             <div ref={catScrollRef} className="flex flex-1 overflow-x-auto no-scrollbar">
               {all.map((cat, i) => (
                 <button
@@ -539,7 +551,7 @@ function DexertoFeedPanel({ onLaunch }: { onLaunch: (url: string, image?: string
                   style={{
                     background: activeCategory === cat ? "rgba(234,179,8,0.18)" : "transparent",
                     color: activeCategory === cat ? "#facc15" : "rgba(250,204,21,0.45)",
-                    borderRight: i < all.length - 1 ? "1px solid rgba(79,131,255,0.15)" : "none",
+                    borderRight: i < all.length - 1 ? "1px solid rgba(234,179,8,0.15)" : "none",
                   }}
                 >
                   {cat ?? "All"}
@@ -549,7 +561,7 @@ function DexertoFeedPanel({ onLaunch }: { onLaunch: (url: string, image?: string
             <button
               onClick={scroll}
               className="lg:hidden shrink-0 flex items-center justify-center w-8 h-full transition-opacity hover:opacity-100 opacity-70"
-              style={{ borderLeft: "1px solid rgba(79,131,255,0.15)", color: "rgba(250,204,21,0.6)", background: "rgba(13,17,24,0.9)" }}
+              style={{ borderLeft: "1px solid rgba(234,179,8,0.15)", color: "rgba(250,204,21,0.6)", background: "rgba(20,17,10,0.9)" }}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5"><path d="M9 18l6-6-6-6"/></svg>
             </button>

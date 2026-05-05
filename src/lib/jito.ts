@@ -271,8 +271,14 @@ export async function executeClassicBundle(
 
 export interface AtomicLaunchParams {
   connection: Connection;
-  /** Pre-built instructions for create + dev buy (no blockhash yet) */
+  /** Instructions for the create tx (tx[0]). For standard tokens this also includes the dev buy. */
   createAndDevBuyIxs: TransactionInstruction[];
+  /**
+   * When provided (Token2022), the dev buy is placed in its own tx[1] because the Token2022
+   * create instruction is ~436 bytes larger than standard, pushing create+devbuy over Solana's
+   * 1232-byte limit. Wallet buys then fill tx[2..4] (max 3 instead of 4).
+   */
+  devBuyIxs?: TransactionInstruction[];
   creatorKeypair: Keypair;
   mintKeypair: Keypair;
   bundleWallets: BundleWallet[];
@@ -286,11 +292,9 @@ export interface AtomicLaunchParams {
 }
 
 // Jito enforces a hard limit of 5 transactions per bundle.
-// tx[0] = create + dev buy. tx[1..4] = one buy per wallet (max 4 bundle wallets).
-// Each pump.fun buy is ~800 bytes serialized — packing two into one tx exceeds
-// Solana's 1232-byte limit, so each wallet always gets its own transaction.
+// Standard:   tx[0]=create+devbuy, tx[1..4]=wallet buys (max 4 wallets)
+// Token2022:  tx[0]=create,        tx[1]=devbuy, tx[2..4]=wallet buys (max 3 wallets)
 const JITO_MAX_TXS = 5;
-const MAX_BUY_TXS = JITO_MAX_TXS - 1; // 4 wallet buy slots
 
 const BUNDLE_MAX_RETRIES = 3;
 
@@ -299,10 +303,12 @@ export async function executeAtomicLaunchBundle(
   onProgress: (msg: string, level?: string, txSig?: string, walletAddr?: string) => void
 ): Promise<{ bundleId: string; results: { address: string; tokenAmount: number }[] }> {
   const {
-    connection, createAndDevBuyIxs, creatorKeypair, mintKeypair,
+    connection, createAndDevBuyIxs, devBuyIxs, creatorKeypair, mintKeypair,
     bundleWallets, devSolAmount, solPerWallet, tokenCreator, mint,
     tipLamports = JITO_TIP_LAMPORTS, slippageBps = 500, isToken2022 = false,
   } = params;
+  const hasSplitDevBuy = !!devBuyIxs && devBuyIxs.length > 0;
+  const MAX_BUY_TXS = JITO_MAX_TXS - (hasSplitDevBuy ? 2 : 1);
 
   // ── Build buy instructions (once — instructions are blockhash-independent) ──
   const initialCurveWithCreator = { ...INITIAL_CURVE, creator: tokenCreator };
@@ -406,11 +412,11 @@ export async function executeAtomicLaunchBundle(
   }
 
   // ── Assemble VersionedTransactions (v0) ──────────────────────────────────────
-  // tx[0] = create + dev buy. The Jito tip lives in tx[1] (first wallet buy) to
-  // keep tx[0] under Solana's 1232-byte limit: the IPFS metadata URI alone can
-  // push tx[0] over the limit when the tip account (32 bytes) + tip instruction
-  // are included in the same transaction. Moving the tip to tx[1] fixes this.
-  // When there are no bundle wallets the tip stays in tx[0] (it's small enough).
+  // Standard:  tx[0]=create+devbuy (tip in tx[1] to stay under 1232-byte limit),
+  //            tx[1..4]=wallet buys (first wallet pays tip).
+  // Token2022: tx[0]=create only, tx[1]=devbuy (Token2022 create+devbuy would be
+  //            ~1668 bytes, over the 1232-byte raw limit), tx[2..4]=wallet buys.
+  //            Tip goes on tx[1] (creator) if no wallets, else on tx[2] (first wallet).
   function assembleTxs(blockhash: string): { encodedTxs: string[]; signatures: string[] } {
     const tipAccount = randomTipAccount();
     const encodedTxs: string[] = [];
@@ -418,12 +424,12 @@ export async function executeAtomicLaunchBundle(
     const capped = buyEntries.slice(0, MAX_BUY_TXS);
     const hasBuyWallets = capped.length > 0;
 
-    // tx[0]: create + dev buy (tip excluded when wallet buys follow)
+    // tx[0]: create (and dev buy for standard; just create for Token2022 split)
     const createVtx = new VersionedTransaction(
       new TransactionMessage({
         payerKey: creatorKeypair.publicKey,
         recentBlockhash: blockhash,
-        instructions: hasBuyWallets
+        instructions: hasBuyWallets || hasSplitDevBuy
           ? [...createAndDevBuyIxs]
           : [
               ...createAndDevBuyIxs,
@@ -435,7 +441,28 @@ export async function executeAtomicLaunchBundle(
     encodedTxs.push(bs58.encode(createVtx.serialize()));
     signatures.push(bs58.encode(createVtx.signatures[0]));
 
-    // tx[1..4]: one v0 transaction per wallet; first wallet pays the Jito tip
+    // tx[1] (Token2022 split only): dev buy in its own transaction
+    if (hasSplitDevBuy) {
+      const devBuyVtx = new VersionedTransaction(
+        new TransactionMessage({
+          payerKey: creatorKeypair.publicKey,
+          recentBlockhash: blockhash,
+          instructions: [
+            priorityFeeIx(300_000),
+            computeUnitLimitIx(300_000),
+            ...(!hasBuyWallets
+              ? [SystemProgram.transfer({ fromPubkey: creatorKeypair.publicKey, toPubkey: tipAccount, lamports: tipLamports })]
+              : []),
+            ...devBuyIxs!,
+          ],
+        }).compileToV0Message()
+      );
+      devBuyVtx.sign([creatorKeypair]);
+      encodedTxs.push(bs58.encode(devBuyVtx.serialize()));
+      signatures.push(bs58.encode(devBuyVtx.signatures[0]));
+    }
+
+    // tx[1..4] (standard) or tx[2..4] (Token2022): one v0 tx per wallet; first pays tip
     for (let i = 0; i < capped.length; i++) {
       const entry = capped[i];
       const buyVtx = new VersionedTransaction(
@@ -474,8 +501,9 @@ export async function executeAtomicLaunchBundle(
   }
 
   const walletCount = Math.min(buyEntries.length, MAX_BUY_TXS);
+  const totalTxs = 1 + (hasSplitDevBuy && devSolAmount > 0 ? 1 : 0) + walletCount;
   onProgress(
-    `Launching: ${1 + walletCount} bundle txs, tip ${(tipLamports / 1e9).toFixed(4)} SOL...`,
+    `Launching: ${totalTxs} bundle txs, tip ${(tipLamports / 1e9).toFixed(4)} SOL...`,
     "info"
   );
 

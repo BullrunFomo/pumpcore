@@ -299,10 +299,15 @@ export default function Step2BundleConfig() {
             <button
               title="Randomize buy amounts (±30%)"
               onClick={() => {
-                const amounts: Record<string, number> = {};
+                const amounts: Record<string, number> = { ...bundleConfig.walletBuyAmounts };
                 wallets.forEach((w) => {
+                  if (!bundleConfig.selectedWalletIds.includes(w.id)) {
+                    amounts[w.id] = 0;
+                    return;
+                  }
                   const max = Math.max(0, w.solBalance - 0.01);
-                  const rand = Math.random() * max;
+                  const min = max / 2;
+                  const rand = min + Math.random() * (max - min);
                   amounts[w.id] = Math.round(Math.min(rand, max) * 1000) / 1000;
                 });
                 updateBundleConfig({ walletBuyAmounts: amounts });
@@ -322,15 +327,29 @@ export default function Step2BundleConfig() {
         ) : (
           <div className="max-h-[26rem] overflow-y-auto">
             {(() => {
-              const totalBuySOL = bundleConfig.selectedWalletIds.reduce(
-                (sum, id) => sum + (bundleConfig.walletBuyAmounts[id] ?? 0.1),
-                0
-              );
+              // Pump.fun bonding curve constants
+              const TOTAL_SUPPLY = 1_000_000_000;
+              let vSol = 30;
+              let vTok = 1_073_000_191;
+              const k = vSol * vTok;
+
+              // Calculate tokens each selected wallet receives sequentially
+              const tokensByWallet: Record<string, number> = {};
+              wallets.forEach((w) => {
+                if (!bundleConfig.selectedWalletIds.includes(w.id)) return;
+                const buy = bundleConfig.walletBuyAmounts[w.id] ?? 0.1;
+                if (buy <= 0) return;
+                const tokOut = vTok - k / (vSol + buy);
+                tokensByWallet[w.id] = tokOut;
+                vSol += buy;
+                vTok -= tokOut;
+              });
+
               return wallets.map((w, i) => {
                 const sel = bundleConfig.selectedWalletIds.includes(w.id);
                 const isDev = bundleConfig.devWalletId === w.id;
                 const buyAmt = bundleConfig.walletBuyAmounts[w.id] ?? 0.1;
-                const supplyPct = sel && totalBuySOL > 0 ? (buyAmt / totalBuySOL) * 100 : null;
+                const supplyPct = sel && tokensByWallet[w.id] ? (tokensByWallet[w.id] / TOTAL_SUPPLY) * 100 : null;
                 return (
                   <div
                     key={w.id}
@@ -401,7 +420,24 @@ export default function Step2BundleConfig() {
               : `${wallets.length} wallets`}
           </span>
           <span className="hidden sm:block text-xs font-semibold tabular-nums text-right pr-12 text-zinc-300">
-            {bundleConfig.selectedWalletIds.length > 0 ? "100%" : "0%"}
+            {(() => {
+              const TOTAL_SUPPLY = 1_000_000_000;
+              let vSol = 30, vTok = 1_073_000_191;
+              const k = vSol * vTok;
+              let totalTok = 0;
+              wallets.forEach((w) => {
+                if (!bundleConfig.selectedWalletIds.includes(w.id)) return;
+                const buy = bundleConfig.walletBuyAmounts[w.id] ?? 0.1;
+                if (buy <= 0) return;
+                const tokOut = vTok - k / (vSol + buy);
+                totalTok += tokOut;
+                vSol += buy;
+                vTok -= tokOut;
+              });
+              return bundleConfig.selectedWalletIds.length > 0
+                ? `${((totalTok / TOTAL_SUPPLY) * 100).toFixed(1)}%`
+                : "0%";
+            })()}
           </span>
           <span className="text-xs font-semibold pr-2 tabular-nums text-right text-zinc-300">
             {formatSol(

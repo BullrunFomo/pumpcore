@@ -19,6 +19,7 @@ const sections = [
   { id: "bundle",          label: "Bundle & Stagger",  icon: Layers },
   { id: "auto-sell",       label: "Auto-Sell",         icon: Zap },
   { id: "manage",          label: "Manage Positions",  icon: Settings },
+  { id: "feed",            label: "Feed",              icon: Activity },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -272,8 +273,9 @@ export default function DocsPage() {
               </div>
               <div className="mt-4">
                 <WarnBox>
-                  Access keys are stored in <Code>localStorage</Code>. Clearing browser data will log you out.
-                  Your account data is preserved — re-entering your key restores everything.
+                  Authentication uses a secure <Code>bundlex-session</Code> cookie. Clearing cookies or
+                  using a private window will log you out. Your account data is preserved — re-entering
+                  your key restores everything. Rate limiting applies: 10 failed attempts per IP per 15 minutes.
                 </WarnBox>
               </div>
             </Card>
@@ -427,7 +429,7 @@ export default function DocsPage() {
                   </div>
                   <p className="text-xs text-zinc-400 leading-relaxed">
                     Dev wallet creates the token; remaining wallets buy sequentially with a
-                    configurable delay between each.
+                    configurable per-wallet delay (set via slider in Step 2, in milliseconds).
                   </p>
                 </div>
               </div>
@@ -484,8 +486,8 @@ export default function DocsPage() {
             <Card>
               <SectionTitle icon={Settings}>Manage Positions</SectionTitle>
               <p className="text-sm text-zinc-400 leading-relaxed mb-5">
-                The Manage page shows live per-wallet positions for the active token mint. From here you can
-                execute buys and sells without leaving the app.
+                The Manage page shows a live candlestick chart for the active token mint alongside
+                per-wallet positions. From here you can execute buys and sells without leaving the app.
               </p>
               <div className="flex flex-col gap-4 mb-5">
                 {[
@@ -509,6 +511,72 @@ export default function DocsPage() {
               >
                 PnL (SOL) = (currentPrice − avgBuyPrice) × tokenBalance<br />
                 PnL (USD) = PnL (SOL) × SOL/USD
+              </div>
+            </Card>
+          </section>
+
+          {/* ── FEED ── */}
+          <section>
+            <SectionAnchor id="feed" />
+            <Card>
+              <SectionTitle icon={Activity}>Feed</SectionTitle>
+              <p className="text-sm text-zinc-400 leading-relaxed mb-5">
+                The Feed page surfaces real-time social and news content across three panels to help you
+                spot trending topics before they pump. All panels auto-refresh every 20 seconds.
+              </p>
+              <div className="grid sm:grid-cols-3 gap-3 mb-5">
+                {[
+                  {
+                    color: "#4f83ff",
+                    bg: "rgba(79,131,255,0.06)",
+                    border: "rgba(79,131,255,0.2)",
+                    title: "X Feed",
+                    desc: "Search any query and get live posts from X/Twitter via Nitter proxies. Results auto-refresh every 20 s while a query is active.",
+                  },
+                  {
+                    color: "#8b5cf6",
+                    bg: "rgba(139,92,246,0.06)",
+                    border: "rgba(139,92,246,0.2)",
+                    title: "KYM Feed",
+                    desc: "Know Your Meme trending memes. Click the rocket icon on any meme card to pre-fill a token launch with its name and image.",
+                  },
+                  {
+                    color: "#eab308",
+                    bg: "rgba(234,179,8,0.06)",
+                    border: "rgba(234,179,8,0.2)",
+                    title: "Viral News",
+                    desc: "Dexerto gaming and internet-culture headlines. Click the rocket icon on any article to pre-fill a launch with the headline image.",
+                  },
+                ].map(({ color, bg, border, title, desc }) => (
+                  <div
+                    key={title}
+                    className="rounded-lg p-4"
+                    style={{ background: bg, border: `1px solid ${border}` }}
+                  >
+                    <p className="text-xs font-semibold mb-1" style={{ color }}>{title}</p>
+                    <p className="text-xs text-zinc-500 leading-relaxed">{desc}</p>
+                  </div>
+                ))}
+              </div>
+              <InfoBox>
+                On mobile, use the tab selector at the top of the Feed page to switch between panels.
+                On desktop all three columns are shown side-by-side.
+              </InfoBox>
+              <div className="mt-4">
+                <p className="text-[11px] font-semibold text-zinc-600 uppercase tracking-widest mb-3">Quick Launch from Feed</p>
+                <div className="flex flex-col gap-3">
+                  <Step n={1} title="Click the rocket icon on any KYM or Viral News item">
+                    The Quick Launch modal opens with the token name and image pre-filled from the
+                    article or meme.
+                  </Step>
+                  <Step n={2} title="Configure buy amounts and tip">
+                    Choose which wallets participate, set SOL per wallet, and set a Jito tip inside the modal.
+                  </Step>
+                  <Step n={3} title="Launch">
+                    The token is created and all buys are submitted as a Jito bundle — without leaving the
+                    Feed page.
+                  </Step>
+                </div>
               </div>
             </Card>
           </section>

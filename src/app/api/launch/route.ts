@@ -184,9 +184,12 @@ export async function POST(req: NextRequest) {
             );
 
         // Dev buy uses INITIAL_CURVE — the known state right after token creation.
-        // This runs as part of tx[0] in the bundle alongside the create instruction.
+        // For Token2022: create+devbuy in one tx is ~1668 bytes (Solana limit: 1232).
+        // So for Token2022 we keep them separate and the bundle executor places the
+        // dev buy in its own tx[1]; wallet buys then fill tx[2..4] (max 3 wallets).
         const devSolAmount: number = creatorWallet.solAmount ?? 0.1;
-        const createAndDevBuyIxs = [...createIxs];
+        let createAndDevBuyIxs = [...createIxs];
+        let splitDevBuyIxs: typeof createIxs | undefined;
         if (devSolAmount > 0) {
           const { instructions: devBuyIxs } = await buildBuyIxFromCurve(
             connection,
@@ -197,7 +200,11 @@ export async function POST(req: NextRequest) {
             500,
             isToken2022
           );
-          createAndDevBuyIxs.push(...devBuyIxs);
+          if (isToken2022) {
+            splitDevBuyIxs = devBuyIxs;
+          } else {
+            createAndDevBuyIxs.push(...devBuyIxs);
+          }
         }
         const bundleWallets = bundleConfig.selectedWallets.slice(1); // all wallets except dev
 
@@ -210,6 +217,7 @@ export async function POST(req: NextRequest) {
             {
               connection,
               createAndDevBuyIxs,
+              devBuyIxs: splitDevBuyIxs,
               creatorKeypair,
               mintKeypair: mintKp,
               bundleWallets,
