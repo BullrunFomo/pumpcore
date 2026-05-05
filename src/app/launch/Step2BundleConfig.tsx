@@ -86,7 +86,7 @@ export default function Step2BundleConfig() {
               <button
                 key={t.value}
                 onClick={() => updateBundleConfig({ launchType: t.value })}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
                 style={{
                   background: active ? "rgba(79,131,255,0.12)" : "rgba(7,10,18,0.6)",
                   border: `1px solid ${active ? "rgba(79,131,255,0.4)" : "rgba(28,38,56,0.9)"}`,
@@ -123,10 +123,10 @@ export default function Step2BundleConfig() {
         {/* Row 2: Tip + Auto-Sell (+ stagger delay on mobile) */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Tip button */}
-          <div className="relative" ref={tipRef}>
+          <div className="relative flex-1" ref={tipRef}>
             <button
               onClick={() => setTipOpen((o) => !o)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
               style={{
                 background: tipOpen ? "rgba(79,131,255,0.08)" : "rgba(7,10,18,0.6)",
                 border: `1px solid ${tipOpen ? "rgba(79,131,255,0.35)" : "rgba(28,38,56,0.9)"}`,
@@ -160,7 +160,7 @@ export default function Step2BundleConfig() {
           {/* Auto-Sell button */}
           <button
             onClick={() => setAutoSellOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
             style={{
               background: autoSell.enabled ? "rgba(79,131,255,0.08)" : "rgba(7,10,18,0.6)",
               border: `1px solid ${autoSell.enabled ? "rgba(79,131,255,0.35)" : "rgba(28,38,56,0.9)"}`,
