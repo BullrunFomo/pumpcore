@@ -425,7 +425,7 @@ export default function ManagePage() {
               <h1 className="text-2xl font-bold text-zinc-100">
                 {tokenMeta?.name || tokenConfig.name || "Token"}{" "}
                 <span className="text-zinc-500 font-normal text-lg">
-                  ({tokenMeta?.symbol || tokenConfig.symbol || "—"})
+                  (${tokenMeta?.symbol || tokenConfig.symbol || "—"})
                 </span>
               </h1>
               <Badge

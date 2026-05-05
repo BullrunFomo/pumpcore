@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 export default function DashboardPage() {
   const router = useRouter();
   const wallets = useStore((s) => s.wallets);
+  const devWalletId = useStore((s) => s.launch.bundleConfig.devWalletId);
   const launches = useStore((s) => s.launches);
   const setActiveTokenMint = useStore((s) => s.setActiveTokenMint);
 
@@ -220,7 +221,7 @@ export default function DashboardPage() {
               </Button>
             </div>
           ) : (
-            <WalletTable wallets={wallets} />
+            <WalletTable wallets={wallets} devWalletId={devWalletId} />
           )}
         </div>
 

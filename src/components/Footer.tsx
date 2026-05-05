@@ -86,11 +86,6 @@ export default function Footer() {
             href: "https://t.me",
             icon: <Send className="h-3.5 w-3.5" />,
           },
-          {
-            href: "/docs",
-            icon: <FileText className="h-3.5 w-3.5" />,
-            label: "Docs",
-          },
         ].map((item, i) => (
           <a
             key={i}
@@ -103,6 +98,16 @@ export default function Footer() {
             {item.label && <span>{item.label}</span>}
           </a>
         ))}
+
+        <div className="h-3.5 w-px mx-0.5" style={{ background: "rgba(63,63,70,0.5)" }} />
+
+        <a
+          href="/docs"
+          className="flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-medium transition-all duration-150 text-zinc-600 hover:text-[#4f83ff]"
+        >
+          <FileText className="h-3.5 w-3.5" />
+          <span>Docs</span>
+        </a>
       </div>
     </div>
   );

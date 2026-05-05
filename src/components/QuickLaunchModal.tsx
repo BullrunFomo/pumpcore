@@ -24,6 +24,7 @@ const LOG_COLORS: Record<LaunchLogEntry["level"], string> = {
 interface Props {
   prefillUrl: string;
   prefillImage?: string | null;
+  prefillName?: string | null;
   onClose: () => void;
 }
 
@@ -59,7 +60,7 @@ function SegmentedControl<T extends string>({
   );
 }
 
-export default function QuickLaunchModal({ prefillUrl, prefillImage, onClose }: Props) {
+export default function QuickLaunchModal({ prefillUrl, prefillImage, prefillName, onClose }: Props) {
   const router = useRouter();
   const wallets = useStore((s) => s.wallets);
   const addLaunch = useStore((s) => s.addLaunch);
@@ -67,7 +68,7 @@ export default function QuickLaunchModal({ prefillUrl, prefillImage, onClose }: 
   const setActiveTokenMint = useStore((s) => s.setActiveTokenMint);
 
   // ── Token config ─────────────────────────────────────────────────────────────
-  const [name, setName] = useState("");
+  const [name, setName] = useState(prefillName ?? "");
   const [symbol, setSymbol] = useState("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoUri, setLogoUri] = useState(prefillImage ?? "");

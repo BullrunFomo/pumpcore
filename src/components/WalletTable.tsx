@@ -44,7 +44,7 @@ function SolanaLogo({ className }: { className?: string }) {
     </svg>
   );
 }
-import { Trash2, ArrowUpDown } from "lucide-react";
+import { Trash2, ArrowUpDown, Crown } from "lucide-react";
 import CopyButton from "./CopyButton";
 import type { WalletInfo } from "@/types";
 import { truncateAddress, formatSol } from "@/lib/utils";
@@ -52,12 +52,13 @@ import { useStore } from "@/store";
 
 interface WalletTableProps {
   wallets: WalletInfo[];
+  devWalletId?: string;
 }
 
 type SortKey = "address" | "balance";
 type SortDir = "asc" | "desc";
 
-export default function WalletTable({ wallets }: WalletTableProps) {
+export default function WalletTable({ wallets, devWalletId }: WalletTableProps) {
   const removeWallet = useStore((s) => s.removeWallet);
   const [sortKey, setSortKey] = useState<SortKey>("balance");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -68,6 +69,11 @@ export default function WalletTable({ wallets }: WalletTableProps) {
   };
 
   const sorted = [...wallets].sort((a, b) => {
+    // Dev wallet always first
+    if (devWalletId) {
+      if (a.id === devWalletId) return -1;
+      if (b.id === devWalletId) return 1;
+    }
     let diff = 0;
     if (sortKey === "balance") diff = a.solBalance - b.solBalance;
     else diff = a.address.localeCompare(b.address);
@@ -191,6 +197,9 @@ const totalSol = wallets.reduce((s, w) => s + w.solBalance, 0);
 
             {/* Wallet info */}
             <div className="flex items-center gap-1.5 min-w-0">
+              {devWalletId && w.id === devWalletId && (
+                <Crown className="h-3 w-3 shrink-0 text-yellow-400" title="Dev wallet" />
+              )}
               <span className="font-mono text-xs text-zinc-200 truncate">
                 {truncateAddress(w.address, 4)}
               </span>

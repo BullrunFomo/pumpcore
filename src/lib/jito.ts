@@ -90,35 +90,49 @@ async function submitEncodedBundle(
       (e as any).isRateLimit = true;
       throw e;
     }
-    throw err;
+    // Surface Jito's actual error detail from the response body
+    const body = err.response?.data;
+    const detail =
+      body?.error?.message ??
+      body?.message ??
+      (typeof body === "string" ? body : null) ??
+      err.message;
+    throw new Error(`HTTP ${err.response?.status ?? "ERR"}: ${detail}`);
   }
   if (res.data.error) throw new Error(`Jito error: ${JSON.stringify(res.data.error)}`);
   return res.data.result as string;
 }
 
 /**
- * Try endpoints one at a time — stop as soon as one accepts.
- * Sequential avoids blasting all endpoints simultaneously (wastes rate-limit quota).
- * Worst case: 5 API calls. Best case: 1.
+ * Try every endpoint in sequence — stop as soon as one accepts.
+ * Continues past non-429 errors (e.g. 400, 503) so a bad regional node
+ * doesn't block the whole bundle; collects errors for diagnosis.
  */
 async function sendBundleSequential(
   encodedTxs: string[],
   signatures: string[]
 ): Promise<{ bundleId: string; signatures: string[]; endpoint: string }> {
+  const errors: string[] = [];
   for (const endpoint of JITO_ENDPOINTS) {
     try {
       const bundleId = await submitEncodedBundle(encodedTxs, endpoint);
-      return { bundleId, signatures, endpoint }; // return which endpoint accepted the bundle
+      return { bundleId, signatures, endpoint };
     } catch (err: any) {
+      const region = endpoint.match(/\/\/([^.]+)/)?.[1] ?? endpoint;
+      errors.push(`${region}: ${err.message}`);
       if ((err as any).isRateLimit) {
         await new Promise((r) => setTimeout(r, 1_000));
-        continue;
       }
-      throw err;
+      // always try the next endpoint regardless of error type
     }
   }
-  const e = new Error("All Jito endpoints rate-limited (429)");
-  (e as any).isRateLimit = true;
+  const allRateLimited = errors.every((e) => e.includes("RATE_LIMITED") || e.includes("429"));
+  const e = new Error(
+    allRateLimited
+      ? "All Jito endpoints rate-limited (429)"
+      : `All Jito endpoints rejected the bundle:\n${errors.join("\n")}`
+  );
+  (e as any).isRateLimit = allRateLimited;
   throw e;
 }
 
@@ -338,21 +352,27 @@ export async function executeAtomicLaunchBundle(
 
   // ── Balance pre-checks ───────────────────────────────────────────────────────
   // Each wallet needs buy amount + ~0.005 SOL buffer for ATA rent, PDA init, fees.
+  // The Jito tip is paid by the first bundle wallet (or the creator if no wallets).
   const RENT_BUFFER = 0.005 * LAMPORTS_PER_SOL;
   {
+    const hasBuyWallets = buyEntries.length > 0;
     const creatorBalance = await connection.getBalance(creatorKeypair.publicKey);
-    const creatorNeed = tipLamports + Math.round(devSolAmount * LAMPORTS_PER_SOL) + RENT_BUFFER;
+    const creatorNeed = Math.round(devSolAmount * LAMPORTS_PER_SOL) + RENT_BUFFER +
+      (hasBuyWallets ? 0 : tipLamports); // tip only from creator when no wallet buys
     if (creatorBalance < creatorNeed) {
       throw new Error(
         `Creator wallet has ${(creatorBalance / LAMPORTS_PER_SOL).toFixed(4)} SOL but needs at least ` +
-        `${(creatorNeed / LAMPORTS_PER_SOL).toFixed(4)} SOL (buy + tip + fees).`
+        `${(creatorNeed / LAMPORTS_PER_SOL).toFixed(4)} SOL (buy + fees${hasBuyWallets ? "" : " + tip"}).`
       );
     }
-    for (const entry of buyEntries) {
+    for (let i = 0; i < buyEntries.length; i++) {
+      const entry = buyEntries[i];
       const entryWallet = bundleWallets.find((w) => w.address === entry.address);
       const entrySol = entryWallet?.solAmount ?? solPerWallet;
       const bal = await connection.getBalance(entry.keypair.publicKey);
-      const need = Math.round(entrySol * LAMPORTS_PER_SOL) + RENT_BUFFER;
+      const isFirstWallet = i === 0;
+      const need = Math.round(entrySol * LAMPORTS_PER_SOL) + RENT_BUFFER +
+        (isFirstWallet ? tipLamports : 0); // first wallet pays the Jito tip
       if (bal < need) {
         onProgress(
           `Warning: wallet ${entry.address.slice(0, 8)} has ${(bal / LAMPORTS_PER_SOL).toFixed(4)} SOL, ` +
@@ -386,30 +406,38 @@ export async function executeAtomicLaunchBundle(
   }
 
   // ── Assemble VersionedTransactions (v0) ──────────────────────────────────────
-  // v0 is what every working pump.fun bundler uses with Jito's REST API.
-  // Tip is the LAST instruction in tx[0] (matches how working bundlers structure it).
+  // tx[0] = create + dev buy. The Jito tip lives in tx[1] (first wallet buy) to
+  // keep tx[0] under Solana's 1232-byte limit: the IPFS metadata URI alone can
+  // push tx[0] over the limit when the tip account (32 bytes) + tip instruction
+  // are included in the same transaction. Moving the tip to tx[1] fixes this.
+  // When there are no bundle wallets the tip stays in tx[0] (it's small enough).
   function assembleTxs(blockhash: string): { encodedTxs: string[]; signatures: string[] } {
     const tipAccount = randomTipAccount();
     const encodedTxs: string[] = [];
     const signatures: string[] = [];
+    const capped = buyEntries.slice(0, MAX_BUY_TXS);
+    const hasBuyWallets = capped.length > 0;
 
-    // tx[0]: create + dev buy + tip (tip is LAST)
+    // tx[0]: create + dev buy (tip excluded when wallet buys follow)
     const createVtx = new VersionedTransaction(
       new TransactionMessage({
         payerKey: creatorKeypair.publicKey,
         recentBlockhash: blockhash,
-        instructions: [
-          ...createAndDevBuyIxs,
-          SystemProgram.transfer({ fromPubkey: creatorKeypair.publicKey, toPubkey: tipAccount, lamports: tipLamports }),
-        ],
+        instructions: hasBuyWallets
+          ? [...createAndDevBuyIxs]
+          : [
+              ...createAndDevBuyIxs,
+              SystemProgram.transfer({ fromPubkey: creatorKeypair.publicKey, toPubkey: tipAccount, lamports: tipLamports }),
+            ],
       }).compileToV0Message()
     );
     createVtx.sign([creatorKeypair, mintKeypair]);
     encodedTxs.push(bs58.encode(createVtx.serialize()));
     signatures.push(bs58.encode(createVtx.signatures[0]));
 
-    // tx[1..4]: one v0 transaction per wallet
-    for (const entry of buyEntries.slice(0, MAX_BUY_TXS)) {
+    // tx[1..4]: one v0 transaction per wallet; first wallet pays the Jito tip
+    for (let i = 0; i < capped.length; i++) {
+      const entry = capped[i];
       const buyVtx = new VersionedTransaction(
         new TransactionMessage({
           payerKey: entry.keypair.publicKey,
@@ -417,6 +445,9 @@ export async function executeAtomicLaunchBundle(
           instructions: [
             priorityFeeIx(300_000),
             computeUnitLimitIx(300_000),
+            ...(i === 0
+              ? [SystemProgram.transfer({ fromPubkey: entry.keypair.publicKey, toPubkey: tipAccount, lamports: tipLamports })]
+              : []),
             ...entry.ixs,
           ],
         }).compileToV0Message()

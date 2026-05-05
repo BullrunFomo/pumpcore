@@ -64,6 +64,43 @@ async function fetchRSS(url: string): Promise<KYMEntry[]> {
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const xml = await res.text();
+  return parseRSSXml(xml);
+}
+
+// Fallback: fetch KYM RSS via rss2json.com proxy (different IP, bypasses blocks)
+async function fetchRSSViaProxy(rssUrl: string): Promise<KYMEntry[]> {
+  const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+  const res = await fetch(api, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(12000),
+  });
+  if (!res.ok) throw new Error(`Proxy HTTP ${res.status}`);
+  const data = await res.json();
+  if (data.status !== "ok") throw new Error(`Proxy error: ${data.message}`);
+
+  return (data.items ?? []).map((item: {
+    title: string; link: string; pubDate: string;
+    author: string; thumbnail: string; description: string;
+  }) => {
+    const desc$ = cheerio.load(item.description ?? "");
+    const imgSrc =
+      item.thumbnail && item.thumbnail.startsWith("http")
+        ? item.thumbnail
+        : desc$("img").first().attr("src") || null;
+    const { added: descAdded, updated: descUpdated } = extractDatesFromDescription(item.description ?? "");
+    const date = descAdded || (item.pubDate ? new Date(item.pubDate).toISOString() : null);
+    return {
+      title: item.title,
+      url: item.link,
+      thumbnail: imgSrc && imgSrc.startsWith("http") ? imgSrc : null,
+      author: item.author || null,
+      date,
+      updatedDate: descUpdated,
+    } satisfies KYMEntry;
+  });
+}
+
+function parseRSSXml(xml: string): KYMEntry[] {
   const $ = cheerio.load(xml, { xmlMode: true });
   const entries: KYMEntry[] = [];
 
@@ -77,11 +114,9 @@ async function fetchRSS(url: string): Promise<KYMEntry[]> {
       $(el).find("author").first().text().trim() ||
       null;
 
-    // Pull first <img src> out of the description HTML
     const desc$ = cheerio.load(description);
     const imgSrc = desc$("img").first().attr("src") || null;
 
-    // pubDate = added date; also try to pull updated from description
     const { added: descAdded, updated: descUpdated } = extractDatesFromDescription(description);
     const date = descAdded || (pubDate ? new Date(pubDate).toISOString() : null);
     const updatedDate =
@@ -151,22 +186,35 @@ export async function GET(req: NextRequest) {
   try {
     let entries: KYMEntry[];
 
-    if (section === "confirmed") {
-      entries = await fetchRSS(`${BASE}/memes.rss`);
-    } else {
+    const rssUrl =
+      section === "confirmed"
+        ? `${BASE}/memes.rss`
+        : `${BASE}/memes/submissions.rss`;
+
+    try {
+      entries = await fetchRSS(rssUrl);
+    } catch {
+      // Direct fetch blocked (e.g. IP ban) — retry via rss2json proxy
       try {
-        entries = await fetchRSS(`${BASE}/memes/submissions.rss`);
+        entries = await fetchRSSViaProxy(rssUrl);
       } catch {
-        entries = await fetchHTML("/memes/submissions");
+        entries = await fetchHTML(section === "confirmed" ? "/memes" : "/memes/submissions");
       }
     }
 
     const seen = new Set<string>();
-    const deduped = entries.filter((e) => {
-      if (seen.has(e.url)) return false;
-      seen.add(e.url);
-      return true;
-    });
+    const deduped = entries
+      .filter((e) => {
+        if (seen.has(e.url)) return false;
+        seen.add(e.url);
+        return true;
+      })
+      .sort((a, b) => {
+        if (!a.date && !b.date) return 0;
+        if (!a.date) return 1;
+        if (!b.date) return -1;
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
 
     return NextResponse.json({ entries: deduped.slice(0, 40) });
   } catch (err) {

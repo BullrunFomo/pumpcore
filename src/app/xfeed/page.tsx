@@ -275,7 +275,7 @@ function XFeedPanel() {
 
 // ─── KYM Feed Panel ───────────────────────────────────────────────────────────
 
-function KYMFeedPanel({ onLaunch }: { onLaunch: (url: string, image?: string | null) => void }) {
+function KYMFeedPanel({ onLaunch }: { onLaunch: (url: string, image?: string | null, name?: string) => void }) {
   const [section, setSection] = useState<"submissions" | "confirmed">("confirmed");
   const [entries, setEntries] = useState<KYMEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -436,7 +436,7 @@ function KYMFeedPanel({ onLaunch }: { onLaunch: (url: string, image?: string | n
               </div>
             </div>
             <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onLaunch(entry.url, entry.thumbnail); }}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onLaunch(entry.url, entry.thumbnail, entry.title); }}
               className="shrink-0 flex items-center justify-center w-8 h-8 rounded transition-all"
               style={{
                 background: "rgba(139,92,246,0.1)",
@@ -469,6 +469,7 @@ function DexertoFeedPanel({ onLaunch }: { onLaunch: (url: string, image?: string
   const [error, setError] = useState<string | null>(null);
   const [hoveredUrl, setHoveredUrl] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const catScrollRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -526,25 +527,32 @@ function DexertoFeedPanel({ onLaunch }: { onLaunch: (url: string, image?: string
       {articles.length > 0 && (() => {
         const cats = Array.from(new Set(articles.map(a => a.category).filter(Boolean))) as string[];
         const all = [null, ...cats] as (string | null)[];
+        const scroll = () => catScrollRef.current?.scrollBy({ left: 120, behavior: "smooth" });
         return (
-          <div
-            className="shrink-0 flex h-10 overflow-x-auto no-scrollbar"
-            style={{ borderBottom: X_SEP, background: "rgba(13,17,24,0.6)" }}
-          >
-            {all.map((cat, i) => (
-              <button
-                key={cat ?? "__all__"}
-                onClick={() => setActiveCategory(cat)}
-                className="flex-1 text-[10px] font-semibold uppercase tracking-wider transition-all shrink-0"
-                style={{
-                  background: activeCategory === cat ? "rgba(234,179,8,0.18)" : "transparent",
-                  color: activeCategory === cat ? "#facc15" : "rgba(250,204,21,0.45)",
-                  borderRight: i < all.length - 1 ? "1px solid rgba(79,131,255,0.15)" : "none",
-                }}
-              >
-                {cat ?? "All"}
-              </button>
-            ))}
+          <div className="shrink-0 flex h-10 relative" style={{ borderBottom: X_SEP, background: "rgba(13,17,24,0.6)" }}>
+            <div ref={catScrollRef} className="flex flex-1 overflow-x-auto no-scrollbar">
+              {all.map((cat, i) => (
+                <button
+                  key={cat ?? "__all__"}
+                  onClick={() => setActiveCategory(cat)}
+                  className="shrink-0 px-3 lg:flex-1 text-[10px] font-semibold uppercase tracking-wider transition-all"
+                  style={{
+                    background: activeCategory === cat ? "rgba(234,179,8,0.18)" : "transparent",
+                    color: activeCategory === cat ? "#facc15" : "rgba(250,204,21,0.45)",
+                    borderRight: i < all.length - 1 ? "1px solid rgba(79,131,255,0.15)" : "none",
+                  }}
+                >
+                  {cat ?? "All"}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={scroll}
+              className="lg:hidden shrink-0 flex items-center justify-center w-8 h-full transition-opacity hover:opacity-100 opacity-70"
+              style={{ borderLeft: "1px solid rgba(79,131,255,0.15)", color: "rgba(250,204,21,0.6)", background: "rgba(13,17,24,0.9)" }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
           </div>
         );
       })()}
@@ -663,13 +671,13 @@ const FEED_TABS: { id: FeedTab; label: string }[] = [
 ];
 
 export default function XFeedPage() {
-  const [launchTarget, setLaunchTarget] = useState<{ url: string; image?: string | null } | null>(null);
+  const [launchTarget, setLaunchTarget] = useState<{ url: string; image?: string | null; name?: string } | null>(null);
   const [activeTab, setActiveTab] = useState<FeedTab>("viral");
 
   return (
     <div className="flex flex-col flex-1 min-h-0 px-3 py-3 sm:px-6 sm:py-5 w-full">
       {/* Page header */}
-      <div className="shrink-0 mb-3">
+      <div className="shrink-0 mb-4">
         <h1 className="text-lg sm:text-2xl font-bold text-zinc-100 tracking-tight">Feed</h1>
         <p className="text-xs text-zinc-600 mt-0.5">Live X feed, latest memes and viral news.</p>
       </div>
@@ -707,7 +715,7 @@ export default function XFeedPage() {
         })}
       </div>
 
-      {/* Layout: stacked on mobile (one tab at a time), 3 columns on lg+ */}
+      {/* Layout: one tab at a time on mobile, 3 columns on lg+ */}
       <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4">
 
         <div className={`flex flex-col min-h-[500px] lg:flex-1 lg:min-h-0 ${activeTab !== "x" ? "hidden lg:flex" : ""}`}>
@@ -715,7 +723,7 @@ export default function XFeedPage() {
         </div>
 
         <div className={`flex flex-col min-h-[500px] lg:flex-1 lg:min-h-0 ${activeTab !== "kym" ? "hidden lg:flex" : ""}`}>
-          <KYMFeedPanel onLaunch={(url, image) => setLaunchTarget({ url, image })} />
+          <KYMFeedPanel onLaunch={(url, image, name) => setLaunchTarget({ url, image, name })} />
         </div>
 
         <div className={`flex flex-col min-h-[500px] lg:flex-1 lg:min-h-0 ${activeTab !== "viral" ? "hidden lg:flex" : ""}`}>
@@ -725,7 +733,7 @@ export default function XFeedPage() {
       </div>
 
       {launchTarget && (
-        <QuickLaunchModal prefillUrl={launchTarget.url} prefillImage={launchTarget.image} onClose={() => setLaunchTarget(null)} />
+        <QuickLaunchModal prefillUrl={launchTarget.url} prefillImage={launchTarget.image} prefillName={launchTarget.name} onClose={() => setLaunchTarget(null)} />
       )}
     </div>
   );
