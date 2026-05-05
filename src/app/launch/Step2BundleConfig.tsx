@@ -74,9 +74,9 @@ export default function Step2BundleConfig() {
     <div className="space-y-4">
 
       {/* Toolbar */}
-      <div className="rounded-lg px-3 sm:px-4 py-3 flex items-center flex-wrap gap-2 sm:gap-3" style={cardStyle}>
-        {/* Launch mode */}
-        <div className="flex items-center gap-1.5">
+      <div className="rounded-lg px-3 sm:px-4 py-3 flex flex-col gap-2" style={cardStyle}>
+        {/* Row 1: Launch mode (+ stagger delay on desktop) */}
+        <div className="flex items-center gap-2 sm:gap-3">
           {([
             { value: "classic" as LaunchType, label: "Classic", icon: <Zap className="h-3.5 w-3.5" /> },
             { value: "stagger" as LaunchType, label: "Stagger", icon: <Layers className="h-3.5 w-3.5" /> },
@@ -99,67 +99,11 @@ export default function Step2BundleConfig() {
               </button>
             );
           })}
-        </div>
 
-        <div className="w-px h-5 bg-zinc-800 mx-1" />
-
-        {/* Tip button */}
-        <div className="relative" ref={tipRef}>
-          <button
-            onClick={() => setTipOpen((o) => !o)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
-            style={{
-              background: tipOpen ? "rgba(79,131,255,0.08)" : "rgba(7,10,18,0.6)",
-              border: `1px solid ${tipOpen ? "rgba(79,131,255,0.35)" : "rgba(28,38,56,0.9)"}`,
-              color: tipOpen ? "#4f83ff" : "#a1a1aa",
-            }}
-          >
-            Tip: {bundleConfig.jitoTipSol} SOL
-            <ChevronDown className="h-3 w-3" />
-          </button>
-          {tipOpen && (
-            <div
-              className="absolute left-0 top-full mt-2 z-50 rounded-md p-4 space-y-2 w-56"
-              style={{ background: "rgba(10,14,22,0.98)", border: "1px solid rgba(28,38,56,0.9)", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}
-            >
-              <Label className="text-[10px] text-zinc-500 uppercase tracking-wider">Jito Tip (SOL)</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min={0.0001}
-                  step={0.0005}
-                  value={bundleConfig.jitoTipSol}
-                  onChange={(e) => updateBundleConfig({ jitoTipSol: parseFloat(e.target.value) || 0.005 })}
-                  className="h-8 text-sm"
-                />
-              </div>
-              <p className="text-[10px] text-zinc-600">Higher tip = faster inclusion</p>
-            </div>
-          )}
-        </div>
-
-        {/* Auto-Sell button */}
-        <button
-          onClick={() => setAutoSellOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
-          style={{
-            background: autoSell.enabled ? "rgba(79,131,255,0.08)" : "rgba(7,10,18,0.6)",
-            border: `1px solid ${autoSell.enabled ? "rgba(79,131,255,0.35)" : "rgba(28,38,56,0.9)"}`,
-            color: autoSell.enabled ? "#4f83ff" : "#a1a1aa",
-          }}
-        >
-          <Timer className="h-3.5 w-3.5" />
-          Auto-Sell
-          {autoSell.enabled && (
-            <span className="w-1.5 h-1.5 rounded-full bg-[#4f83ff]" style={{ boxShadow: "0 0 6px rgba(79,131,255,0.8)" }} />
-          )}
-        </button>
-
-        {/* Stagger delay inline */}
-        {bundleConfig.launchType === "stagger" && (
-          <>
-            <div className="hidden sm:block w-px h-5 bg-zinc-800 mx-1" />
-            <div className="flex items-center gap-3 w-full sm:flex-1">
+          {/* Stagger delay — same row on sm+, hidden on mobile (shown in row 2) */}
+          {bundleConfig.launchType === "stagger" && (
+            <div className="hidden sm:flex items-center gap-3 flex-1">
+              <div className="w-px h-5 bg-zinc-800 mx-1" />
               <span className="text-[10px] text-zinc-500 uppercase tracking-wider shrink-0">Delay</span>
               <Slider
                 min={0}
@@ -173,8 +117,81 @@ export default function Step2BundleConfig() {
                 {bundleConfig.staggerDelayMs}ms
               </span>
             </div>
-          </>
-        )}
+          )}
+        </div>
+
+        {/* Row 2: Tip + Auto-Sell (+ stagger delay on mobile) */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Tip button */}
+          <div className="relative" ref={tipRef}>
+            <button
+              onClick={() => setTipOpen((o) => !o)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
+              style={{
+                background: tipOpen ? "rgba(79,131,255,0.08)" : "rgba(7,10,18,0.6)",
+                border: `1px solid ${tipOpen ? "rgba(79,131,255,0.35)" : "rgba(28,38,56,0.9)"}`,
+                color: tipOpen ? "#4f83ff" : "#a1a1aa",
+              }}
+            >
+              Tip: {bundleConfig.jitoTipSol} SOL
+              <ChevronDown className="h-3 w-3" />
+            </button>
+            {tipOpen && (
+              <div
+                className="absolute left-0 top-full mt-2 z-50 rounded-md p-4 space-y-2 w-56"
+                style={{ background: "rgba(10,14,22,0.98)", border: "1px solid rgba(28,38,56,0.9)", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}
+              >
+                <Label className="text-[10px] text-zinc-500 uppercase tracking-wider">Jito Tip (SOL)</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={0.0001}
+                    step={0.0005}
+                    value={bundleConfig.jitoTipSol}
+                    onChange={(e) => updateBundleConfig({ jitoTipSol: parseFloat(e.target.value) || 0.005 })}
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <p className="text-[10px] text-zinc-600">Higher tip = faster inclusion</p>
+              </div>
+            )}
+          </div>
+
+          {/* Auto-Sell button */}
+          <button
+            onClick={() => setAutoSellOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
+            style={{
+              background: autoSell.enabled ? "rgba(79,131,255,0.08)" : "rgba(7,10,18,0.6)",
+              border: `1px solid ${autoSell.enabled ? "rgba(79,131,255,0.35)" : "rgba(28,38,56,0.9)"}`,
+              color: autoSell.enabled ? "#4f83ff" : "#a1a1aa",
+            }}
+          >
+            <Timer className="h-3.5 w-3.5" />
+            Auto-Sell
+            {autoSell.enabled && (
+              <span className="w-1.5 h-1.5 rounded-full bg-[#4f83ff]" style={{ boxShadow: "0 0 6px rgba(79,131,255,0.8)" }} />
+            )}
+          </button>
+
+          {/* Stagger delay — mobile only */}
+          {bundleConfig.launchType === "stagger" && (
+            <div className="sm:hidden flex items-center gap-2 flex-1">
+              <div className="w-px h-5 bg-zinc-800 mx-1" />
+              <Slider
+                min={0}
+                max={10000}
+                step={100}
+                value={[bundleConfig.staggerDelayMs]}
+                onValueChange={([v]) => updateBundleConfig({ staggerDelayMs: v })}
+                className="flex-1"
+              />
+              <span className="text-xs font-semibold tabular-nums shrink-0" style={{ color: "#4f83ff" }}>
+                {bundleConfig.staggerDelayMs}ms
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Auto-Sell modal */}
