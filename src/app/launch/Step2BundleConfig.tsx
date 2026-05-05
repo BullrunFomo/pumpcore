@@ -75,8 +75,8 @@ export default function Step2BundleConfig() {
 
       {/* Toolbar */}
       <div className="rounded-lg px-3 sm:px-4 py-3 flex flex-col gap-2" style={cardStyle}>
-        {/* Row 1: Launch mode (+ stagger delay on desktop) */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        {/* Row 1: Launch mode */}
+        <div className="grid grid-cols-2 gap-2">
           {([
             { value: "classic" as LaunchType, label: "Classic", icon: <Zap className="h-3.5 w-3.5" /> },
             { value: "stagger" as LaunchType, label: "Stagger", icon: <Layers className="h-3.5 w-3.5" /> },
@@ -86,7 +86,7 @@ export default function Step2BundleConfig() {
               <button
                 key={t.value}
                 onClick={() => updateBundleConfig({ launchType: t.value })}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
+                className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
                 style={{
                   background: active ? "rgba(79,131,255,0.12)" : "rgba(7,10,18,0.6)",
                   border: `1px solid ${active ? "rgba(79,131,255,0.4)" : "rgba(28,38,56,0.9)"}`,
@@ -99,31 +99,12 @@ export default function Step2BundleConfig() {
               </button>
             );
           })}
-
-          {/* Stagger delay — same row on sm+, hidden on mobile (shown in row 2) */}
-          {bundleConfig.launchType === "stagger" && (
-            <div className="hidden sm:flex items-center gap-3 flex-1">
-              <div className="w-px h-5 bg-zinc-800 mx-1" />
-              <span className="text-[10px] text-zinc-500 uppercase tracking-wider shrink-0">Delay</span>
-              <Slider
-                min={0}
-                max={10000}
-                step={100}
-                value={[bundleConfig.staggerDelayMs]}
-                onValueChange={([v]) => updateBundleConfig({ staggerDelayMs: v })}
-                className="flex-1"
-              />
-              <span className="text-xs font-semibold tabular-nums shrink-0" style={{ color: "#4f83ff" }}>
-                {bundleConfig.staggerDelayMs}ms
-              </span>
-            </div>
-          )}
         </div>
 
-        {/* Row 2: Tip + Auto-Sell (+ stagger delay on mobile) */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        {/* Row 2: Tip + Auto-Sell */}
+        <div className="grid grid-cols-2 gap-2">
           {/* Tip button */}
-          <div className="relative flex-1" ref={tipRef}>
+          <div className="relative" ref={tipRef}>
             <button
               onClick={() => setTipOpen((o) => !o)}
               className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
@@ -160,7 +141,7 @@ export default function Step2BundleConfig() {
           {/* Auto-Sell button */}
           <button
             onClick={() => setAutoSellOpen(true)}
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
             style={{
               background: autoSell.enabled ? "rgba(79,131,255,0.08)" : "rgba(7,10,18,0.6)",
               border: `1px solid ${autoSell.enabled ? "rgba(79,131,255,0.35)" : "rgba(28,38,56,0.9)"}`,
@@ -173,25 +154,25 @@ export default function Step2BundleConfig() {
               <span className="w-1.5 h-1.5 rounded-full bg-[#4f83ff]" style={{ boxShadow: "0 0 6px rgba(79,131,255,0.8)" }} />
             )}
           </button>
-
-          {/* Stagger delay — mobile only */}
-          {bundleConfig.launchType === "stagger" && (
-            <div className="sm:hidden flex items-center gap-2 flex-1">
-              <div className="w-px h-5 bg-zinc-800 mx-1" />
-              <Slider
-                min={0}
-                max={10000}
-                step={100}
-                value={[bundleConfig.staggerDelayMs]}
-                onValueChange={([v]) => updateBundleConfig({ staggerDelayMs: v })}
-                className="flex-1"
-              />
-              <span className="text-xs font-semibold tabular-nums shrink-0" style={{ color: "#4f83ff" }}>
-                {bundleConfig.staggerDelayMs}ms
-              </span>
-            </div>
-          )}
         </div>
+
+        {/* Row 3: Stagger delay (when stagger selected) */}
+        {bundleConfig.launchType === "stagger" && (
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] text-zinc-500 uppercase tracking-wider shrink-0">Delay</span>
+            <Slider
+              min={0}
+              max={10000}
+              step={100}
+              value={[bundleConfig.staggerDelayMs]}
+              onValueChange={([v]) => updateBundleConfig({ staggerDelayMs: v })}
+              className="flex-1"
+            />
+            <span className="text-xs font-semibold tabular-nums shrink-0" style={{ color: "#4f83ff" }}>
+              {bundleConfig.staggerDelayMs}ms
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Auto-Sell modal */}
