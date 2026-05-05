@@ -95,7 +95,6 @@ export default function Footer() {
             className="flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-medium transition-all duration-150 text-zinc-600 hover:text-[#4f83ff]"
           >
             {item.icon}
-            {item.label && <span>{item.label}</span>}
           </a>
         ))}
 
