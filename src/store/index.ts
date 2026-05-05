@@ -10,7 +10,6 @@ import type {
   TokenConfig,
   BundleConfig,
   AutoSellConfig,
-  SniperGuardConfig,
   LaunchLogEntry,
   TradeRecord,
   TokenPrice,
@@ -65,14 +64,6 @@ function defaultAutoSell(): AutoSellConfig {
   };
 }
 
-function defaultSniperGuard(): SniperGuardConfig {
-  return {
-    enabled: false,
-    solThreshold: 5,
-    action: "stop",
-  };
-}
-
 // ─── Store Interface ──────────────────────────────────────────────────────────
 
 interface AppState {
@@ -109,7 +100,6 @@ interface AppState {
   updateTokenConfig: (patch: Partial<TokenConfig>) => void;
   updateBundleConfig: (patch: Partial<BundleConfig>) => void;
   updateAutoSell: (patch: Partial<AutoSellConfig>) => void;
-  updateSniperGuard: (patch: Partial<SniperGuardConfig>) => void;
   setLaunching: (v: boolean) => void;
   addLaunchLog: (entry: Omit<LaunchLogEntry, "id" | "timestamp">) => void;
   setLaunched: (v: boolean) => void;
@@ -220,7 +210,6 @@ export const useStore = create<AppState>()(
         tokenConfig: defaultTokenConfig(),
         bundleConfig: defaultBundleConfig(),
         autoSell: defaultAutoSell(),
-        sniperGuard: defaultSniperGuard(),
         isLaunching: false,
         logs: [],
         launched: false,
@@ -248,13 +237,6 @@ export const useStore = create<AppState>()(
             autoSell: { ...s.launch.autoSell, ...patch },
           },
         })),
-      updateSniperGuard: (patch) =>
-        set((s) => ({
-          launch: {
-            ...s.launch,
-            sniperGuard: { ...s.launch.sniperGuard, ...patch },
-          },
-        })),
       setLaunching: (v) =>
         set((s) => ({ launch: { ...s.launch, isLaunching: v } })),
       addLaunchLog: (entry) =>
@@ -276,7 +258,6 @@ export const useStore = create<AppState>()(
             tokenConfig: defaultTokenConfig(),
             bundleConfig: defaultBundleConfig(),
             autoSell: defaultAutoSell(),
-            sniperGuard: defaultSniperGuard(),
             isLaunching: false,
             logs: [],
             launched: false,
@@ -287,7 +268,7 @@ export const useStore = create<AppState>()(
       launches: [],
       addLaunch: (record) =>
         set((s) => ({
-          launches: [{ ...record, id: randomId() }, ...s.launches].slice(0, 50),
+          launches: [{ ...record, id: randomId() }, ...s.launches].slice(0, 10000),
         })),
       updateLaunch: (id, patch) =>
         set((s) => ({

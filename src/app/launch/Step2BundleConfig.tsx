@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { Crown, Timer, TrendingUp, Zap, Layers, ChevronDown, X, Shield, Shuffle } from "lucide-react";
+import { Crown, Timer, TrendingUp, Zap, Layers, ChevronDown, X, Shuffle } from "lucide-react";
 import { truncateAddress, formatSol } from "@/lib/utils";
-import type { LaunchType, AutoSellMode, SniperAction } from "@/types";
+import type { LaunchType, AutoSellMode } from "@/types";
 
 const cardStyle = {
   background: "rgba(13,17,24,0.8)",
@@ -23,8 +23,6 @@ export default function Step2BundleConfig() {
   const updateBundleConfig = useStore((s) => s.updateBundleConfig);
   const autoSell = useStore((s) => s.launch.autoSell);
   const updateAutoSell = useStore((s) => s.updateAutoSell);
-  const sniperGuard = useStore((s) => s.launch.sniperGuard);
-  const updateSniperGuard = useStore((s) => s.updateSniperGuard);
   const setLaunchStep = useStore((s) => s.setLaunchStep);
 
   const toggleWallet = (id: string) => {
@@ -57,7 +55,6 @@ export default function Step2BundleConfig() {
 
   const [tipOpen, setTipOpen] = useState(false);
   const [autoSellOpen, setAutoSellOpen] = useState(false);
-  const [sniperOpen, setSniperOpen] = useState(false);
   const tipRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -155,23 +152,6 @@ export default function Step2BundleConfig() {
           Auto-Sell
           {autoSell.enabled && (
             <span className="w-1.5 h-1.5 rounded-full bg-[#4f83ff]" style={{ boxShadow: "0 0 6px rgba(79,131,255,0.8)" }} />
-          )}
-        </button>
-
-        {/* Sniper Guard button */}
-        <button
-          onClick={() => setSniperOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
-          style={{
-            background: sniperGuard.enabled ? "rgba(255,96,96,0.08)" : "rgba(7,10,18,0.6)",
-            border: `1px solid ${sniperGuard.enabled ? "rgba(255,96,96,0.35)" : "rgba(28,38,56,0.9)"}`,
-            color: sniperGuard.enabled ? "#ff6060" : "#a1a1aa",
-          }}
-        >
-          <Shield className="h-3.5 w-3.5" />
-          Sniper Guard
-          {sniperGuard.enabled && (
-            <span className="w-1.5 h-1.5 rounded-full bg-[#ff6060]" style={{ boxShadow: "0 0 6px rgba(255,96,96,0.8)" }} />
           )}
         </button>
 
@@ -299,84 +279,6 @@ export default function Step2BundleConfig() {
                   <span className="text-xs text-zinc-500 shrink-0">MCap</span>
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Sniper Guard modal */}
-      {sniperOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: "rgba(0,0,0,0.7)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setSniperOpen(false); }}
-        >
-          <div
-            className="rounded-lg w-full max-w-sm mx-4"
-            style={{
-              background: "rgba(13,17,24,0.95)",
-              border: "1px solid rgba(28,38,56,0.8)",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-            }}
-          >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(28,38,56,0.8)]">
-              <div className="flex items-center gap-3">
-                <Shield className="h-4 w-4" style={{ color: sniperGuard.enabled ? "#ff6060" : "#3f3f46" }} />
-                <span className="text-sm font-semibold text-zinc-100">Sniper Guard</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Switch checked={sniperGuard.enabled} onCheckedChange={(v) => updateSniperGuard({ enabled: v })} />
-                <button onClick={() => setSniperOpen(false)} className="text-zinc-600 hover:text-zinc-300">
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-            <div className="px-5 py-5 space-y-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-zinc-400">SOL Threshold</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    min={0.1}
-                    step={0.5}
-                    value={sniperGuard.solThreshold}
-                    onChange={(e) => updateSniperGuard({ solThreshold: parseFloat(e.target.value) || 0 })}
-                    className="w-28"
-                  />
-                  <span className="text-xs text-zinc-500">SOL</span>
-                </div>
-                <p className="text-[10px] text-zinc-600">
-                  Trigger if external buys exceed {sniperGuard.solThreshold} SOL
-                </p>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-zinc-400">Action on Trigger</Label>
-                <div className="flex gap-2">
-                  {([
-                    { value: "stop" as SniperAction, label: "Stop Buying" },
-                    { value: "sell-all" as SniperAction, label: "Sell All" },
-                  ]).map((opt) => {
-                    const active = sniperGuard.action === opt.value;
-                    return (
-                      <button
-                        key={opt.value}
-                        onClick={() => updateSniperGuard({ action: opt.value })}
-                        className="flex-1 py-1.5 rounded text-xs font-semibold"
-                        style={{
-                          background: active ? "rgba(255,96,96,0.1)" : "rgba(7,10,18,0.6)",
-                          border: `1px solid ${active ? "rgba(255,96,96,0.4)" : "rgba(28,38,56,0.9)"}`,
-                          color: active ? "#ff6060" : "#71717a",
-                        }}
-                      >
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="text-[10px] text-zinc-600">
-                  {sniperGuard.action === "stop" ? "Halt remaining wallet buys in queue" : "Immediately liquidate all positions"}
-                </p>
-              </div>
             </div>
           </div>
         </div>

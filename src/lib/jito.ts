@@ -552,18 +552,12 @@ export async function executeAtomicLaunchBundle(
 
 export async function executeStaggerBuy(
   params: ClassicBundleParams & { staggerDelayMs: number },
-  onProgress: (msg: string, level?: string, txSig?: string, walletAddr?: string) => void,
-  shouldStop: () => boolean
+  onProgress: (msg: string, level?: string, txSig?: string, walletAddr?: string) => void
 ): Promise<{ results: { address: string; tokenAmount: number }[] }> {
   const { connection, mint, wallets, solPerWallet, staggerDelayMs, slippageBps = 500, isToken2022 = false } = params;
   const results: { address: string; tokenAmount: number }[] = [];
 
   for (let i = 0; i < wallets.length; i++) {
-    if (shouldStop()) {
-      onProgress("Sniper guard triggered — stopping buys", "warn");
-      break;
-    }
-
     const w = wallets[i];
     const bs58mod = (await import("bs58")).default;
 

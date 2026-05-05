@@ -144,7 +144,6 @@ export default function QuickLaunchModal({ prefillUrl, prefillImage, onClose }: 
           staggerDelayMs,
         },
         autoSell: { enabled: false, mode: "time", sellPct: 100, timeSeconds: 300, mcapTarget: 50000 },
-        sniperGuard: { enabled: false, solThreshold: 5, action: "stop" },
       }));
 
       const res = await fetch("/api/launch", { method: "POST", body: formData });

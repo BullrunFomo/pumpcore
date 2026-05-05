@@ -18,7 +18,6 @@ const sections = [
   { id: "launch",          label: "Launch a Token",    icon: Rocket },
   { id: "bundle",          label: "Bundle & Stagger",  icon: Layers },
   { id: "auto-sell",       label: "Auto-Sell",         icon: Zap },
-  { id: "sniper-guard",    label: "Sniper Guard",      icon: Shield },
   { id: "manage",          label: "Manage Positions",  icon: Settings },
 ];
 
@@ -369,7 +368,7 @@ export default function DocsPage() {
                 },
                 {
                   n: 3, title: "Optional Settings",
-                  body: "Configure Auto-Sell (time-based or market-cap target) and Sniper Guard (volume threshold protection). Both are disabled by default.",
+                  body: "Configure Auto-Sell (time-based or market-cap target). Disabled by default.",
                   extra: null,
                 },
                 {
@@ -428,14 +427,12 @@ export default function DocsPage() {
                   </div>
                   <p className="text-xs text-zinc-400 leading-relaxed">
                     Dev wallet creates the token; remaining wallets buy sequentially with a
-                    configurable delay between each. Slower but allows Sniper Guard to monitor
-                    on-chain volume between transactions.
+                    configurable delay between each.
                   </p>
                 </div>
               </div>
               <InfoBox>
-                Classic mode is the safest choice for most launches. Use Stagger only when you need
-                Sniper Guard's per-transaction monitoring.
+                Classic mode is the safest choice for most launches.
               </InfoBox>
             </Card>
           </section>
@@ -478,44 +475,6 @@ export default function DocsPage() {
                 interrupted before the trigger fires, the sell will not execute. Monitor your positions
                 manually as a fallback.
               </WarnBox>
-            </Card>
-          </section>
-
-          {/* ── SNIPER GUARD ── */}
-          <section>
-            <SectionAnchor id="sniper-guard" />
-            <Card>
-              <SectionTitle icon={Shield}>Sniper Guard</SectionTitle>
-              <p className="text-sm text-zinc-400 leading-relaxed mb-5">
-                Sniper Guard is only active in <Badge color="zinc">Stagger</Badge> mode. It monitors on-chain
-                logs between each staggered buy and triggers a protective action if it detects suspicious
-                external buy volume above your configured SOL threshold.
-              </p>
-              <div className="grid sm:grid-cols-2 gap-4 mb-5">
-                {[
-                  {
-                    label: "Stop",
-                    desc: "Halt all remaining staggered buys. No further wallets will execute purchases. Protects remaining capital from entering an already-sniped token.",
-                  },
-                  {
-                    label: "Sell All",
-                    desc: "Immediately liquidate all positions that have already been filled, then halt further buys. Attempts to exit before price impact from sniper selling.",
-                  },
-                ].map(({ label, desc }) => (
-                  <div
-                    key={label}
-                    className="rounded-lg p-4"
-                    style={{ background: "rgba(20,28,40,0.8)", border: "1px solid rgba(28,38,56,0.8)" }}
-                  >
-                    <p className="text-xs font-semibold text-zinc-200 mb-1">{label}</p>
-                    <p className="text-xs text-zinc-400 leading-relaxed">{desc}</p>
-                  </div>
-                ))}
-              </div>
-              <InfoBox>
-                Set your SOL threshold conservatively. A threshold that is too low will trigger on
-                legitimate organic buy activity. Recommended starting point: 5 SOL.
-              </InfoBox>
             </Card>
           </section>
 

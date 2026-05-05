@@ -10,7 +10,6 @@ import {
 } from "@/lib/pumpfun";
 import { uploadMetadata } from "@/lib/ipfs";
 import { executeAtomicLaunchBundle, executeStaggerBuy } from "@/lib/jito";
-import { SniperGuard } from "@/lib/sniper-guard";
 
 // ─── Auto-sell Helpers ────────────────────────────────────────────────────────
 
@@ -110,7 +109,7 @@ export async function POST(req: NextRequest) {
         }
 
         const config = JSON.parse(configRaw);
-        const { tokenConfig, bundleConfig, autoSell, sniperGuard } = config;
+        const { tokenConfig, bundleConfig, autoSell } = config;
 
         const connection = getConnection();
 
@@ -201,7 +200,6 @@ export async function POST(req: NextRequest) {
           createAndDevBuyIxs.push(...devBuyIxs);
         }
         const bundleWallets = bundleConfig.selectedWallets.slice(1); // all wallets except dev
-        let stopped = false;
 
         // ── Step 3: Launch ────────────────────────────────────────────────────
         if (bundleConfig.launchType === "classic") {
@@ -248,38 +246,6 @@ export async function POST(req: NextRequest) {
           }
 
           if (bundleWallets.length > 0) {
-            let sniperInstance: SniperGuard | null = null;
-            if (sniperGuard.enabled) {
-              log(controller, `Sniper guard active: threshold ${sniperGuard.solThreshold} SOL`, "info");
-              sniperInstance = new SniperGuard({
-                connection,
-                mint: mintPubkey,
-                ownAddresses: bundleConfig.selectedWallets.map((w: { address: string }) => w.address),
-                solThreshold: sniperGuard.solThreshold,
-                action: sniperGuard.action,
-                onTrigger: async (action: string) => {
-                  log(controller, `Sniper guard triggered! Action: ${action}`, "warn");
-                  if (action === "stop") {
-                    stopped = true;
-                  } else if (action === "sell-all") {
-                    stopped = true;
-                    log(controller, "Executing emergency sell-all...", "warn");
-                    for (const w of bundleConfig.selectedWallets) {
-                      try {
-                        const kp = keypairFromPrivateKey(w.privateKey);
-                        const tokenBal = await getTokenBalance(connection, kp.publicKey, mintPubkey);
-                        if (tokenBal > 0) {
-                          const result = await executeSell(connection, kp, mintPubkey, tokenBal);
-                          log(controller, `Emergency sell: ${w.address.slice(0, 8)}`, "success", result.txSig, w.address);
-                        }
-                      } catch {}
-                    }
-                  }
-                },
-              });
-              sniperInstance.start();
-            }
-
             log(controller, `Stagger buying for ${bundleWallets.length} wallets...`);
             await executeStaggerBuy(
               {
@@ -292,16 +258,13 @@ export async function POST(req: NextRequest) {
               },
               (msg, level, txSig, walletAddr) => {
                 log(controller, msg, (level as any) || "info", txSig, walletAddr);
-              },
-              () => stopped
+              }
             );
-
-            sniperInstance?.stop();
           }
         }
 
         // ── Step 4: Auto-sell ─────────────────────────────────────────────────
-        if (autoSell.enabled && !stopped) {
+        if (autoSell.enabled) {
           const sellWallets: { address: string; privateKey: string }[] = bundleConfig.selectedWallets;
           const pct = Math.min(100, Math.max(1, autoSell.sellPct)) / 100;
 

@@ -59,7 +59,6 @@ export interface BundleConfig {
 // ─── Optional Settings ────────────────────────────────────────────────────────
 
 export type AutoSellMode = "time" | "mcap";
-export type SniperAction = "stop" | "sell-all";
 
 export interface AutoSellConfig {
   enabled: boolean;
@@ -67,12 +66,6 @@ export interface AutoSellConfig {
   sellPct: number;
   timeSeconds: number;
   mcapTarget: number;
-}
-
-export interface SniperGuardConfig {
-  enabled: boolean;
-  solThreshold: number;
-  action: SniperAction;
 }
 
 // ─── Launch State ─────────────────────────────────────────────────────────────
@@ -93,7 +86,6 @@ export interface LaunchState {
   tokenConfig: TokenConfig;
   bundleConfig: BundleConfig;
   autoSell: AutoSellConfig;
-  sniperGuard: SniperGuardConfig;
   isLaunching: boolean;
   logs: LaunchLogEntry[];
   launched: boolean;

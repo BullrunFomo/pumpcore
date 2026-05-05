@@ -79,40 +79,6 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Refresh */}
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all duration-200 disabled:opacity-50 ${
-              refreshing ? "scale-95" : ""
-            }`}
-            style={{
-              border: "1px solid rgba(79,131,255,0.35)",
-              color: refreshing ? "#4f83ff" : "#93b4ff",
-              background: refreshing ? "rgba(79,131,255,0.1)" : "rgba(79,131,255,0.06)",
-              boxShadow: refreshing
-                ? "0 0 12px rgba(79,131,255,0.25), inset 0 0 8px rgba(79,131,255,0.06)"
-                : "0 0 8px rgba(79,131,255,0.1)",
-            }}
-            onMouseEnter={(e) => {
-              if (!refreshing) {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(79,131,255,0.12)";
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 14px rgba(79,131,255,0.3)";
-                (e.currentTarget as HTMLButtonElement).style.color = "#b8cfff";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!refreshing) {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(79,131,255,0.06)";
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 8px rgba(79,131,255,0.1)";
-                (e.currentTarget as HTMLButtonElement).style.color = "#93b4ff";
-              }
-            }}
-          >
-            <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshing ? "animate-spin" : ""}`} />
-            <span className="hidden sm:block">Refresh</span>
-          </button>
-
           {/* Generate Wallets */}
           <button
             onClick={() => setGenerateModalOpen(true)}

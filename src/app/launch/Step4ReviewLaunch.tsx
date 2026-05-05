@@ -50,7 +50,7 @@ export default function Step4ReviewLaunch() {
   const addTrade = useStore((s) => s.addTrade);
   const logEndRef = useRef<HTMLDivElement>(null);
 
-  const { tokenConfig, bundleConfig, autoSell, sniperGuard } = launch;
+  const { tokenConfig, bundleConfig, autoSell } = launch;
   const selectedWallets = wallets.filter((w) =>
     bundleConfig.selectedWalletIds.includes(w.id)
   );
@@ -91,7 +91,6 @@ export default function Step4ReviewLaunch() {
             staggerDelayMs: bundleConfig.staggerDelayMs,
           },
           autoSell,
-          sniperGuard,
         })
       );
 
@@ -272,14 +271,6 @@ export default function Step4ReviewLaunch() {
                   ? <span className="text-zinc-200">{autoSell.mode === "time"
                       ? `${autoSell.sellPct}% every ${autoSell.timeSeconds}s`
                       : `${autoSell.sellPct}% at $${autoSell.mcapTarget.toLocaleString()}`}</span>
-                  : <span className="text-zinc-600">Disabled</span>}
-              </div>
-            </div>
-            <div>
-              <div className="text-[10px] uppercase tracking-wider text-zinc-600 mb-1">Sniper Guard</div>
-              <div className="text-sm font-medium">
-                {sniperGuard.enabled
-                  ? <span className="text-zinc-200">{`>${sniperGuard.solThreshold} SOL → ${sniperGuard.action === "stop" ? "Stop" : "Sell All"}`}</span>
                   : <span className="text-zinc-600">Disabled</span>}
               </div>
             </div>

@@ -541,7 +541,7 @@ export default function ManagePage() {
         <div className="min-w-0 flex flex-col" style={{ flex: "1 1 0", width: "50%" }}>
           <div className="rounded-md overflow-hidden flex flex-col flex-1" style={{ background: "rgba(13,17,24,0.8)", border: "1px solid rgba(28,38,56,0.8)" }}>
 
-            <div className="overflow-x-auto overflow-y-auto flex-1">
+            <div className="overflow-x-hidden overflow-y-auto flex-1">
               <table className="w-full">
                 <thead>
                   <tr className="text-left" style={{ borderBottom: "1px solid rgba(28,38,56,0.8)" }}>
