@@ -198,7 +198,7 @@ const totalSol = wallets.reduce((s, w) => s + w.solBalance, 0);
             {/* Wallet info */}
             <div className="flex items-center gap-1.5 min-w-0">
               {devWalletId && w.id === devWalletId && (
-                <Crown className="h-3 w-3 shrink-0 text-yellow-400" title="Dev wallet" />
+                <Crown className="h-3 w-3 shrink-0 text-yellow-400" />
               )}
               <span className="font-mono text-xs text-zinc-200 truncate">
                 {truncateAddress(w.address, 4)}
