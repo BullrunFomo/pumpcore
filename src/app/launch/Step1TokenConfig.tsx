@@ -15,6 +15,7 @@ const TOKEN_TYPES: {
   icon: React.ReactNode;
   color: string;
   glow: string;
+  soon?: boolean;
 }[] = [
   {
     value: "Standard",
@@ -31,6 +32,7 @@ const TOKEN_TYPES: {
     icon: <Flame className="h-5 w-5" />,
     color: "#ff4f4f",
     glow: "rgba(255,79,79,0.25)",
+    soon: true,
   },
   {
     value: "Cashback",
@@ -39,6 +41,7 @@ const TOKEN_TYPES: {
     icon: <Coins className="h-5 w-5" />,
     color: "#4fff91",
     glow: "rgba(79,255,145,0.2)",
+    soon: true,
   },
   {
     value: "Agent",
@@ -47,6 +50,7 @@ const TOKEN_TYPES: {
     icon: <Bot className="h-5 w-5" />,
     color: "#a855f7",
     glow: "rgba(168,85,247,0.25)",
+    soon: true,
   },
 ];
 
@@ -109,7 +113,8 @@ export default function Step1TokenConfig() {
     if (file && file.type.startsWith("image/")) handleFile(file);
   };
 
-  const canContinue = tokenConfig.name.trim() && tokenConfig.symbol.trim();
+  const selectedType = TOKEN_TYPES.find((t) => t.value === tokenConfig.tokenType);
+  const canContinue = tokenConfig.name.trim() && tokenConfig.symbol.trim() && !selectedType?.soon;
 
   const inputCls =
     "w-full rounded-md bg-[rgba(7,10,18,0.7)] border border-[rgba(28,38,56,0.9)] text-zinc-200 text-sm px-3 py-2.5 outline-none transition-colors placeholder:text-zinc-600 focus:border-[rgba(79,131,255,0.5)] focus:shadow-[0_0_0_1px_rgba(79,131,255,0.15)]";
@@ -265,13 +270,25 @@ export default function Step1TokenConfig() {
               <button
                 key={t.value}
                 onClick={() => updateTokenConfig({ tokenType: t.value })}
-                className="p-4 rounded-md text-left transition-all duration-200"
+                className="relative p-4 rounded-md text-left transition-all duration-200"
                 style={{
                   background: selected ? `rgba(${hexToRgb(t.color)},0.07)` : "rgba(7,10,18,0.7)",
                   border: `1px solid ${selected ? t.color + "55" : "rgba(28,38,56,0.9)"}`,
                   boxShadow: selected ? `0 0 20px ${t.glow}, inset 0 0 20px rgba(${hexToRgb(t.color)},0.03)` : "none",
                 }}
               >
+                {t.soon && (
+                  <span
+                    className="absolute top-2 right-2 text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded"
+                    style={{
+                      background: selected ? `rgba(${hexToRgb(t.color)},0.15)` : "rgba(28,38,56,0.6)",
+                      color: selected ? t.color : "#52525b",
+                      border: `1px solid ${selected ? t.color + "55" : "rgba(28,38,56,0.9)"}`,
+                    }}
+                  >
+                    SOON!
+                  </span>
+                )}
                 <div className="mb-2.5" style={{ color: selected ? t.color : "#3f3f46" }}>
                   {t.icon}
                 </div>

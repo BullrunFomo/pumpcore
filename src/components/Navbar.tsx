@@ -45,7 +45,7 @@ export default function Navbar() {
                 key={href}
                 href={href}
                 className={cn(
-                  "h-full flex items-center gap-1.5 px-2 sm:px-3 text-xs font-bold tracking-wider uppercase transition-all border-b-2",
+                  "h-full flex items-center gap-1.5 px-4 sm:px-5 text-xs font-bold tracking-wider uppercase transition-all border-b-2",
                   active
                     ? "border-b-[#4f83ff] text-[#4f83ff]"
                     : "border-b-transparent text-zinc-500 hover:text-zinc-200"

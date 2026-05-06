@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, RefreshCw, Rocket, Wallet, Sparkles, Zap, Coins, ArrowDownToLine } from "lucide-react";
+import { Plus, RefreshCw, Rocket, Wallet, Sparkles, Zap, Coins, ArrowDownToLine, Activity } from "lucide-react";
 import { useStore } from "@/store";
 import StatsBar from "@/components/StatsBar";
 import WalletTable from "@/components/WalletTable";
@@ -9,6 +9,7 @@ import ImportWalletsModal from "@/components/ImportWalletsModal";
 import GenerateWalletsModal from "@/components/GenerateWalletsModal";
 import WithdrawModal from "@/components/WithdrawModal";
 import FundModal from "@/components/FundModal";
+import GenerateActivityModal from "@/components/GenerateActivityModal";
 import { Button } from "@/components/ui/button";
 
 export default function DashboardPage() {
@@ -22,6 +23,7 @@ export default function DashboardPage() {
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
   const [fundModalOpen, setFundModalOpen] = useState(false);
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
+  const [activityModalOpen, setActivityModalOpen] = useState(false);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -63,7 +65,7 @@ export default function DashboardPage() {
             <h1 className="text-lg sm:text-2xl font-bold text-zinc-100 tracking-tight">Dashboard</h1>
             {wallets.length > 0 && (
               <div
-                className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider"
+                className="hidden sm:flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider"
                 style={{
                   color: "#4f83ff",
                 }}
@@ -80,6 +82,31 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Generate Activity */}
+          <button
+            onClick={() => setActivityModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all duration-200"
+            style={{
+              border: "1px solid rgba(79,131,255,0.4)",
+              color: "#93b4ff",
+              background: "rgba(79,131,255,0.08)",
+              boxShadow: "0 0 8px rgba(79,131,255,0.15)",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(79,131,255,0.14)";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 16px rgba(79,131,255,0.3)";
+              (e.currentTarget as HTMLButtonElement).style.color = "#b8cfff";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(79,131,255,0.08)";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 8px rgba(79,131,255,0.15)";
+              (e.currentTarget as HTMLButtonElement).style.color = "#93b4ff";
+            }}
+          >
+            <Activity className="h-3.5 w-3.5" />
+            <span className="hidden sm:block">Generate Activity</span>
+          </button>
+
           {/* Generate Wallets */}
           <button
             onClick={() => setGenerateModalOpen(true)}
@@ -179,6 +206,7 @@ export default function DashboardPage() {
             <ArrowDownToLine className="h-3.5 w-3.5" />
             <span className="hidden sm:block">Withdraw</span>
           </button>
+
         </div>
       </div>
 
@@ -342,6 +370,7 @@ export default function DashboardPage() {
       <GenerateWalletsModal open={generateModalOpen} onClose={() => setGenerateModalOpen(false)} />
       <WithdrawModal open={withdrawModalOpen} onClose={() => setWithdrawModalOpen(false)} />
       <FundModal open={fundModalOpen} onClose={() => setFundModalOpen(false)} />
+      <GenerateActivityModal open={activityModalOpen} onClose={() => setActivityModalOpen(false)} />
     </div>
   );
 }

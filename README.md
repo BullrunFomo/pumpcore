@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PumpFun Bundler
+
+A Next.js bundler app for Solana — manage wallets, launch tokens, and simulate buy/sell activity on PumpSwap.
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Wallet Management
+Generate and manage Solana wallets. Balances are fetched live from the RPC.
 
-## Learn More
+### Token Launch
+Launch tokens on Pump.fun (Token2022). The launch flow splits the create and dev-buy into separate bundle transactions submitted via Jito.
 
-To learn more about Next.js, take a look at the following resources:
+### Generate Activity
+Simulates buy/sell cycles across selected wallets on PumpSwap tokens with ≥ $300k market cap.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Qualifying tokens are fetched from **DexScreener** (`api.dexscreener.com`) — filtered to PumpSwap pairs on Solana with `fdv >= 300_000`
+- Swaps are executed via **Jupiter** (`api.jup.ag/swap/v1`) — both quote and swap endpoints
+- Each wallet is assigned a distinct random token per loop
+- Buy → hold 2–5s → sell 100%, repeated for the configured number of loops
+- Results stream back to the UI in real time via SSE
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**API endpoints used:**
+| Service | URL |
+|---|---|
+| Token discovery | `https://api.dexscreener.com/latest/dex/search?q=pumpswap` |
+| Jupiter quote | `https://api.jup.ag/swap/v1/quote` |
+| Jupiter swap | `https://api.jup.ag/swap/v1/swap` |
 
-## Deploy on Vercel
+> Note: The legacy `quote-api.jup.ag` and `frontend-api.pump.fun` domains are decommissioned and will return errors.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Next.js 16** (App Router)
+- **Solana web3.js** + **Jito** for transaction bundling
+- **Jupiter v1** for swaps
+- **Pinata** for IPFS metadata uploads
+- **Tailwind CSS** + **Radix UI**
