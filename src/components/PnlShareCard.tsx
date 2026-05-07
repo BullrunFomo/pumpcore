@@ -111,6 +111,7 @@ function drawCard(
   tokenLogoImg: HTMLImageElement | null,
   solanaLogoImg: HTMLImageElement | null,
   bgImg: HTMLImageElement | null,
+  bundleLogoImg: HTMLImageElement | null,
   showLogo: boolean,
   redactName: boolean
 ) {
@@ -149,9 +150,19 @@ function drawCard(
   ctx.stroke();
 
   // ── Branding ────────────────────────────────────────────────────────────────
+  const brandLogoH = 22;
+  let brandTextX = 36;
+  if (bundleLogoImg) {
+    const brandLogoW = bundleLogoImg.naturalWidth > 0
+      ? (brandLogoH * bundleLogoImg.naturalWidth) / bundleLogoImg.naturalHeight
+      : brandLogoH;
+    const brandLogoY = 52 - brandLogoH + 4;
+    ctx.drawImage(bundleLogoImg, 36, brandLogoY, brandLogoW, brandLogoH);
+    brandTextX = 36 + brandLogoW + 8;
+  }
   ctx.fillStyle = "#4f83ff";
   ctx.font = "bold 18px Satoshi, sans-serif";
-  ctx.fillText("BUNDLEX", 36, 52);
+  ctx.fillText("BUNDLEX", brandTextX, 52);
 
   // ── Token logo (top-right) ───────────────────────────────────────────────
   const logoSize = 68;
@@ -252,6 +263,7 @@ export default function PnlShareCard({
   const [tokenLogoImg, setTokenLogoImg] = useState<HTMLImageElement | null>(null);
   const [solanaLogoImg, setSolanaLogoImg] = useState<HTMLImageElement | null>(null);
   const [bgImg, setBgImg] = useState<HTMLImageElement | null>(null);
+  const [bundleLogoImg, setBundleLogoImg] = useState<HTMLImageElement | null>(null);
 
   // Load images once when dialog opens or tokenLogoUrl changes
   useEffect(() => {
@@ -263,6 +275,11 @@ export default function PnlShareCard({
     bg.onload  = () => setBgImg(bg);
     bg.onerror = () => setBgImg(null);
     bg.src = "/pnl_bg_blur.png";
+
+    const bl = new Image();
+    bl.onload  = () => setBundleLogoImg(bl);
+    bl.onerror = () => setBundleLogoImg(null);
+    bl.src = "/pnglogo.png";
 
     if (tokenLogoUrl) {
       const img = new Image();
@@ -280,10 +297,10 @@ export default function PnlShareCard({
   useEffect(() => {
     if (!canvasEl || !solanaLogoImg) return;
     loadSatoshi().then(() =>
-      drawCard(canvasEl, { ...rest, tokenLogoUrl }, tokenLogoImg, solanaLogoImg, bgImg, showLogo, redactName)
+      drawCard(canvasEl, { ...rest, tokenLogoUrl }, tokenLogoImg, solanaLogoImg, bgImg, bundleLogoImg, showLogo, redactName)
     );
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canvasEl, solanaLogoImg, tokenLogoImg, bgImg, showLogo, redactName,
+  }, [canvasEl, solanaLogoImg, tokenLogoImg, bgImg, bundleLogoImg, showLogo, redactName,
       rest.tokenName, rest.totalPnlSol, rest.totalPnlUsd, rest.investedSol, rest.currentPositionSol, rest.solPrice]);
 
   const handleDownload = () => {
@@ -339,16 +356,37 @@ export default function PnlShareCard({
             </div>
             <button
               onClick={handleDownload}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium"
+              className="relative flex items-center gap-1.5 px-4 py-2 rounded text-sm font-bold overflow-hidden transition-all duration-300 active:scale-95"
               style={{
-                background: "linear-gradient(135deg, rgba(79,131,255,0.28) 0%, rgba(79,131,255,0.12) 100%)",
-                border: "1px solid rgba(79,131,255,0.55)",
+                background: "rgba(79,131,255,0.1)",
+                border: "1px solid rgba(79,131,255,0.5)",
                 color: "#4f83ff",
-                boxShadow: "0 0 20px rgba(79,131,255,0.18), inset 0 1px 0 rgba(255,255,255,0.06)",
+                boxShadow: "0 0 20px rgba(79,131,255,0.3), inset 0 0 20px rgba(79,131,255,0.06)",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.boxShadow =
+                  "0 0 32px rgba(79,131,255,0.55), 0 0 60px rgba(79,131,255,0.2), inset 0 0 20px rgba(79,131,255,0.1)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(79,131,255,0.8)";
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(79,131,255,0.18)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.boxShadow =
+                  "0 0 20px rgba(79,131,255,0.3), inset 0 0 20px rgba(79,131,255,0.06)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(79,131,255,0.5)";
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(79,131,255,0.1)";
               }}
             >
-              <Download className="h-3.5 w-3.5" style={{ filter: "drop-shadow(0 0 4px rgba(79,131,255,0.7))" }} />
-              Download PNG
+              <span
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: "linear-gradient(105deg, transparent 40%, rgba(79,131,255,0.12) 50%, transparent 60%)",
+                  animation: "shimmer 2.5s infinite",
+                }}
+              />
+              <span className="relative flex items-center gap-1.5">
+                <Download className="h-3.5 w-3.5" style={{ filter: "drop-shadow(0 0 4px rgba(79,131,255,0.7))" }} />
+                Download PNG
+              </span>
             </button>
           </div>
         </div>

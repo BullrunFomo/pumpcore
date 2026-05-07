@@ -6,7 +6,6 @@ import { useStore } from "@/store";
 import StatsBar from "@/components/StatsBar";
 import WalletTable from "@/components/WalletTable";
 import ImportWalletsModal from "@/components/ImportWalletsModal";
-import GenerateWalletsModal from "@/components/GenerateWalletsModal";
 import WithdrawModal from "@/components/WithdrawModal";
 import FundModal from "@/components/FundModal";
 import GenerateActivityModal from "@/components/GenerateActivityModal";
@@ -20,7 +19,7 @@ export default function DashboardPage() {
   const setActiveTokenMint = useStore((s) => s.setActiveTokenMint);
 
   const [refreshing, setRefreshing] = useState(false);
-  const [generateModalOpen, setGenerateModalOpen] = useState(false);
+  const [importInitialTab, setImportInitialTab] = useState<"import" | "generate">("import");
   const [fundModalOpen, setFundModalOpen] = useState(false);
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
   const [activityModalOpen, setActivityModalOpen] = useState(false);
@@ -107,34 +106,9 @@ export default function DashboardPage() {
             <span className="hidden sm:block">Generate Activity</span>
           </button>
 
-          {/* Generate Wallets */}
+          {/* Add Wallets */}
           <button
-            onClick={() => setGenerateModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all duration-200"
-            style={{
-              border: "1px solid rgba(79,131,255,0.4)",
-              color: "#93b4ff",
-              background: "rgba(79,131,255,0.08)",
-              boxShadow: "0 0 8px rgba(79,131,255,0.15)",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = "rgba(79,131,255,0.14)";
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 16px rgba(79,131,255,0.3)";
-              (e.currentTarget as HTMLButtonElement).style.color = "#b8cfff";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = "rgba(79,131,255,0.08)";
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 8px rgba(79,131,255,0.15)";
-              (e.currentTarget as HTMLButtonElement).style.color = "#93b4ff";
-            }}
-          >
-            <Zap className="h-3.5 w-3.5" />
-            <span className="hidden sm:block">Generate Wallets</span>
-          </button>
-
-          {/* Import Wallets */}
-          <button
-            onClick={() => setImportModalOpen(true)}
+            onClick={() => { setImportInitialTab("import"); setImportModalOpen(true); }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all duration-200"
             style={{
               border: "1px solid rgba(79,131,255,0.4)",
@@ -154,7 +128,7 @@ export default function DashboardPage() {
             }}
           >
             <Plus className="h-3.5 w-3.5" />
-            <span className="hidden sm:block">Import Wallets</span>
+            <span className="hidden sm:block">Add Wallets</span>
           </button>
 
           {/* Fund */}
@@ -243,7 +217,7 @@ export default function DashboardPage() {
                 <p className="text-sm font-medium text-zinc-400">No wallets imported</p>
                 <p className="text-xs text-zinc-600 mt-0.5">Import your wallets to get started</p>
               </div>
-              <Button variant="outline" size="sm" onClick={() => setImportModalOpen(true)}>
+              <Button variant="outline" size="sm" onClick={() => { setImportInitialTab("import"); setImportModalOpen(true); }}>
                 <Plus className="h-3.5 w-3.5 mr-1.5" />
                 Import Wallets
               </Button>
@@ -366,8 +340,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <ImportWalletsModal open={importModalOpen} onClose={() => setImportModalOpen(false)} />
-      <GenerateWalletsModal open={generateModalOpen} onClose={() => setGenerateModalOpen(false)} />
+      <ImportWalletsModal open={importModalOpen} onClose={() => setImportModalOpen(false)} initialTab={importInitialTab} />
       <WithdrawModal open={withdrawModalOpen} onClose={() => setWithdrawModalOpen(false)} />
       <FundModal open={fundModalOpen} onClose={() => setFundModalOpen(false)} />
       <GenerateActivityModal open={activityModalOpen} onClose={() => setActivityModalOpen(false)} />
