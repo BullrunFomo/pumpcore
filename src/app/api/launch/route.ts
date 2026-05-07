@@ -10,7 +10,6 @@ import {
 } from "@/lib/pumpfun";
 import { uploadMetadata } from "@/lib/ipfs";
 import { executeAtomicLaunchBundle, executeStaggerBuy } from "@/lib/jito";
-import { buildTokenDescription } from "@/lib/utils";
 
 // ─── Auto-sell Helpers ────────────────────────────────────────────────────────
 
@@ -142,7 +141,7 @@ export async function POST(req: NextRequest) {
             symbol: tokenConfig.symbol,
             logoBuffer: logoBuffer.length > 0 ? logoBuffer : Buffer.from("placeholder"),
             logoFileName,
-            description: buildTokenDescription(tokenConfig.name),
+            description: `${tokenConfig.name} . ${tokenConfig.tokenType || "Token"} on PumpFun`,
             website: tokenConfig.website,
             twitter: tokenConfig.twitter,
             telegram: tokenConfig.telegram,

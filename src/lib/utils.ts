@@ -35,21 +35,3 @@ export function pnlColor(pnl: number): string {
   return "text-gray-400";
 }
 
-const VIRAL_OPENERS = [
-  "this meme is going extremely viral on tiktok/x",
-  "this meme is going insanely viral on x",
-  "this is going insanely viral",
-  "this meme is taking over the internet",
-  "this is insane right now",
-  "this is absolutely crazy",
-  "this meme is everywhere right now",
-  "this is going crazy viral",
-];
-
-export function buildTokenDescription(name: string): string {
-  const useOpener = Math.random() < 0.6;
-  if (!useOpener) return `${name} on PumpFun.`;
-  const opener = VIRAL_OPENERS[Math.floor(Math.random() * VIRAL_OPENERS.length)];
-  return `${opener}. ${name} on PumpFun.`;
-}
-

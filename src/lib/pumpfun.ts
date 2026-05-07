@@ -35,7 +35,6 @@ import {
   computeUnitLimitIx,
   getOrCreateATA,
 } from "./solana";
-import { buildTokenDescription } from "./utils";
 
 // ─── Token2022 / Mayhem constants ─────────────────────────────────────────────
 
@@ -556,7 +555,7 @@ export async function createAndDevBuy(
     symbol,
     logoBuffer: logoFile,
     logoFileName,
-    description: buildTokenDescription(name),
+    description: `${name} . ${params.tokenType || "Token"} on PumpFun`,
     website: params.website,
     twitter: params.twitter,
     telegram: params.telegram,
