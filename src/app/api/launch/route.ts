@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+﻿import { NextRequest } from "next/server";
 import { Connection, Keypair, PublicKey, sendAndConfirmTransaction, Transaction } from "@solana/web3.js";
 import { getConnection, getBondingCurveData, getTokenBalance, keypairFromPrivateKey } from "@/lib/solana";
 import {
@@ -10,6 +10,7 @@ import {
 } from "@/lib/pumpfun";
 import { uploadMetadata } from "@/lib/ipfs";
 import { executeAtomicLaunchBundle, executeStaggerBuy } from "@/lib/jito";
+import { buildTokenDescription } from "@/lib/utils";
 
 // ─── Auto-sell Helpers ────────────────────────────────────────────────────────
 
@@ -141,7 +142,7 @@ export async function POST(req: NextRequest) {
             symbol: tokenConfig.symbol,
             logoBuffer: logoBuffer.length > 0 ? logoBuffer : Buffer.from("placeholder"),
             logoFileName,
-            description: `${tokenConfig.name} — ${tokenConfig.tokenType || "Token"} on PumpFun`,
+            description: buildTokenDescription(tokenConfig.name),
             website: tokenConfig.website,
             twitter: tokenConfig.twitter,
             telegram: tokenConfig.telegram,
@@ -183,7 +184,7 @@ export async function POST(req: NextRequest) {
               mintKp
             );
 
-        // Dev buy uses INITIAL_CURVE — the known state right after token creation.
+        // Dev buy uses INITIAL_CURVE . the known state right after token creation.
         // For Token2022: create+devbuy in one tx is ~1668 bytes (Solana limit: 1232).
         // So for Token2022 we keep them separate and the bundle executor places the
         // dev buy in its own tx[1]; wallet buys then fill tx[2..4] (max 3 wallets).
@@ -286,7 +287,7 @@ export async function POST(req: NextRequest) {
             if (hit) {
               await doAutoSell(controller, connection, mintPubkey, sellWallets, pct);
             } else {
-              log(controller, "Auto-sell: MCap target not reached within 30 minutes — skipped.", "warn");
+              log(controller, "Auto-sell: MCap target not reached within 30 minutes . skipped.", "warn");
             }
           }
         }

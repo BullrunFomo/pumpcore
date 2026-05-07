@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect } from "react"
 import { getStoredAccessKey } from "@/lib/auth"
@@ -13,7 +13,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         if (res.ok) {
           setStatus("authenticated")
         } else {
-          // No valid cookie — try to silently restore from localStorage
+          // No valid cookie . try to silently restore from localStorage
           const stored = getStoredAccessKey()
           if (stored) {
             fetch("/api/auth/validate", {

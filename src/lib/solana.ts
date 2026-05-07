@@ -1,4 +1,4 @@
-import {
+﻿import {
   Connection,
   PublicKey,
   Keypair,
@@ -24,7 +24,7 @@ export const PUMPFUN_PROGRAM_ID = new PublicKey(
   "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
 );
 
-// Derived PDAs — correct regardless of program version
+// Derived PDAs . correct regardless of program version
 export const [PUMPFUN_GLOBAL] = PublicKey.findProgramAddressSync(
   [Buffer.from("global")],
   PUMPFUN_PROGRAM_ID
@@ -201,7 +201,7 @@ export async function getGlobalState(connection: Connection): Promise<{
   const data = accountInfo.data;
   // fee_recipient: discriminator(8) + initialized(1) + authority(32) = offset 41
   const feeRecipient = new PublicKey(data.subarray(41, 73));
-  // buyback_fee_recipient: verified by searching a real buy tx — offset 741
+  // buyback_fee_recipient: verified by searching a real buy tx . offset 741
   const buybackFeeRecipient = new PublicKey(data.subarray(741, 773));
   return { feeRecipient, buybackFeeRecipient };
 }

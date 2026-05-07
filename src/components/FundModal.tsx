@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -61,7 +61,7 @@ export default function FundModal({ open, onClose }: FundModalProps) {
         setError(data.error ?? "Failed to fetch balance");
       }
     } catch {
-      setError("Network error — could not fetch balance");
+      setError("Network error . could not fetch balance");
     }
     setBalanceLoading(false);
   }, []);

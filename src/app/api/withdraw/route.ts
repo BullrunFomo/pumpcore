@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import {
   Keypair,
   PublicKey,
@@ -26,7 +26,7 @@ async function sendAndConfirm(
     if (Date.now() - lastBroadcast >= REBROADCAST_INTERVAL) {
       try {
         await connection.sendRawTransaction(rawTx, { skipPreflight: true, maxRetries: 0 });
-      } catch { /* ignore — may already be on-chain */ }
+      } catch { /* ignore . may already be on-chain */ }
       lastBroadcast = Date.now();
     }
 
@@ -39,7 +39,7 @@ async function sendAndConfirm(
     } else {
       const blockHeight = await connection.getBlockHeight("confirmed");
       if (blockHeight > lastValidBlockHeight) {
-        throw new Error("Transaction expired — blockhash too old. Please retry.");
+        throw new Error("Transaction expired . blockhash too old. Please retry.");
       }
     }
 
@@ -53,7 +53,7 @@ async function sendAndConfirm(
     return;
   }
 
-  throw new Error("Confirmation timeout — the transaction may still land. Check Solscan.");
+  throw new Error("Confirmation timeout . the transaction may still land. Check Solscan.");
 }
 
 async function sendWithdraw(
@@ -75,7 +75,7 @@ async function sendWithdraw(
 
       // Get the exact fee the network will charge for this transaction.
       // getFeeForMessage accounts for the actual lamports_per_signature on this
-      // cluster — which may differ from the 5 000 lamport assumption.
+      // cluster . which may differ from the 5 000 lamport assumption.
       const probeMsg = new Transaction({ recentBlockhash: blockhash, feePayer: keypair.publicKey })
         .add(SystemProgram.transfer({ fromPubkey: keypair.publicKey, toPubkey: dest, lamports: 1 }))
         .compileMessage();

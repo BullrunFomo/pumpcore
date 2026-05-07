@@ -1,7 +1,9 @@
-"use client";
+﻿"use client";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { RefreshCw, Search, BookImage, Siren, Globe, Rocket } from "lucide-react";
+import { RefreshCw, Search, BookImage, Siren, Globe, Rocket, SlidersHorizontal } from "lucide-react";
 import QuickLaunchModal from "@/components/QuickLaunchModal";
+import BundlePresetModal from "@/components/BundlePresetModal";
+import { useStore } from "@/store";
 
 function XLogo({ className }: { className?: string }) {
   return (
@@ -685,16 +687,44 @@ const FEED_TABS: { id: FeedTab; label: string }[] = [
 export default function XFeedPage() {
   const [launchTarget, setLaunchTarget] = useState<{ url: string; image?: string | null; name?: string } | null>(null);
   const [activeTab, setActiveTab] = useState<FeedTab>("viral");
+  const [presetOpen, setPresetOpen] = useState(false);
+  const bundlePreset = useStore((s) => s.bundlePreset);
 
   return (
     <div className="flex flex-col flex-1 min-h-0 px-3 py-3 sm:px-6 sm:py-5 w-full">
       {/* Page header */}
-      <div className="shrink-0 mb-4">
-        <h1 className="text-lg sm:text-2xl font-bold text-zinc-100 tracking-tight">Feed</h1>
-        <p className="text-xs text-zinc-600 mt-0.5">Live X feed, latest memes and viral news.</p>
+      <div className="shrink-0 flex items-start justify-between gap-3 mb-4">
+        <div>
+          <h1 className="text-lg sm:text-2xl font-bold text-zinc-100 tracking-tight">Feed</h1>
+          <p className="text-xs text-zinc-600 mt-0.5">Live X feed, latest memes and viral news.</p>
+        </div>
+        <button
+          onClick={() => setPresetOpen(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded text-sm font-semibold transition-all duration-200 shrink-0"
+          style={{
+            border: "1px solid rgba(79,131,255,0.4)",
+            color: "#93b4ff",
+            background: "rgba(79,131,255,0.08)",
+            boxShadow: "0 0 8px rgba(79,131,255,0.15)",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.background = "rgba(79,131,255,0.14)";
+            (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 16px rgba(79,131,255,0.3)";
+            (e.currentTarget as HTMLButtonElement).style.color = "#b8cfff";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.background = "rgba(79,131,255,0.08)";
+            (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 8px rgba(79,131,255,0.15)";
+            (e.currentTarget as HTMLButtonElement).style.color = "#93b4ff";
+          }}
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+          Bundle Preset
+          {bundlePreset && <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#4f83ff" }} />}
+        </button>
       </div>
 
-      {/* Mobile tab selector — hidden on lg+ */}
+      {/* Mobile tab selector . hidden on lg+ */}
       <div
         className="lg:hidden shrink-0 flex mb-3 rounded overflow-hidden"
         style={{ border: "1px solid rgba(28,38,56,0.85)", background: "rgba(13,17,24,0.85)" }}
@@ -745,8 +775,10 @@ export default function XFeedPage() {
       </div>
 
       {launchTarget && (
-        <QuickLaunchModal prefillUrl={launchTarget.url} prefillImage={launchTarget.image} prefillName={launchTarget.name} onClose={() => setLaunchTarget(null)} />
+        <QuickLaunchModal prefillUrl={launchTarget.url} prefillImage={launchTarget.image} prefillName={launchTarget.name} preset={bundlePreset} onClose={() => setLaunchTarget(null)} />
       )}
+
+      {presetOpen && <BundlePresetModal onClose={() => setPresetOpen(false)} />}
     </div>
   );
 }

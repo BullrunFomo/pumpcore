@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { TrendingUp, Wallet, Zap } from "lucide-react";
 import CopyButton from "./CopyButton";
 import { useStore } from "@/store";
@@ -76,7 +76,7 @@ export default function StatsBar() {
           </div>
         </div>
 
-        {/* Row separator — mobile only */}
+        {/* Row separator . mobile only */}
         <div className="col-span-2 sm:hidden h-px mx-4" style={{ background: "rgba(28,38,56,0.9)" }} />
 
         {/* Wallets */}

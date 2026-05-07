@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 
 export interface DexertoArticle {
   title: string;
@@ -52,7 +52,7 @@ export async function GET() {
       const pubDate = extractTag(block, "pubDate");
       const publishedAt = pubDate ? new Date(pubDate).toISOString() : null;
 
-      // All category tags — skip sub-categories (game titles etc), keep first top-level section
+      // All category tags . skip sub-categories (game titles etc), keep first top-level section
       const TOP_LEVEL = new Set([
         "Gaming", "Entertainment", "Anime", "TV & Movies", "Twitch",
         "YouTube", "Celebrity", "Tech", "Sports", "Esports", "AI",

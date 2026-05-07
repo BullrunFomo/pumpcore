@@ -1,4 +1,4 @@
-import { create } from "zustand";
+﻿import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { Keypair } from "@solana/web3.js";
 import bs58 from "bs58";
@@ -83,7 +83,7 @@ interface AppState {
   clearWallets: () => void;
   refreshBalances: () => Promise<void>;
 
-  // Wallet funding info (persisted cache — keyed by wallet address)
+  // Wallet funding info (persisted cache . keyed by wallet address)
   walletFunding: Record<string, WalletFundingRecord>;
   setWalletFunding: (address: string, record: WalletFundingRecord) => void;
   mergeWalletFunding: (records: Record<string, WalletFundingRecord>) => void;
@@ -119,6 +119,17 @@ interface AppState {
   setTokenPrice: (p: TokenPrice) => void;
   priceHistory: Array<{ time: number; price: number }>; // SOL per token, unix seconds
   clearPriceHistory: () => void;
+
+  // Bundle preset
+  bundlePreset: {
+    selectedWalletIds: string[];
+    devWalletId: string;
+    walletBuyAmounts: Record<string, number>;
+    jitoTip: number;
+    launchType: "classic" | "stagger";
+    staggerDelayMs: number;
+  } | null;
+  setBundlePreset: (preset: AppState["bundlePreset"]) => void;
 
   // UI
   importModalOpen: boolean;
@@ -294,6 +305,10 @@ export const useStore = create<AppState>()(
       priceHistory: [],
       clearPriceHistory: () => set({ priceHistory: [] }),
 
+      // ── Bundle preset ────────────────────────────────────────────────────────
+      bundlePreset: null,
+      setBundlePreset: (preset) => set({ bundlePreset: preset }),
+
       // ── UI ───────────────────────────────────────────────────────────────────
       importModalOpen: false,
       setImportModalOpen: (v) => set({ importModalOpen: v }),
@@ -321,6 +336,7 @@ export const useStore = create<AppState>()(
         trades: s.trades,
         launches: s.launches,
         walletFunding: s.walletFunding,
+        bundlePreset: s.bundlePreset,
       }),
     }
   )

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import {
   Crown,
@@ -10,6 +10,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import CopyButton from "@/components/CopyButton";
+import PnlShareCard from "@/components/PnlShareCard";
 import { useStore } from "@/store";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -310,6 +311,7 @@ export default function ManagePage() {
 
   const [sellAllOpen, setSellAllOpen] = useState(false);
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
+  const [pnlCardOpen, setPnlCardOpen] = useState(false);
 
   const { tokenConfig, bundleConfig } = launch;
   const devWalletId = bundleConfig.devWalletId;
@@ -331,11 +333,18 @@ export default function ManagePage() {
     return acc;
   }, 0);
   const totalPnlUsd = totalPnlSol * (tokenPrice?.solPrice ?? 0);
+  const investedSol = trades
+    .filter((t) => t.type === "buy")
+    .reduce((acc, t) => acc + (t.solAmount ?? 0), 0);
+  const currentPositionSol = bundleWallets.reduce(
+    (acc, w) => acc + w.tokenBalance * (tokenPrice?.price ?? 0),
+    0
+  );
 
   useEffect(() => {
     refreshBalances();
     if (activeTokenMint && (!tokenMeta || !tokenMeta.image)) {
-      // Use the stored launch record first — it has the direct logoUri already
+      // Use the stored launch record first . it has the direct logoUri already
       const record = launches.find((l) => l.mintAddress === activeTokenMint);
       if (record?.logoUri) {
         setTokenMeta({ name: record.name, symbol: record.symbol, image: record.logoUri });
@@ -470,26 +479,46 @@ export default function ManagePage() {
 
         {/* PNL Card */}
         <div
-          className="flex flex-col gap-0.5 px-4 py-1.5 rounded-md flex-shrink-0 mr-auto"
+          className="flex items-center gap-2 px-4 py-1.5 rounded-md flex-shrink-0 mr-auto"
           style={{ background: "rgba(13,17,24,0.8)", border: "1px solid rgba(28,38,56,0.8)", minWidth: "148px" }}
         >
-          <span className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: "rgba(100,116,139,0.7)" }}>
-            Total P&amp;L
-          </span>
-          <div className="flex items-center gap-1.5">
-            {totalPnlSol >= 0
-              ? <TrendingUp className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "#4ade80" }} />
-              : <TrendingDown className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "#f87171" }} />}
-            <span
-              className="text-sm font-bold tabular-nums"
-              style={{ color: totalPnlSol >= 0 ? "#4ade80" : "#f87171" }}
-            >
-              {totalPnlSol >= 0 ? "+" : ""}{formatSol(Math.abs(totalPnlSol), 3)} SOL
+          <div className="flex flex-col gap-0.5 flex-1">
+            <span className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: "rgba(100,116,139,0.7)" }}>
+              Total P&amp;L
+            </span>
+            <div className="flex items-center gap-1.5">
+              {totalPnlSol >= 0
+                ? <TrendingUp className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "#4ade80" }} />
+                : <TrendingDown className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "#f87171" }} />}
+              <span
+                className="text-sm font-bold tabular-nums"
+                style={{ color: totalPnlSol >= 0 ? "#4ade80" : "#f87171" }}
+              >
+                {totalPnlSol >= 0 ? "+" : ""}{formatSol(Math.abs(totalPnlSol), 3)} SOL
+              </span>
+            </div>
+            <span className="text-[11px] tabular-nums" style={{ color: "rgba(100,116,139,0.6)" }}>
+              {totalPnlUsd >= 0 ? "+" : "-"}{formatUsd(Math.abs(totalPnlUsd))}
             </span>
           </div>
-          <span className="text-[11px] tabular-nums" style={{ color: "rgba(100,116,139,0.6)" }}>
-            {totalPnlUsd >= 0 ? "+" : "-"}{formatUsd(Math.abs(totalPnlUsd))}
-          </span>
+          <button
+            onClick={() => setPnlCardOpen(true)}
+            title="Share PnL card"
+            className="flex-shrink-0 rounded p-1 transition-colors"
+            style={{ color: "rgba(100,116,139,0.6)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#60a5fa")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(100,116,139,0.6)")}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 3h12" />
+              <path d="M6 3v6a6 6 0 0 0 12 0V3" />
+              <path d="M4 3C4 3 2 3.5 2 7c0 2.5 2 4 4 4" />
+              <path d="M20 3c0 0 2 .5 2 4c0 2.5-2 4-4 4" />
+              <path d="M12 15v4" />
+              <path d="M8 19h8" />
+              <path d="M9 22h6" />
+            </svg>
+          </button>
         </div>
 
         {/* Right: Sell All */}
@@ -662,6 +691,18 @@ export default function ManagePage() {
 
       {/* ── Modals ───────────────────────────────────────────────────────────── */}
       <SellAllModal open={sellAllOpen} onClose={() => setSellAllOpen(false)} />
+      <PnlShareCard
+        open={pnlCardOpen}
+        onClose={() => setPnlCardOpen(false)}
+        tokenName={tokenMeta?.name || tokenConfig.name || "Token"}
+        tokenSymbol={tokenMeta?.symbol || tokenConfig.symbol || ""}
+        tokenLogoUrl={tokenMeta?.image || ""}
+        totalPnlSol={totalPnlSol}
+        totalPnlUsd={totalPnlUsd}
+        investedSol={investedSol}
+        currentPositionSol={currentPositionSol}
+        solPrice={tokenPrice?.solPrice ?? 0}
+      />
     </div>
   );
 }

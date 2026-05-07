@@ -158,9 +158,9 @@ export default function GenerateActivityModal({ open, onClose }: GenerateActivit
       <DialogContent
         className="max-w-lg w-full p-0 overflow-hidden"
         style={{
-          background: "rgba(10,13,20,0.98)",
-          border: "1px solid rgba(28,38,56,0.9)",
-          boxShadow: "0 0 60px rgba(79,131,255,0.08)",
+          background: "rgba(9,9,11,0.97)",
+          border: "1px solid rgba(79,131,255,0.3)",
+          boxShadow: "0 0 0 1px rgba(79,131,255,0.1), 0 0 40px rgba(79,131,255,0.12), 0 24px 48px rgba(0,0,0,0.5)",
         }}
       >
         <VisuallyHidden>
@@ -169,12 +169,18 @@ export default function GenerateActivityModal({ open, onClose }: GenerateActivit
 
         {/* Header */}
         <div
-          className="flex items-center gap-3 px-5 py-4"
-          style={{ borderBottom: "1px solid rgba(28,38,56,0.8)" }}
+          className="relative flex items-center gap-3 px-5 py-4"
+          style={{ borderBottom: "1px solid rgba(79,131,255,0.1)", background: "rgba(79,131,255,0.03)" }}
         >
+          <div className="absolute top-0 left-0 right-0 h-px"
+            style={{ background: "linear-gradient(90deg, transparent, rgba(79,131,255,0.6) 40%, rgba(139,92,246,0.4) 60%, transparent)" }} />
           <div
-            className="w-8 h-8 rounded flex items-center justify-center shrink-0"
-            style={{ background: "rgba(79,131,255,0.1)", border: "1px solid rgba(79,131,255,0.2)" }}
+            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+            style={{
+              background: "linear-gradient(135deg, rgba(79,131,255,0.2), rgba(139,92,246,0.15))",
+              border: "1px solid rgba(79,131,255,0.3)",
+              boxShadow: "0 0 16px rgba(79,131,255,0.15)",
+            }}
           >
             <Activity className="h-4 w-4 text-[#4f83ff]" />
           </div>

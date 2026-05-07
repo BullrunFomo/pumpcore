@@ -1,4 +1,4 @@
-import {
+﻿import {
   Connection,
   Keypair,
   Transaction,
@@ -15,7 +15,7 @@ import bs58 from "bs58";
 import { randomTipAccount, priorityFeeIx, computeUnitLimitIx, keypairFromPrivateKey } from "./solana";
 import { buildBuyIx, buildBuyIxFromCurve, INITIAL_CURVE } from "./pumpfun";
 
-// Regional endpoints — rotated across retries to avoid 429s and improve landing odds
+// Regional endpoints . rotated across retries to avoid 429s and improve landing odds
 const JITO_ENDPOINTS = process.env.JITO_ENDPOINT
   ? [process.env.JITO_ENDPOINT]
   : [
@@ -31,7 +31,7 @@ const JITO_TIP_LAMPORTS = parseInt(process.env.JITO_TIP_LAMPORTS || "1000000");
 // ─── Jito Bundle ──────────────────────────────────────────────────────────────
 
 // Poll Jito for bundle landing status. Returns true if landed, false on timeout.
-// Check landing via Solana RPC only — no Jito status API calls (those count against the rate limit).
+// Check landing via Solana RPC only . no Jito status API calls (those count against the rate limit).
 // Bundles either land within a few slots or are dropped; 45s is generous.
 async function waitForBundleLanding(
   _bundleId: string,
@@ -104,7 +104,7 @@ async function submitEncodedBundle(
 }
 
 /**
- * Try every endpoint in sequence — stop as soon as one accepts.
+ * Try every endpoint in sequence . stop as soon as one accepts.
  * Continues past non-429 errors (e.g. 400, 503) so a bad regional node
  * doesn't block the whole bundle; collects errors for diagnosis.
  */
@@ -238,7 +238,7 @@ export async function executeClassicBundle(
     jitoFailed = true;
   }
 
-  // Sequential fallback — used when Jito fails or bundle doesn't land
+  // Sequential fallback . used when Jito fails or bundle doesn't land
   const fallbackResults: { address: string; tokenAmount: number }[] = [];
   for (const w of wallets) {
     const bs58mod = (await import("bs58")).default;
@@ -310,12 +310,12 @@ export async function executeAtomicLaunchBundle(
   const hasSplitDevBuy = !!devBuyIxs && devBuyIxs.length > 0;
   const MAX_BUY_TXS = JITO_MAX_TXS - (hasSplitDevBuy ? 2 : 1);
 
-  // ── Build buy instructions (once — instructions are blockhash-independent) ──
+  // ── Build buy instructions (once . instructions are blockhash-independent) ──
   const initialCurveWithCreator = { ...INITIAL_CURVE, creator: tokenCreator };
 
   // Bundle wallet buys run AFTER the dev buy in the same block. The dev buy
   // moves the bonding curve, so we must build bundle wallet instructions against
-  // the predicted post-dev-buy curve — not INITIAL_CURVE. Jito simulates each
+  // the predicted post-dev-buy curve . not INITIAL_CURVE. Jito simulates each
   // transaction in sequence; using the wrong curve state causes tx[1+] to fail
   // the on-chain tokenAmount (minimum tokens) check and the bundle is dropped.
   function predictCurveAfterBuy(
@@ -382,7 +382,7 @@ export async function executeAtomicLaunchBundle(
       if (bal < need) {
         onProgress(
           `Warning: wallet ${entry.address.slice(0, 8)} has ${(bal / LAMPORTS_PER_SOL).toFixed(4)} SOL, ` +
-          `needs ${(need / LAMPORTS_PER_SOL).toFixed(4)} SOL — may fail on-chain`,
+          `needs ${(need / LAMPORTS_PER_SOL).toFixed(4)} SOL . may fail on-chain`,
           "warn"
         );
       }
@@ -534,16 +534,16 @@ export async function executeAtomicLaunchBundle(
     }
 
     // Race two signals:
-    // 1. Jito status API polling — detects simulation failures within seconds,
+    // 1. Jito status API polling . detects simulation failures within seconds,
     //    so we don't wait 60s for block expiry when Jito has already rejected us.
-    // 2. confirmTransaction (WebSocket) — detects on-chain landing fast.
+    // 2. confirmTransaction (WebSocket) . detects on-chain landing fast.
     // Whichever resolves first wins.
     type BundleOutcome = "landed" | "failed" | "expired";
     let outcome: BundleOutcome;
     let outcomeError = "";
 
     const statusPoll = (async (): Promise<BundleOutcome> => {
-      // Must query the SAME endpoint that accepted the bundle — other regions won't have it
+      // Must query the SAME endpoint that accepted the bundle . other regions won't have it
       const statusEndpoint = submittedEndpoint;
       for (let tick = 0; tick < 20; tick++) {
         await new Promise((r) => setTimeout(r, 3_000));
@@ -557,7 +557,7 @@ export async function executeAtomicLaunchBundle(
           onProgress(`Jito bundle status: ${status ?? "unknown"}`, "info");
           if (status === "Failed" || status === "Invalid") return "failed";
           if (status === "Landed") return "landed";
-        } catch { /* status endpoint unavailable — keep waiting */ }
+        } catch { /* status endpoint unavailable . keep waiting */ }
       }
       return "expired"; // status stayed Pending for full 60s
     })();
@@ -590,7 +590,7 @@ export async function executeAtomicLaunchBundle(
     }
 
     if (outcomeError.startsWith("On-chain tx error")) {
-      throw new Error(outcomeError); // fatal — tx landed but failed; don't retry
+      throw new Error(outcomeError); // fatal . tx landed but failed; don't retry
     }
 
     lastError = outcomeError || `bundle status: ${outcome}`;
@@ -649,7 +649,7 @@ export async function executeStaggerBuy(
       tx.feePayer = keypair.publicKey;
 
       const txSig = await sendAndConfirmTransaction(connection, tx, [keypair], { commitment: "confirmed" });
-      onProgress(`✓ Buy confirmed — ${(Number(tokenAmount) / 1e6).toLocaleString()} tokens`, "success", txSig, w.address);
+      onProgress(`✓ Buy confirmed . ${(Number(tokenAmount) / 1e6).toLocaleString()} tokens`, "success", txSig, w.address);
       results.push({ address: w.address, tokenAmount: Number(tokenAmount) / 1e6 });
     } catch (err: any) {
       onProgress(`✗ Buy failed: ${err.message}`, "error", undefined, w.address);

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import { FileText, Send, Activity } from "lucide-react";
 
@@ -33,7 +33,7 @@ export default function Footer() {
         backdropFilter: "blur(12px)",
       }}
     >
-      {/* Left — status */}
+      {/* Left . status */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2 w-2">
@@ -71,7 +71,7 @@ export default function Footer() {
 
       <div />
 
-      {/* Right — links */}
+      {/* Right . links */}
       <div className="flex items-center gap-1.5">
         {[
           {

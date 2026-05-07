@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
 import { getConnection, getSolBalance, getTokenBalance } from "@/lib/solana";
@@ -34,7 +34,7 @@ function keypairFromBase58(key: string): Keypair {
   return Keypair.fromSecretKey(decoded);
 }
 
-// ─── POST /api/wallets — import wallets ───────────────────────────────────────
+// ─── POST /api/wallets . import wallets ───────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   try {
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// ─── GET /api/wallets — refresh balances ──────────────────────────────────────
+// ─── GET /api/wallets . refresh balances ──────────────────────────────────────
 
 export async function GET(req: NextRequest) {
   try {

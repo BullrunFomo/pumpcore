@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import {
   Dialog,
@@ -71,7 +71,7 @@ export default function ImportWalletsModal({ open, onClose }: ImportWalletsModal
             Import Wallets
           </DialogTitle>
           <p className="text-sm text-zinc-500 mt-0.5">
-            Paste private keys below — one per line (base58) or as a JSON array.
+            Paste private keys below . one per line (base58) or as a JSON array.
           </p>
         </DialogHeader>
 

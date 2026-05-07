@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import * as cheerio from "cheerio";
 
 export interface KYMEntry {
@@ -194,7 +194,7 @@ export async function GET(req: NextRequest) {
     try {
       entries = await fetchRSS(rssUrl);
     } catch {
-      // Direct fetch blocked (e.g. IP ban) — retry via rss2json proxy
+      // Direct fetch blocked (e.g. IP ban) . retry via rss2json proxy
       try {
         entries = await fetchRSSViaProxy(rssUrl);
       } catch {

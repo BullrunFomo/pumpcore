@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+﻿import { NextRequest } from "next/server";
 import { PublicKey, VersionedTransaction, Connection, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { getConnection, keypairFromPrivateKey } from "@/lib/solana";
 
@@ -173,7 +173,7 @@ export async function GET() {
   }
 }
 
-// ─── POST /api/activity — SSE stream ─────────────────────────────────────────
+// ─── POST /api/activity . SSE stream ─────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -192,7 +192,7 @@ export async function POST(req: NextRequest) {
           return;
         }
 
-        log(controller, `Starting activity — ${loops} loop(s), ${wallets.length} wallet(s), ${solAmount} SOL each`);
+        log(controller, `Starting activity . ${loops} loop(s), ${wallets.length} wallet(s), ${solAmount} SOL each`);
 
         let tokens: PumpToken[];
         try {
@@ -210,7 +210,7 @@ export async function POST(req: NextRequest) {
         let completedLoops = 0;
 
         for (let loop = 1; loop <= loops; loop++) {
-          log(controller, `━━ Loop ${loop}/${loops} — assigning each wallet a random token`);
+          log(controller, `━━ Loop ${loop}/${loops} . assigning each wallet a random token`);
           sseEvent(controller, { type: "progress", loop: loop - 1, total: loops });
 
           // Assign each wallet a distinct random token
@@ -219,7 +219,7 @@ export async function POST(req: NextRequest) {
             token: tokens[Math.floor(Math.random() * tokens.length)],
           }));
 
-          // Buy — all wallets in parallel, each on its own token
+          // Buy . all wallets in parallel, each on its own token
           log(controller, `Buying ${solAmount} SOL on ${wallets.length} wallet(s) via Jupiter → PumpSwap...`);
           const buyResults = await Promise.allSettled(
             walletTokens.map(async ({ wallet: w, token }) => {
@@ -227,7 +227,7 @@ export async function POST(req: NextRequest) {
               const result = await jupiterBuy(connection, keypair, token.mint, solAmount);
               log(
                 controller,
-                `Buy ✓ — ${solAmount} SOL → ~${result.tokenAmount.toFixed(0)} ${token.symbol} ($${Math.round(token.usd_market_cap / 1000)}k)`,
+                `Buy ✓ . ${solAmount} SOL → ~${result.tokenAmount.toFixed(0)} ${token.symbol} ($${Math.round(token.usd_market_cap / 1000)}k)`,
                 "success",
                 result.txSig,
                 w.address
@@ -247,7 +247,7 @@ export async function POST(req: NextRequest) {
           log(controller, `Holding for ${(holdMs / 1000).toFixed(1)}s...`);
           await new Promise((r) => setTimeout(r, holdMs));
 
-          // Sell — each wallet sells the token it bought
+          // Sell . each wallet sells the token it bought
           log(controller, `Selling 100% on ${wallets.length} wallet(s) via Jupiter → PumpSwap...`);
           await Promise.allSettled(
             buyResults.map(async (res) => {
@@ -262,7 +262,7 @@ export async function POST(req: NextRequest) {
               const sellResult = await jupiterSell(connection, keypair, token.mint, rawBalance);
               log(
                 controller,
-                `Sell ✓ — ${token.symbol} → ${sellResult.solReceived.toFixed(4)} SOL`,
+                `Sell ✓ . ${token.symbol} → ${sellResult.solReceived.toFixed(4)} SOL`,
                 "success",
                 sellResult.txSig,
                 w.address
@@ -278,7 +278,7 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        log(controller, `Activity complete — ${completedLoops}/${loops} loop(s) finished`, "success");
+        log(controller, `Activity complete . ${completedLoops}/${loops} loop(s) finished`, "success");
         sseEvent(controller, { type: "complete", completedLoops });
       } catch (err: any) {
         sseEvent(controller, { type: "error", message: err.message });

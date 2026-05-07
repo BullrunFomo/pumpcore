@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 import { useState, useRef, useCallback } from "react";
 import {
-  X, Rocket, Upload, Crown, CheckCircle2, XCircle, AlertTriangle,
+  X, Rocket, Upload, CheckCircle2, XCircle, AlertTriangle,
   Info, Loader2, ExternalLink,
 } from "lucide-react";
 import { useStore } from "@/store";
@@ -21,10 +21,20 @@ const LOG_COLORS: Record<LaunchLogEntry["level"], string> = {
   info: "#a1a1aa", success: "#4ade80", error: "#f87171", warn: "#fbbf24",
 };
 
+interface BundlePreset {
+  selectedWalletIds?: string[];
+  devWalletId?: string;
+  walletBuyAmounts?: Record<string, number>;
+  jitoTip?: number;
+  launchType?: "classic" | "stagger";
+  staggerDelayMs?: number;
+}
+
 interface Props {
   prefillUrl: string;
   prefillImage?: string | null;
   prefillName?: string | null;
+  preset?: BundlePreset | null;
   onClose: () => void;
 }
 
@@ -60,7 +70,7 @@ function SegmentedControl<T extends string>({
   );
 }
 
-export default function QuickLaunchModal({ prefillUrl, prefillImage, prefillName, onClose }: Props) {
+export default function QuickLaunchModal({ prefillUrl, prefillImage, prefillName, preset, onClose }: Props) {
   const router = useRouter();
   const wallets = useStore((s) => s.wallets);
   const addLaunch = useStore((s) => s.addLaunch);
@@ -78,12 +88,12 @@ export default function QuickLaunchModal({ prefillUrl, prefillImage, prefillName
   const [telegram, setTelegram] = useState("");
 
   // ── Bundle config ─────────────────────────────────────────────────────────────
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [devWalletId, setDevWalletId] = useState("");
-  const [walletAmounts, setWalletAmounts] = useState<Record<string, number>>({});
-  const [jitoTip, setJitoTip] = useState(0.005);
-  const [launchType, setLaunchType] = useState<"classic" | "stagger">("classic");
-  const [staggerDelayMs, setStaggerDelayMs] = useState(500);
+  const [selectedIds, setSelectedIds] = useState<string[]>(preset?.selectedWalletIds ?? []);
+  const [devWalletId, setDevWalletId] = useState(preset?.devWalletId ?? "");
+  const [walletAmounts, setWalletAmounts] = useState<Record<string, number>>(preset?.walletBuyAmounts ?? {});
+  const [jitoTip, setJitoTip] = useState(preset?.jitoTip ?? 0.005);
+  const [launchType, setLaunchType] = useState<"classic" | "stagger">(preset?.launchType ?? "classic");
+  const [staggerDelayMs, setStaggerDelayMs] = useState(preset?.staggerDelayMs ?? 500);
 
   // ── Launch state ──────────────────────────────────────────────────────────────
   const [isLaunching, setIsLaunching] = useState(false);
@@ -195,7 +205,7 @@ export default function QuickLaunchModal({ prefillUrl, prefillImage, prefillName
   };
 
   const SECTION = "text-[10px] font-semibold uppercase tracking-widest text-zinc-500";
-  const SEP = "1px solid rgba(28,38,56,0.8)";
+  const SEP = "1px solid rgba(79,131,255,0.1)";
 
   return (
     <div
@@ -205,10 +215,10 @@ export default function QuickLaunchModal({ prefillUrl, prefillImage, prefillName
     >
       <div
         className="relative w-full max-w-lg max-h-[90vh] flex flex-col rounded-xl overflow-hidden"
-        style={{ background: "rgba(10,13,20,0.98)", border: "1px solid rgba(79,131,255,0.2)", boxShadow: "0 0 40px rgba(79,131,255,0.08)" }}
+        style={{ background: "rgba(9,9,11,0.97)", border: "1px solid rgba(79,131,255,0.3)", boxShadow: "0 0 0 1px rgba(79,131,255,0.1), 0 0 40px rgba(79,131,255,0.12), 0 24px 48px rgba(0,0,0,0.5)" }}
       >
         {/* Header */}
-        <div className="shrink-0 flex items-center gap-3 px-5 py-4" style={{ borderBottom: SEP }}>
+        <div className="shrink-0 flex items-center gap-3 px-5 py-4" style={{ borderBottom: SEP, background: "rgba(79,131,255,0.03)" }}>
           <div className="flex items-center justify-center w-7 h-7 rounded" style={{ background: "rgba(79,131,255,0.1)", border: "1px solid rgba(79,131,255,0.2)" }}>
             <Rocket className="h-3.5 w-3.5 text-[#4f83ff]" />
           </div>
@@ -266,82 +276,20 @@ export default function QuickLaunchModal({ prefillUrl, prefillImage, prefillName
           {/* ── Bundle ── */}
           <div className="px-5 pt-4 pb-4" style={{ borderBottom: SEP }}>
             <p className={SECTION + " mb-3"}>Bundle</p>
-
-            {/* Launch type + Jito tip */}
-            <div className="flex gap-3 mb-3">
-              <div className="flex-1">
-                <SegmentedControl
-                  options={["classic", "stagger"] as const}
-                  value={launchType}
-                  onChange={setLaunchType}
-                  labels={{ classic: "Classic (Jito)", stagger: "Stagger" }}
-                />
+            {preset && (preset.selectedWalletIds?.length ?? 0) > 0 ? (
+              <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ background: "rgba(79,131,255,0.06)", border: "1px solid rgba(79,131,255,0.18)" }}>
+                <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "#4f83ff", boxShadow: "0 0 6px rgba(79,131,255,0.8)" }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-semibold text-[#7aa3ff]">Preset active</p>
+                  <p className="text-[10px] text-zinc-500 mt-0.5">
+                    {preset.selectedWalletIds?.length} wallet{preset.selectedWalletIds?.length !== 1 ? "s" : ""} · {preset.launchType === "stagger" ? "Stagger" : "Classic (Jito)"} · {preset.jitoTip} SOL tip
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-[11px] text-zinc-500">Tip</span>
-                <input type="number" value={jitoTip} step={0.001} min={0}
-                  onChange={(e) => setJitoTip(Number(e.target.value))}
-                  className="w-16 px-2 py-1.5 text-xs outline-none rounded text-right" style={INPUT} />
-                <span className="text-[11px] text-zinc-600">SOL</span>
-              </div>
-            </div>
-
-            {launchType === "stagger" && (
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-[11px] text-zinc-500">Delay</span>
-                <input type="number" value={staggerDelayMs} min={0} max={10000}
-                  onChange={(e) => setStaggerDelayMs(Number(e.target.value))}
-                  className="w-20 px-2 py-1 text-xs outline-none rounded text-right" style={INPUT} />
-                <span className="text-[11px] text-zinc-600">ms</span>
-              </div>
-            )}
-
-            {/* Wallets */}
-            {wallets.length === 0 ? (
-              <p className="text-xs text-zinc-600">No wallets imported.</p>
             ) : (
-              <div className="space-y-1.5 overflow-y-auto no-scrollbar" style={{ maxHeight: wallets.length > 5 ? "205px" : "none" }}>
-                {wallets.map((w) => {
-                  const sel = selectedIds.includes(w.id);
-                  const isDev = devWalletId === w.id;
-                  return (
-                    <div
-                      key={w.id}
-                      className="flex items-center gap-2 rounded px-3 py-2 cursor-pointer transition-all"
-                      style={{
-                        background: sel ? "rgba(79,131,255,0.07)" : "rgba(13,17,24,0.6)",
-                        border: sel ? "1px solid rgba(79,131,255,0.2)" : "1px solid rgba(28,38,56,0.6)",
-                      }}
-                      onClick={() => toggleWallet(w.id)}
-                    >
-                      <div className="shrink-0 w-4 h-4 rounded flex items-center justify-center"
-                        style={{ background: sel ? "rgba(79,131,255,0.3)" : "rgba(28,38,56,0.8)", border: sel ? "1px solid rgba(79,131,255,0.5)" : "1px solid rgba(28,38,56,0.9)" }}>
-                        {sel && <div className="w-2 h-2 rounded-sm bg-[#4f83ff]" />}
-                      </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setDevWalletId(w.id); }}
-                        title="Set as dev wallet"
-                        className="shrink-0 transition-colors"
-                      >
-                        <Crown className={`h-3.5 w-3.5 ${isDev ? "text-yellow-400" : "text-zinc-500 hover:text-zinc-300"}`} />
-                      </button>
-                      <span className="flex-1 font-mono text-[11px] text-zinc-400">{w.address.slice(0, 6)}…{w.address.slice(-4)}</span>
-                      <span className="text-[11px] text-zinc-500 shrink-0 tabular-nums">{(w.solBalance ?? 0).toFixed(3)}</span>
-                      <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="number"
-                          placeholder="0.1"
-                          value={walletAmounts[w.id] ?? ""}
-                          onChange={(e) => setWalletAmounts((prev) => ({ ...prev, [w.id]: Number(e.target.value) }))}
-                          className="w-14 px-2 py-0.5 text-xs outline-none rounded text-right"
-                          style={INPUT}
-                          step={0.01} min={0.001}
-                        />
-                        <span className="text-[10px] text-zinc-600">SOL</span>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ background: "rgba(234,179,8,0.05)", border: "1px solid rgba(234,179,8,0.2)" }}>
+                <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "#eab308", boxShadow: "0 0 6px rgba(234,179,8,0.7)" }} />
+                <p className="text-[11px] text-amber-400/80">{preset ? "No wallets selected in preset" : "No bundle preset configured"} . update it using the <span className="font-semibold text-amber-400">Bundle Preset</span> button before launching.</p>
               </div>
             )}
           </div>
@@ -385,7 +333,7 @@ export default function QuickLaunchModal({ prefillUrl, prefillImage, prefillName
         <div className="shrink-0 px-5 py-4" style={{ borderTop: SEP }}>
           <button
             onClick={handleLaunch}
-            disabled={isLaunching || launched}
+            disabled={isLaunching || launched || !preset || (preset.selectedWalletIds?.length ?? 0) === 0}
             className="relative w-full py-3 text-sm font-bold rounded transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
             style={
               launched

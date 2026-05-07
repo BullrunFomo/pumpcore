@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import { Keypair } from "@solana/web3.js";
 import bs58 from "bs58";
@@ -57,7 +57,7 @@ export default function GenerateWalletsModal({
   const handleGenerate = () => {
     setLoading(true);
     const now = new Date().toISOString();
-    // Keypair.generate() uses crypto.getRandomValues() — CSPRNG
+    // Keypair.generate() uses crypto.getRandomValues() . CSPRNG
     const wallets: GeneratedWallet[] = Array.from({ length: count }, (_, i) => {
       const kp = Keypair.generate();
       return {
@@ -322,7 +322,7 @@ export default function GenerateWalletsModal({
                 Back Up Your Private Keys
               </DialogTitle>
               <p className="text-sm text-zinc-500 mt-0.5">
-                Save these now — they cannot be recovered later.
+                Save these now . they cannot be recovered later.
               </p>
             </DialogHeader>
 

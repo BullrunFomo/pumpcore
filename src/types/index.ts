@@ -1,11 +1,11 @@
-// ─── Wallet Funding ───────────────────────────────────────────────────────────
+﻿// ─── Wallet Funding ───────────────────────────────────────────────────────────
 
 export interface WalletFundingRecord {
   sourceAddress: string | null;
   sourceLabel: string | null;
   timestamp: number | null; // ms
   amountSol: number;
-  // True once we've attempted a fetch — prevents repeated API calls for wallets
+  // True once we've attempted a fetch . prevents repeated API calls for wallets
   // where no funding transaction was found on-chain.
   fetched: boolean;
 }

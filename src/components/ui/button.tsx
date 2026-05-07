@@ -1,4 +1,4 @@
-import * as React from "react";
+﻿import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
@@ -7,7 +7,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Neon-bordered ghost style — matches the screenshot
+        // Neon-bordered ghost style . matches the screenshot
         default:
           "bg-transparent border border-[#4f83ff] text-[#4f83ff] shadow-[0_0_8px_rgba(79,131,255,0.35),inset_0_0_8px_rgba(79,131,255,0.06)] hover:bg-[#4f83ff]/10 hover:shadow-[0_0_14px_rgba(79,131,255,0.5),inset_0_0_10px_rgba(79,131,255,0.08)]",
         destructive:

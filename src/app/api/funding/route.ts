@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
 // ─── Known exchange / entity labels ──────────────────────────────────────────
 const KNOWN_LABELS: Record<string, string> = {
@@ -42,7 +42,7 @@ export interface FundingInfo {
 async function fetchFundingForAddress(address: string, apiKey: string): Promise<FundingInfo> {
   const empty: FundingInfo = { address, sourceAddress: null, sourceLabel: null, timestamp: null, amountSol: 0 };
 
-  // We want the OLDEST inbound SOL transfer — that's the original funding, not a recent
+  // We want the OLDEST inbound SOL transfer . that's the original funding, not a recent
   // sell-proceeds deposit from an AMM. Helius returns newest-first, so we paginate up to
   // MAX_PAGES and keep overwriting the result; the last match found is the oldest.
   const MAX_PAGES = 3;
@@ -86,7 +86,7 @@ async function fetchFundingForAddress(address: string, apiKey: string): Promise<
       };
     }
 
-    // Fewer than 100 results means we've seen the full history — stop paginating
+    // Fewer than 100 results means we've seen the full history . stop paginating
     if (txs.length < 100) break;
 
     before = txs[txs.length - 1].signature;

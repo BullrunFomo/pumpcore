@@ -1,4 +1,4 @@
-import {
+﻿import {
   Connection,
   PublicKey,
   Keypair,
@@ -35,6 +35,7 @@ import {
   computeUnitLimitIx,
   getOrCreateATA,
 } from "./solana";
+import { buildTokenDescription } from "./utils";
 
 // ─── Token2022 / Mayhem constants ─────────────────────────────────────────────
 
@@ -161,7 +162,7 @@ export async function buildCreateTokenIx(
   };
 }
 
-// ─── Create Token v2 (Token2022 — Mayhem / Cashback / Agent) ─────────────────
+// ─── Create Token v2 (Token2022 . Mayhem / Cashback / Agent) ─────────────────
 
 export async function buildCreateTokenV2Ix(
   params: CreateTokenParams & { isMayhemMode: boolean; isCashbackEnabled: boolean | null },
@@ -555,7 +556,7 @@ export async function createAndDevBuy(
     symbol,
     logoBuffer: logoFile,
     logoFileName,
-    description: `${name} — ${params.tokenType || "Token"} on PumpFun`,
+    description: buildTokenDescription(name),
     website: params.website,
     twitter: params.twitter,
     telegram: params.telegram,

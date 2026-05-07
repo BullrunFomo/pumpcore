@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import {
   Keypair,
   PublicKey,
@@ -11,7 +11,7 @@ import { getConnection, keypairFromPrivateKey, priorityFeeIx, computeUnitLimitIx
 
 // CU budget: well above what 15 SOL transfers actually consume (~3,000 CU)
 const BATCH_CU = 50_000;
-// Priority: 100,000 microlamports/CU — ensures reliable landing
+// Priority: 100,000 microlamports/CU . ensures reliable landing
 const BATCH_PRIORITY_MICRO = 100_000;
 // priority_fee = BATCH_CU * BATCH_PRIORITY_MICRO / 1_000_000 = 5_000 lamports
 const PRIORITY_FEE_LAMPORTS = Math.ceil(BATCH_CU * BATCH_PRIORITY_MICRO / 1_000_000);
@@ -49,7 +49,7 @@ async function sendAndConfirm(
     if (Date.now() - lastBroadcast >= REBROADCAST_INTERVAL) {
       try {
         await connection.sendRawTransaction(rawTx, { skipPreflight: true, maxRetries: 0 });
-      } catch { /* ignore — may already be on-chain */ }
+      } catch { /* ignore . may already be on-chain */ }
       lastBroadcast = Date.now();
     }
 
@@ -60,10 +60,10 @@ async function sendAndConfirm(
       if (status.err) throw new Error(`Transaction failed: ${JSON.stringify(status.err)}`);
       if (status.confirmationStatus === "confirmed" || status.confirmationStatus === "finalized") return;
     } else {
-      // Transaction not yet visible — check if blockhash has expired
+      // Transaction not yet visible . check if blockhash has expired
       const blockHeight = await connection.getBlockHeight("confirmed");
       if (blockHeight > lastValidBlockHeight) {
-        throw new Error("Transaction expired — blockhash too old. Please retry.");
+        throw new Error("Transaction expired . blockhash too old. Please retry.");
       }
     }
 
@@ -78,7 +78,7 @@ async function sendAndConfirm(
     return;
   }
 
-  throw new Error("Confirmation timeout — the transaction may still land. Check the signature on Solscan.");
+  throw new Error("Confirmation timeout . the transaction may still land. Check the signature on Solscan.");
 }
 
 async function sendBatch(
@@ -212,7 +212,7 @@ export async function POST(req: NextRequest) {
 
     if (distributableLamports <= 0) {
       return NextResponse.json(
-        { error: `Insufficient balance — need at least ${(totalFeeLamports / LAMPORTS_PER_SOL).toFixed(6)} SOL to cover fees` },
+        { error: `Insufficient balance . need at least ${(totalFeeLamports / LAMPORTS_PER_SOL).toFixed(6)} SOL to cover fees` },
         { status: 400 },
       );
     }

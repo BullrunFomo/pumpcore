@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
 import {
@@ -221,7 +221,7 @@ export default function DocsPage() {
               <SectionTitle icon={BookOpen}>Overview</SectionTitle>
               <p className="text-sm text-zinc-400 leading-relaxed mb-4">
                 BundleX lets you create PumpFun tokens and simultaneously buy them across multiple wallets in
-                a single atomic Jito bundle — making your launch MEV-resistant and coordinated from block zero.
+                a single atomic Jito bundle . making your launch MEV-resistant and coordinated from block zero.
               </p>
               <div className="grid sm:grid-cols-3 gap-3">
                 {[
@@ -255,7 +255,7 @@ export default function DocsPage() {
               <SectionTitle icon={Shield}>Access Keys</SectionTitle>
               <p className="text-sm text-zinc-400 leading-relaxed mb-4">
                 BundleX is gated behind unique access keys. Each key unlocks a private account whose data —
-                wallets, launches, trades, and PnL — is completely isolated from every other account.
+                wallets, launches, trades, and PnL . is completely isolated from every other account.
               </p>
               <div className="flex flex-col gap-3">
                 <Step n={1} title="Receive your key">
@@ -274,7 +274,7 @@ export default function DocsPage() {
               <div className="mt-4">
                 <WarnBox>
                   Authentication uses a secure <Code>bundlex-session</Code> cookie. Clearing cookies or
-                  using a private window will log you out. Your account data is preserved — re-entering
+                  using a private window will log you out. Your account data is preserved . re-entering
                   your key restores everything. Rate limiting applies: 10 failed attempts per IP per 15 minutes.
                 </WarnBox>
               </div>
@@ -288,7 +288,7 @@ export default function DocsPage() {
               <SectionTitle icon={Wallet}>Importing Wallets</SectionTitle>
               <p className="text-sm text-zinc-400 leading-relaxed mb-4">
                 All wallets are imported by private key and stored locally in your browser. Keys are never
-                sent to any external server — only to your own Next.js backend for Solana transaction signing.
+                sent to any external server . only to your own Next.js backend for Solana transaction signing.
               </p>
               <div className="flex flex-col gap-3 mb-5">
                 <Step n={1} title='Click "Import Wallets" on the Dashboard'>
@@ -415,7 +415,7 @@ export default function DocsPage() {
                   </div>
                   <p className="text-xs text-zinc-400 leading-relaxed">
                     Token creation and <em>all</em> wallet buys are packed into a single Jito bundle.
-                    Everything lands atomically in block 0 — no snipers can react between your
+                    Everything lands atomically in block 0 . no snipers can react between your
                     creation and your buys.
                   </p>
                 </div>
@@ -573,7 +573,7 @@ export default function DocsPage() {
                     Choose which wallets participate, set SOL per wallet, and set a Jito tip inside the modal.
                   </Step>
                   <Step n={3} title="Launch">
-                    The token is created and all buys are submitted as a Jito bundle — without leaving the
+                    The token is created and all buys are submitted as a Jito bundle . without leaving the
                     Feed page.
                   </Step>
                 </div>
