@@ -244,7 +244,7 @@ function drawCard(
   ctx.font = "13px Satoshi, sans-serif";
   ctx.fillStyle = "rgba(148,163,184,0.45)";
   ctx.textAlign = "right";
-  ctx.fillText("bundlex.io", W - 36, H - 18);
+  ctx.fillText("bundlex.pro", W - 36, H - 18);
   ctx.textAlign = "left";
 }
 

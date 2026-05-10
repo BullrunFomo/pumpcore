@@ -327,18 +327,24 @@ export default function ManagePage() {
   });
 
   // PNL: delta between current total SOL equity and initial equity at launch time.
-  // current equity = SOL held + token holdings valued in SOL
+  // current equity = SOL held + token holdings valued in SOL.
+  // Falls back to trade-based calc for old launches that predate initialSolEquity.
   const activeLaunch = launches.find((l) => l.mintAddress === activeTokenMint);
-  const initialSolEquity = activeLaunch?.initialSolEquity ?? 0;
   const currentSolInWallets = bundleWallets.reduce((acc, w) => acc + w.solBalance, 0);
   const currentPositionSol = bundleWallets.reduce(
     (acc, w) => acc + w.tokenBalance * (tokenPrice?.price ?? 0),
     0
   );
-  const currentTotalEquity = currentSolInWallets + currentPositionSol;
-  const totalPnlSol = initialSolEquity > 0 ? currentTotalEquity - initialSolEquity : 0;
+  const totalPnlSol = activeLaunch?.initialSolEquity != null
+    ? (currentSolInWallets + currentPositionSol) - activeLaunch.initialSolEquity
+    : trades.reduce((acc, t) => {
+        if (t.type === "sell") return acc + (t.solAmount ?? 0);
+        if (t.type === "buy") return acc - (t.solAmount ?? 0);
+        return acc;
+      }, 0);
   const totalPnlUsd = totalPnlSol * (tokenPrice?.solPrice ?? 0);
-  const investedSol = initialSolEquity;
+  const investedSol = activeLaunch?.initialSolEquity
+    ?? trades.filter((t) => t.type === "buy").reduce((acc, t) => acc + (t.solAmount ?? 0), 0);
 
   useEffect(() => {
     refreshBalances();
