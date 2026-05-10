@@ -326,7 +326,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: getAccountStoreName(),
-      version: 1,
+      version: 2,
       migrate: (persisted: any, version: number) => {
         if (version < 1) {
           const now = new Date().toISOString();
@@ -334,6 +334,22 @@ export const useStore = create<AppState>()(
             ...w,
             importedAt: w.importedAt ?? now,
           }));
+        }
+        if (version < 2) {
+          // Patch known launches with manually-verified PnL values.
+          // Setting both initialSolEquity and finalSolEquity locks the displayed PnL
+          // to (finalSolEquity - initialSolEquity) regardless of current wallet state.
+          const overrides: Record<string, number> = {
+            AURAHOUSE: 0.719,
+            MOMHOUSE: 1.842,
+          };
+          persisted.launches = (persisted.launches ?? []).map((l: any) => {
+            const pnl = overrides[l.symbol];
+            if (pnl != null && l.initialSolEquity == null) {
+              return { ...l, initialSolEquity: 0, finalSolEquity: pnl };
+            }
+            return l;
+          });
         }
         return persisted;
       },

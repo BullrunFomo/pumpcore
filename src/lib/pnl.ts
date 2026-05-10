@@ -28,10 +28,11 @@ export function getTradesForLaunch(
 }
 
 /**
- * Computes PnL in SOL for the active launch.
+ * Computes PnL in SOL for a launch.
  *
- * Formula (new launches): currentTotalSol - initialSolEquity
- * Formula (old launches): filtered sells - filtered buys (trade-based fallback)
+ * Closed launch (finalSolEquity set): finalSolEquity - initialSolEquity  (locked value)
+ * Active launch (only initialSolEquity set): currentTotalSol - initialSolEquity  (live)
+ * Old launch (no equity data): filtered sells - filtered buys  (trade-based fallback)
  */
 export function computeLaunchPnl(
   activeLaunch: LaunchRecord | undefined,
@@ -41,10 +42,17 @@ export function computeLaunchPnl(
 ): number {
   if (!activeLaunch) return 0;
 
+  // Closed / manually-locked launch
+  if (activeLaunch.finalSolEquity != null && activeLaunch.initialSolEquity != null) {
+    return activeLaunch.finalSolEquity - activeLaunch.initialSolEquity;
+  }
+
+  // Active launch with equity snapshot
   if (activeLaunch.initialSolEquity != null) {
     return currentTotalSol - activeLaunch.initialSolEquity;
   }
 
+  // Old launch without equity data — fall back to mint-filtered trades
   const launchTrades = getTradesForLaunch(activeLaunch.mintAddress, launches, trades);
   return launchTrades.reduce((acc, t) => {
     if (t.type === "sell") return acc + t.solAmount;
