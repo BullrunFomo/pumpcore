@@ -3,6 +3,7 @@ import { TrendingUp, Wallet, Zap } from "lucide-react";
 import CopyButton from "./CopyButton";
 import { useStore } from "@/store";
 import { formatSol, formatUsd, truncateAddress } from "@/lib/utils";
+import { computeLaunchPnl } from "@/lib/pnl";
 
 export default function StatsBar() {
   const wallets = useStore((s) => s.wallets);
@@ -21,18 +22,8 @@ export default function StatsBar() {
   const trades = useStore((s) => s.trades);
 
   const activeLaunch = launches.find((l) => l.mintAddress === activeTokenMint);
-  const currentSolInWallets = bundleWallets.reduce((acc, w) => acc + w.solBalance, 0);
-  const currentPositionSol = bundleWallets.reduce(
-    (acc, w) => acc + w.tokenBalance * (tokenPrice?.price ?? 0),
-    0
-  );
-  const totalPnlSol = activeLaunch?.initialSolEquity != null
-    ? (currentSolInWallets + currentPositionSol) - activeLaunch.initialSolEquity
-    : trades.reduce((acc, t) => {
-        if (t.type === "sell") return acc + t.solAmount;
-        if (t.type === "buy") return acc - t.solAmount;
-        return acc;
-      }, 0);
+  const currentTotalSol = bundleWallets.reduce((acc, w) => acc + w.solBalance, 0);
+  const totalPnlSol = computeLaunchPnl(activeLaunch, launches, trades, currentTotalSol);
   const totalPnlUsd = totalPnlSol * (tokenPrice?.solPrice ?? 0);
   const isPositive = totalPnlSol >= 0;
 

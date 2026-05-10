@@ -73,7 +73,10 @@ function SegmentedControl<T extends string>({
 export default function QuickLaunchModal({ prefillUrl, prefillImage, prefillName, preset, onClose }: Props) {
   const router = useRouter();
   const wallets = useStore((s) => s.wallets);
+  const launches = useStore((s) => s.launches);
+  const activeTokenMint = useStore((s) => s.activeTokenMint);
   const addLaunch = useStore((s) => s.addLaunch);
+  const updateLaunch = useStore((s) => s.updateLaunch);
   const addTrade = useStore((s) => s.addTrade);
   const setActiveTokenMint = useStore((s) => s.setActiveTokenMint);
 
@@ -180,8 +183,13 @@ export default function QuickLaunchModal({ prefillUrl, prefillImage, prefillName
               setLaunched(true);
               setIsLaunching(false);
               if (event.mintAddress) {
+                const totalSolNow = selectedWallets.reduce((acc, w) => acc + w.solBalance, 0);
+                const prevLaunch = launches.find((l) => l.mintAddress === activeTokenMint);
+                if (prevLaunch && prevLaunch.finalSolEquity == null) {
+                  updateLaunch(prevLaunch.id, { finalSolEquity: totalSolNow });
+                }
                 setActiveTokenMint(event.mintAddress);
-                addLaunch({ mintAddress: event.mintAddress, name, symbol, logoUri, launchedAt: new Date().toISOString(), initialSolEquity: selectedWallets.reduce((acc, w) => acc + w.solBalance, 0) });
+                addLaunch({ mintAddress: event.mintAddress, name, symbol, logoUri, launchedAt: new Date().toISOString(), initialSolEquity: totalSolNow });
                 const now = new Date();
                 for (const w of selectedWallets) {
                   const solAmount = walletAmounts[w.id] ?? 0.1;

@@ -294,7 +294,10 @@ export const useStore = create<AppState>()(
       trades: [],
       addTrade: (trade) =>
         set((s) => ({
-          trades: [{ ...trade, id: randomId() }, ...s.trades].slice(0, 500),
+          trades: [
+            { ...trade, id: randomId(), mintAddress: trade.mintAddress ?? s.activeTokenMint || undefined },
+            ...s.trades,
+          ].slice(0, 500),
         })),
 
       // ── Price ────────────────────────────────────────────────────────────────

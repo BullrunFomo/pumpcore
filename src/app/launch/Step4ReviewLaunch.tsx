@@ -40,6 +40,8 @@ export default function Step4ReviewLaunch() {
   const router = useRouter();
   const launch = useStore((s) => s.launch);
   const wallets = useStore((s) => s.wallets);
+  const launches = useStore((s) => s.launches);
+  const activeTokenMint = useStore((s) => s.activeTokenMint);
   const setLaunchStep = useStore((s) => s.setLaunchStep);
   const setLaunching = useStore((s) => s.setLaunching);
   const addLaunchLog = useStore((s) => s.addLaunchLog);
@@ -47,6 +49,7 @@ export default function Step4ReviewLaunch() {
   const setActiveTokenMint = useStore((s) => s.setActiveTokenMint);
   const updateTokenConfig = useStore((s) => s.updateTokenConfig);
   const addLaunch = useStore((s) => s.addLaunch);
+  const updateLaunch = useStore((s) => s.updateLaunch);
   const addTrade = useStore((s) => s.addTrade);
   const logEndRef = useRef<HTMLDivElement>(null);
 
@@ -128,6 +131,13 @@ export default function Step4ReviewLaunch() {
                 setLaunched(true);
                 setLaunching(false);
                 if (event.mintAddress) {
+                  // Snapshot total SOL across selected wallets (pre-buy, store not yet refreshed)
+                  const totalSolNow = selectedWallets.reduce((acc, w) => acc + w.solBalance, 0);
+                  // Lock in finalSolEquity on the previous launch
+                  const prevLaunch = launches.find((l) => l.mintAddress === activeTokenMint);
+                  if (prevLaunch && prevLaunch.finalSolEquity == null) {
+                    updateLaunch(prevLaunch.id, { finalSolEquity: totalSolNow });
+                  }
                   setActiveTokenMint(event.mintAddress);
                   updateTokenConfig({ mintAddress: event.mintAddress });
                   addLaunch({
@@ -136,7 +146,7 @@ export default function Step4ReviewLaunch() {
                     symbol: tokenConfig.symbol,
                     logoUri: tokenConfig.logoUri,
                     launchedAt: new Date().toISOString(),
-                    initialSolEquity: selectedWallets.reduce((acc, w) => acc + w.solBalance, 0),
+                    initialSolEquity: totalSolNow,
                   });
                   // Record each bundle wallet's buy so PNL is accurate
                   const now = new Date();

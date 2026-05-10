@@ -103,6 +103,7 @@ export interface TradeRecord {
   txSig: string;
   timestamp: Date;
   status: "pending" | "confirmed" | "failed";
+  mintAddress?: string;
 }
 
 // ─── Launch Record ────────────────────────────────────────────────────────────
@@ -115,6 +116,7 @@ export interface LaunchRecord {
   logoUri: string;
   launchedAt: string; // ISO
   initialSolEquity?: number; // total SOL across all bundle wallets at launch time (pre-buy)
+  finalSolEquity?: number;   // total SOL across all bundle wallets when the next launch started
 }
 
 // ─── Price ────────────────────────────────────────────────────────────────────
