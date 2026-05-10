@@ -1,8 +1,7 @@
 ﻿"use client";
-import { TrendingUp, Wallet, Zap } from "lucide-react";
-import CopyButton from "./CopyButton";
+import { TrendingUp, Wallet, Rocket, Zap } from "lucide-react";
 import { useStore } from "@/store";
-import { formatSol, formatUsd, truncateAddress } from "@/lib/utils";
+import { formatSol, formatUsd } from "@/lib/utils";
 import { computeLaunchPnl } from "@/lib/pnl";
 
 export default function StatsBar() {
@@ -104,44 +103,18 @@ export default function StatsBar() {
           </div>
         </div>
 
-        {/* Active Token */}
+        {/* Total Launches */}
         <div className="px-5 py-4 relative before:absolute before:left-0 before:top-3 before:bottom-3 before:w-px before:bg-[rgba(28,38,56,0.9)]">
           <div className="flex items-center gap-2 mb-2.5">
-            <div
-              className="w-2 h-2 rounded-full"
-              style={{
-                background: activeTokenMint ? "#4f83ff" : "#52525b",
-                boxShadow: activeTokenMint ? "0 0 6px rgba(79,131,255,0.6)" : "none",
-              }}
-            />
+            <Rocket className="h-3 w-3 text-[#4f83ff]" />
             <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
-              Active Token
+              Total Launches
             </span>
           </div>
-          {activeTokenMint ? (
-            <>
-              <div className="flex items-center gap-1.5">
-                <span className="font-mono text-base font-bold text-[#4f83ff]">
-                  {truncateAddress(activeTokenMint, 6)}
-                </span>
-                <CopyButton
-                  text={activeTokenMint}
-                  className="text-zinc-500 hover:text-zinc-200 transition-colors"
-                  iconClassName="h-3 w-3"
-                />
-              </div>
-              {tokenPrice && (
-                <div className="text-xs font-semibold mt-0.5" style={{ color: "#4f83ff" }}>
-                  MCap ${Math.round(tokenPrice.mcap).toLocaleString("en-US")}
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <div className="text-base font-bold text-zinc-500">None</div>
-              <div className="text-xs text-zinc-500 mt-0.5">Launch a token first</div>
-            </>
-          )}
+          <div className="text-base font-bold text-[#4f83ff]">{launches.length}</div>
+          <div className="text-xs text-zinc-500 mt-0.5 font-medium">
+            {launches.length === 1 ? "token launched" : "tokens launched"}
+          </div>
         </div>
 
       </div>
