@@ -314,6 +314,11 @@ export default function ManagePage() {
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const [pnlCardOpen, setPnlCardOpen] = useState(false);
 
+  const [creatorFeeSol, setCreatorFeeSol] = useState<number | null>(null);
+  const [creatorAddress, setCreatorAddress] = useState<string | null>(null);
+  const [claimingFees, setClaimingFees] = useState(false);
+  const [claimMsg, setClaimMsg] = useState<string | null>(null);
+
   const { tokenConfig, bundleConfig } = launch;
   const devWalletId = bundleConfig.devWalletId;
 
@@ -413,6 +418,51 @@ export default function ManagePage() {
     }
   };
 
+  // Fetch creator vault balance whenever the active mint changes
+  useEffect(() => {
+    setCreatorFeeSol(null);
+    setCreatorAddress(null);
+    setClaimMsg(null);
+    if (!activeTokenMint) return;
+    fetch(`/api/creator-fees/info?mint=${activeTokenMint}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (d?.creator) {
+          setCreatorAddress(d.creator);
+          setCreatorFeeSol(d.feeSol ?? 0);
+        }
+      })
+      .catch(() => {});
+  }, [activeTokenMint]);
+
+  // The creator wallet (one of ours that matches the on-chain creator)
+  const creatorWallet = creatorAddress
+    ? wallets.find((w) => w.address === creatorAddress) ?? null
+    : null;
+
+  const handleClaimFees = async () => {
+    if (!creatorWallet || !activeTokenMint) return;
+    setClaimingFees(true);
+    setClaimMsg(null);
+    try {
+      const res = await fetch("/api/creator-fees/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mint: activeTokenMint, privateKey: creatorWallet.privateKey }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Claim failed");
+      setClaimMsg(`Claimed ${formatSol(data.claimedSol, 4)} SOL`);
+      setCreatorFeeSol(0);
+      // Refresh balances so the creator wallet's SOL balance updates
+      refreshBalances();
+    } catch {
+      // silent fail
+    } finally {
+      setClaimingFees(false);
+    }
+  };
+
   return (
     <div className="flex flex-col flex-1 min-h-0 max-w-7xl w-full mx-auto px-3 sm:px-6 py-5">
       {/* ── Header ──────────────────────────────────────────────────────────── */}
@@ -475,48 +525,102 @@ export default function ManagePage() {
           </div>
         </div>
 
-        {/* PNL Card */}
-        <div
-          className="flex items-center gap-2 px-4 py-1.5 rounded-md flex-shrink-0 mr-auto"
-          style={{ background: "rgba(13,17,24,0.8)", border: "1px solid rgba(28,38,56,0.8)", minWidth: "148px" }}
-        >
-          <div className="flex flex-col gap-0.5 flex-1">
-            <span className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: "rgba(100,116,139,0.7)" }}>
-              Total P&amp;L
-            </span>
-            <div className="flex items-center gap-1.5">
-              {totalPnlSol >= 0
-                ? <TrendingUp className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "#4ade80" }} />
-                : <TrendingDown className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "#f87171" }} />}
-              <span
-                className="text-sm font-bold tabular-nums"
-                style={{ color: totalPnlSol >= 0 ? "#4ade80" : "#f87171" }}
-              >
-                {totalPnlSol >= 0 ? "+" : ""}{formatSol(Math.abs(totalPnlSol), 3)} SOL
+        {/* PnL + Creator Fees cards, side by side, same height */}
+        <div className="flex items-stretch gap-2 flex-shrink-0 mr-auto">
+          {/* PNL Card */}
+          <div
+            className="flex items-center gap-2 px-4 py-1.5 rounded-md"
+            style={{ background: "rgba(13,17,24,0.8)", border: "1px solid rgba(28,38,56,0.8)", minWidth: "148px" }}
+          >
+            <div className="flex flex-col gap-0.5 flex-1">
+              <span className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: "rgba(100,116,139,0.7)" }}>
+                Total P&amp;L
+              </span>
+              <div className="flex items-center gap-1.5">
+                {totalPnlSol >= 0
+                  ? <TrendingUp className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "#4ade80" }} />
+                  : <TrendingDown className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "#f87171" }} />}
+                <span
+                  className="text-sm font-bold tabular-nums"
+                  style={{ color: totalPnlSol >= 0 ? "#4ade80" : "#f87171" }}
+                >
+                  {totalPnlSol >= 0 ? "+" : ""}{formatSol(Math.abs(totalPnlSol), 3)} SOL
+                </span>
+              </div>
+              <span className="text-[11px] tabular-nums" style={{ color: "rgba(100,116,139,0.6)" }}>
+                {totalPnlUsd >= 0 ? "+" : "-"}{formatUsd(Math.abs(totalPnlUsd))}
               </span>
             </div>
-            <span className="text-[11px] tabular-nums" style={{ color: "rgba(100,116,139,0.6)" }}>
-              {totalPnlUsd >= 0 ? "+" : "-"}{formatUsd(Math.abs(totalPnlUsd))}
-            </span>
+            <button
+              onClick={() => setPnlCardOpen(true)}
+              title="Share PnL card"
+              className="flex-shrink-0 rounded p-1 transition-colors"
+              style={{ color: "rgba(100,116,139,0.6)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#60a5fa")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(100,116,139,0.6)")}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 3h12" />
+                <path d="M6 3v6a6 6 0 0 0 12 0V3" />
+                <path d="M4 3C4 3 2 3.5 2 7c0 2.5 2 4 4 4" />
+                <path d="M20 3c0 0 2 .5 2 4c0 2.5-2 4-4 4" />
+                <path d="M12 15v4" />
+                <path d="M8 19h8" />
+                <path d="M9 22h6" />
+              </svg>
+            </button>
           </div>
-          <button
-            onClick={() => setPnlCardOpen(true)}
-            title="Share PnL card"
-            className="flex-shrink-0 rounded p-1 transition-colors"
-            style={{ color: "rgba(100,116,139,0.6)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#60a5fa")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(100,116,139,0.6)")}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 3h12" />
-              <path d="M6 3v6a6 6 0 0 0 12 0V3" />
-              <path d="M4 3C4 3 2 3.5 2 7c0 2.5 2 4 4 4" />
-              <path d="M20 3c0 0 2 .5 2 4c0 2.5-2 4-4 4" />
-              <path d="M12 15v4" />
-              <path d="M8 19h8" />
-              <path d="M9 22h6" />
-            </svg>
-          </button>
+
+          {/* Creator Fees Card — only shown when one of our wallets is the token creator */}
+          {creatorWallet && creatorFeeSol !== null && (
+            <div
+              className="relative overflow-hidden rounded-md px-4 py-1.5 flex items-center gap-3"
+              style={{
+                background: "linear-gradient(160deg, rgba(15,22,45,0.98) 0%, rgba(18,18,24,0.95) 100%)",
+                border: "1px solid rgba(79,131,255,0.4)",
+                boxShadow: "0 0 40px rgba(79,131,255,0.1), 0 0 80px rgba(79,131,255,0.04), inset 0 1px 0 rgba(79,131,255,0.12)",
+                minWidth: "148px",
+              }}
+            >
+              {/* Top radial glow */}
+              <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 50% -5%, rgba(79,131,255,0.28) 0%, transparent 60%)" }} />
+              {/* Grid texture */}
+              <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: "linear-gradient(rgba(79,131,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(79,131,255,1) 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
+              {/* Bottom shine */}
+              <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{ height: "1px", background: "linear-gradient(90deg, transparent 10%, rgba(79,131,255,0.5) 50%, transparent 90%)" }} />
+
+              <div className="relative flex flex-col gap-0.5 flex-1">
+                <span className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: "rgba(100,116,139,0.7)" }}>
+                  Creator Fees
+                </span>
+                <span
+                  className="text-sm font-bold tabular-nums"
+                  style={{ color: creatorFeeSol > 0 ? "#4f83ff" : "rgba(100,116,139,0.5)" }}
+                >
+                  {formatSol(creatorFeeSol, 4)} SOL
+                </span>
+                {claimMsg && (
+                  <span className="text-[10px]" style={{ color: "#4ade80" }}>
+                    {claimMsg}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={handleClaimFees}
+                disabled={claimingFees || creatorFeeSol === 0}
+                title={creatorFeeSol === 0 ? "No fees to claim" : "Claim creator fees"}
+                className="relative flex-shrink-0 rounded px-2 py-0.5 text-[11px] font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{
+                  background: "linear-gradient(135deg, rgba(79,131,255,0.28) 0%, rgba(79,131,255,0.12) 100%)",
+                  border: "1px solid rgba(79,131,255,0.55)",
+                  color: "#4f83ff",
+                  boxShadow: "0 0 12px rgba(79,131,255,0.18), inset 0 1px 0 rgba(255,255,255,0.06)",
+                }}
+              >
+                {claimingFees ? "..." : "Claim"}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Right: Sell All */}
