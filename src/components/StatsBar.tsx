@@ -1,15 +1,24 @@
 ﻿"use client";
-import { TrendingUp, Wallet, Rocket, Zap } from "lucide-react";
+import { useState } from "react";
+import { TrendingUp, Wallet, Rocket, Zap, Calendar, BarChart2 } from "lucide-react";
 import { useStore } from "@/store";
 import { formatSol, formatUsd } from "@/lib/utils";
 import { computeLaunchPnl } from "@/lib/pnl";
+import OverallPnlCard from "@/components/OverallPnlCard";
+import OverallPnlChart from "@/components/OverallPnlChart";
+import PnlCalendar from "@/components/PnlCalendar";
 
 export default function StatsBar() {
   const wallets = useStore((s) => s.wallets);
   const launches = useStore((s) => s.launches);
+  const trades = useStore((s) => s.trades);
   const tokenPrice = useStore((s) => s.tokenPrice);
   const activeTokenMint = useStore((s) => s.activeTokenMint);
   const launch = useStore((s) => s.launch);
+
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [chartOpen, setChartOpen] = useState(false);
+  const [cardOpen, setCardOpen] = useState(false);
 
   const bundleSelectedIds = launch.bundleConfig.selectedWalletIds;
   const bundleWallets = bundleSelectedIds.length > 0
@@ -18,8 +27,6 @@ export default function StatsBar() {
 
   const totalSol = wallets.reduce((sum, w) => sum + w.solBalance, 0);
 
-  const trades = useStore((s) => s.trades);
-
   const activeLaunch = launches.find((l) => l.mintAddress === activeTokenMint);
   const currentTotalSol = bundleWallets.reduce((acc, w) => acc + w.solBalance, 0);
   const totalPnlSol = computeLaunchPnl(activeLaunch, launches, trades, currentTotalSol);
@@ -27,6 +34,7 @@ export default function StatsBar() {
   const isPositive = totalPnlSol >= 0;
 
   return (
+    <>
     <div
       className="rounded-md overflow-hidden"
       style={{
@@ -53,6 +61,36 @@ export default function StatsBar() {
             <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
               Overall PnL
             </span>
+            <div className="flex items-center gap-1">
+              {[
+                { icon: Calendar,  onClick: () => setCalendarOpen(true), title: "PnL Calendar" },
+                { icon: BarChart2, onClick: () => setChartOpen(true),    title: "PnL Chart" },
+              ].map(({ icon: Icon, onClick, title }) => (
+                <button
+                  key={title}
+                  onClick={onClick}
+                  title={title}
+                  className="flex items-center justify-center rounded p-0.5 transition-all text-zinc-500 hover:text-[#4f83ff] hover:bg-[rgba(79,131,255,0.12)]"
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                </button>
+              ))}
+              <button
+                onClick={() => setCardOpen(true)}
+                title="PnL Card"
+                className="flex items-center justify-center rounded p-0.5 transition-all text-zinc-500 hover:text-[#4f83ff] hover:bg-[rgba(79,131,255,0.12)]"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 3h12" />
+                  <path d="M6 3v6a6 6 0 0 0 12 0V3" />
+                  <path d="M4 3C4 3 2 3.5 2 7c0 2.5 2 4 4 4" />
+                  <path d="M20 3c0 0 2 .5 2 4c0 2.5-2 4-4 4" />
+                  <path d="M12 15v4" />
+                  <path d="M8 19h8" />
+                  <path d="M9 22h6" />
+                </svg>
+              </button>
+            </div>
           </div>
           <div
             className="text-lg font-bold"
@@ -119,5 +157,26 @@ export default function StatsBar() {
 
       </div>
     </div>
+
+    <PnlCalendar
+      open={calendarOpen}
+      onClose={() => setCalendarOpen(false)}
+      currentTotalSol={currentTotalSol}
+    />
+    <OverallPnlChart
+      open={chartOpen}
+      onClose={() => setChartOpen(false)}
+      currentTotalSol={currentTotalSol}
+    />
+    <OverallPnlCard
+      open={cardOpen}
+      onClose={() => setCardOpen(false)}
+      totalPnlSol={totalPnlSol}
+      totalPnlUsd={totalPnlUsd}
+      investedSol={activeLaunch?.initialSolEquity ?? 0}
+      currentPositionSol={currentTotalSol}
+      solPrice={tokenPrice?.solPrice ?? 0}
+    />
+    </>
   );
 }
