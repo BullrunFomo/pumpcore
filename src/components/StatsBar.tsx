@@ -111,7 +111,7 @@ export default function StatsBar() {
               Total Launches
             </span>
           </div>
-          <div className="text-base font-bold text-[#4f83ff]">{launches.length}</div>
+          <div className="text-base font-bold text-white">{launches.length}</div>
           <div className="text-xs text-zinc-500 mt-0.5 font-medium">
             {launches.length === 1 ? "token launched" : "tokens launched"}
           </div>
