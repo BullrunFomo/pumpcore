@@ -264,7 +264,8 @@ export default function FundModal({ open, onClose }: FundModalProps) {
                     ? "linear-gradient(135deg, rgba(79,131,255,0.18), rgba(139,92,246,0.12))"
                     : "transparent",
                   border: tab === t ? "1px solid rgba(79,131,255,0.3)" : "1px solid transparent",
-                  color: tab === t ? "#93b4ff" : "#52525b",
+                  color: tab === t ? "#93b4ff" : t === "splitnow" ? "#3f3f46" : "#52525b",
+                  cursor: t === "splitnow" ? "default" : undefined,
                 }}
               >
                 {t === "classic" ? "Classic" : "Split Now"}
@@ -274,9 +275,53 @@ export default function FundModal({ open, onClose }: FundModalProps) {
         </div>
 
         {/* Content */}
-        <div className="px-6 py-4 space-y-3">
+        <div className="px-6 py-4 space-y-3 overflow-y-auto" style={{ height: 360 }}>
           {tab === "splitnow" ? (
-            <SplitNowTab wallets={wallets} />
+            <div className="relative" style={{ height: "100%" }}>
+              <div className="blur-sm pointer-events-none select-none">
+                <SplitNowTab wallets={wallets} />
+              </div>
+              <div
+                className="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-xl"
+                style={{ background: "radial-gradient(ellipse at 50% 40%, rgba(79,131,255,0.10) 0%, rgba(0,0,0,0.72) 70%)", backdropFilter: "blur(2px)" }}
+              >
+                {/* Glow ring */}
+                <div className="relative flex items-center justify-center">
+                  <div
+                    className="absolute rounded-full animate-ping"
+                    style={{ width: 56, height: 56, background: "rgba(79,131,255,0.18)" }}
+                  />
+                  <div
+                    className="relative flex items-center justify-center rounded-full"
+                    style={{ width: 48, height: 48, background: "linear-gradient(135deg, rgba(79,131,255,0.22), rgba(139,92,246,0.16))", border: "1px solid rgba(79,131,255,0.35)", boxShadow: "0 0 28px rgba(79,131,255,0.25), inset 0 1px 0 rgba(255,255,255,0.08)" }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(147,180,255,0.9)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Text */}
+                <div className="flex flex-col items-center gap-1.5">
+                  <span
+                    className="text-sm font-bold uppercase tracking-[0.2em]"
+                    style={{ color: "#93b4ff" }}
+                  >
+                    Coming Soon
+                  </span>
+                </div>
+
+                {/* Pill badge */}
+                <div
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full"
+                  style={{ background: "rgba(79,131,255,0.08)", border: "1px solid rgba(79,131,255,0.2)" }}
+                >
+                  <div className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: "#4f83ff" }} />
+                  <span className="text-[10px] font-semibold" style={{ color: "#4f83ff" }}>In Development</span>
+                </div>
+              </div>
+            </div>
           ) : (
             <>
               {phase === "idle" && (

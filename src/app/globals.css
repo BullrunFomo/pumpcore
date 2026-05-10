@@ -101,6 +101,12 @@ input[type="number"] {
   100% { transform: translateX(100%); }
 }
 
+@keyframes gradient-pan {
+  0% { background-position: 0% center; }
+  50% { background-position: 100% center; }
+  100% { background-position: 0% center; }
+}
+
 @keyframes pulse-glow {
   0%, 100% { box-shadow: 0 0 16px rgba(79,131,255,0.25), 0 0 32px rgba(79,131,255,0.08); }
   50% { box-shadow: 0 0 24px rgba(79,131,255,0.45), 0 0 48px rgba(79,131,255,0.15); }

@@ -66,7 +66,7 @@ export default function ProfilePage() {
   const redactedKey = accessKey.replace(/./g, "•");
 
   return (
-    <main className="h-full overflow-hidden pt-8 pb-6 px-4" style={{ background: "#07090f" }}>
+    <main className="h-full overflow-y-auto pt-8 pb-6 px-4" style={{ background: "#07090f" }}>
       {/* Glow backdrop */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div style={{ position: "absolute", top: "-10%", left: "50%", transform: "translateX(-50%)", width: 600, height: 400, background: "radial-gradient(ellipse, rgba(79,131,255,0.07) 0%, transparent 70%)" }} />
