@@ -466,7 +466,7 @@ export default function ManagePage() {
   return (
     <div className="flex flex-col flex-1 min-h-0 max-w-7xl w-full mx-auto px-3 sm:px-6 py-5">
       {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-4 gap-6 flex-wrap flex-shrink-0">
+      <div className="flex items-center justify-between mb-4 gap-6 flex-wrap flex-shrink-0 py-0.5">
         {/* Left: logo + token info */}
         <div className="flex items-center gap-4">
           <div
@@ -529,10 +529,22 @@ export default function ManagePage() {
         <div className="flex items-stretch gap-2 flex-shrink-0 mr-auto">
           {/* PNL Card */}
           <div
-            className="flex items-center gap-2 px-4 py-1.5 rounded-md"
-            style={{ background: "rgba(13,17,24,0.8)", border: "1px solid rgba(28,38,56,0.8)", minWidth: "148px" }}
+            className="relative overflow-hidden flex items-center gap-2 px-4 py-[7px] rounded-md"
+            style={{
+              background: "linear-gradient(160deg, rgba(15,22,45,0.98) 0%, rgba(18,18,24,0.95) 100%)",
+              border: "1px solid rgba(79,131,255,0.4)",
+              boxShadow: "inset 0 1px 0 rgba(79,131,255,0.12)",
+              minWidth: "148px",
+            }}
           >
-            <div className="flex flex-col gap-0.5 flex-1">
+            {/* Top radial glow */}
+            <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 50% -5%, rgba(79,131,255,0.28) 0%, transparent 60%)" }} />
+            {/* Grid texture */}
+            <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: "linear-gradient(rgba(79,131,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(79,131,255,1) 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
+            {/* Bottom shine */}
+            <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{ height: "1px", background: "linear-gradient(90deg, transparent 10%, rgba(79,131,255,0.5) 50%, transparent 90%)" }} />
+
+            <div className="relative flex flex-col gap-0.5 flex-1">
               <span className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: "rgba(100,116,139,0.7)" }}>
                 Total P&amp;L
               </span>
@@ -547,16 +559,13 @@ export default function ManagePage() {
                   {totalPnlSol >= 0 ? "+" : ""}{formatSol(Math.abs(totalPnlSol), 3)} SOL
                 </span>
               </div>
-              <span className="text-[11px] tabular-nums" style={{ color: "rgba(100,116,139,0.6)" }}>
-                {totalPnlUsd >= 0 ? "+" : "-"}{formatUsd(Math.abs(totalPnlUsd))}
-              </span>
             </div>
             <button
               onClick={() => setPnlCardOpen(true)}
               title="Share PnL card"
-              className="flex-shrink-0 rounded p-1 transition-colors"
+              className="relative flex-shrink-0 rounded p-1 transition-colors"
               style={{ color: "rgba(100,116,139,0.6)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#60a5fa")}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#4f83ff")}
               onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(100,116,139,0.6)")}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -578,7 +587,7 @@ export default function ManagePage() {
               style={{
                 background: "linear-gradient(160deg, rgba(15,22,45,0.98) 0%, rgba(18,18,24,0.95) 100%)",
                 border: "1px solid rgba(79,131,255,0.4)",
-                boxShadow: "0 0 40px rgba(79,131,255,0.1), 0 0 80px rgba(79,131,255,0.04), inset 0 1px 0 rgba(79,131,255,0.12)",
+                boxShadow: "inset 0 1px 0 rgba(79,131,255,0.12)",
                 minWidth: "148px",
               }}
             >
