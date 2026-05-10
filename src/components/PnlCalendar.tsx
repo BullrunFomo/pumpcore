@@ -139,7 +139,7 @@ export default function PnlCalendar({ open, onClose, currentTotalSol }: Props) {
                   <div
                     key={idx}
                     className="rounded"
-                    style={{ height: "60px", background: "transparent" }}
+                    style={{ height: "76px", background: "transparent" }}
                   />
                 );
               }
@@ -152,7 +152,7 @@ export default function PnlCalendar({ open, onClose, currentTotalSol }: Props) {
                   <div
                     key={idx}
                     className="rounded"
-                    style={{ height: "60px", background: "transparent" }}
+                    style={{ height: "76px", background: "transparent" }}
                   />
                 );
               }
@@ -182,7 +182,7 @@ export default function PnlCalendar({ open, onClose, currentTotalSol }: Props) {
                   key={idx}
                   className="relative rounded flex flex-col items-center justify-center"
                   style={{
-                    height: "60px",
+                    height: "76px",
                     background: bg,
                     border: "1px solid transparent",
                   }}
