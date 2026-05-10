@@ -28,6 +28,23 @@ export function getTradesForLaunch(
 }
 
 /**
+ * Sums PnL across all launches.
+ * The active launch (activeTokenMint) receives the live currentTotalSol;
+ * closed launches use their locked finalSolEquity; legacy launches use trades.
+ */
+export function computeAllLaunchesPnl(
+  launches: LaunchRecord[],
+  trades: TradeRecord[],
+  currentTotalSol: number,
+  activeTokenMint: string | null
+): number {
+  return launches.reduce((total, launch) => {
+    const isActive = launch.mintAddress === activeTokenMint;
+    return total + computeLaunchPnl(launch, launches, trades, isActive ? currentTotalSol : 0);
+  }, 0);
+}
+
+/**
  * Computes PnL in SOL for a launch.
  *
  * Closed launch (finalSolEquity set): finalSolEquity - initialSolEquity  (locked value)

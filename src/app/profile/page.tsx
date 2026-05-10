@@ -18,9 +18,6 @@ export default function ProfilePage() {
 
   const profile = useStore((s) => s.profile);
   const setProfile = useStore((s) => s.setProfile);
-  const launches = useStore((s) => s.launches);
-  const trades = useStore((s) => s.trades);
-  const wallets = useStore((s) => s.wallets);
 
   useEffect(() => {
     setAccessKey(getStoredAccessKey() ?? "");
@@ -129,22 +126,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* ── Stats row ─────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { label: "Launches", value: launches.length },
-            { label: "Trades", value: trades.length },
-            { label: "Wallets", value: wallets.length },
-          ].map(({ label, value }) => (
-            <div key={label} className="rounded-md p-4 text-center relative overflow-hidden" style={{ background: "linear-gradient(160deg, rgba(15,22,45,0.98) 0%, rgba(18,18,24,0.95) 100%)", border: "1px solid rgba(79,131,255,0.25)", boxShadow: "0 0 20px rgba(79,131,255,0.06), inset 0 1px 0 rgba(79,131,255,0.08)" }}>
-              <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 50% -20%, rgba(79,131,255,0.18) 0%, transparent 70%)" }} />
-              <p className="relative text-2xl font-bold text-white" style={{ textShadow: "0 0 20px rgba(79,131,255,0.4)" }}>{value}</p>
-              <p className="relative text-[10px] uppercase tracking-wider mt-1" style={{ color: "rgba(79,131,255,0.5)" }}>{label}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* ── Access key ────────────────────────────────────────────────────── */}
+{/* ── Access key ────────────────────────────────────────────────────── */}
         <div className="rounded-md p-5 relative overflow-hidden" style={{ background: "linear-gradient(160deg, rgba(15,22,45,0.98) 0%, rgba(18,18,24,0.95) 100%)", border: "1px solid rgba(79,131,255,0.25)", boxShadow: "0 0 20px rgba(79,131,255,0.06), inset 0 1px 0 rgba(79,131,255,0.08)" }}>
           <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 50% -10%, rgba(79,131,255,0.14) 0%, transparent 60%)" }} />
           <div className="relative flex items-center gap-2 mb-4">

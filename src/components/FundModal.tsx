@@ -275,7 +275,7 @@ export default function FundModal({ open, onClose }: FundModalProps) {
         </div>
 
         {/* Content */}
-        <div className="px-6 py-4 space-y-3 overflow-y-auto" style={{ height: 360 }}>
+        <div className="px-6 py-4 space-y-3" style={{ height: 360 }}>
           {tab === "splitnow" ? (
             <div className="relative" style={{ height: "100%" }}>
               <div className="blur-sm pointer-events-none select-none">

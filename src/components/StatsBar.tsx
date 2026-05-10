@@ -3,7 +3,7 @@ import { useState } from "react";
 import { TrendingUp, Wallet, Rocket, Zap, Calendar, BarChart2 } from "lucide-react";
 import { useStore } from "@/store";
 import { formatSol, formatUsd } from "@/lib/utils";
-import { computeLaunchPnl } from "@/lib/pnl";
+import { computeAllLaunchesPnl } from "@/lib/pnl";
 import OverallPnlCard from "@/components/OverallPnlCard";
 import OverallPnlChart from "@/components/OverallPnlChart";
 import PnlCalendar from "@/components/PnlCalendar";
@@ -27,9 +27,8 @@ export default function StatsBar() {
 
   const totalSol = wallets.reduce((sum, w) => sum + w.solBalance, 0);
 
-  const activeLaunch = launches.find((l) => l.mintAddress === activeTokenMint);
   const currentTotalSol = bundleWallets.reduce((acc, w) => acc + w.solBalance, 0);
-  const totalPnlSol = computeLaunchPnl(activeLaunch, launches, trades, currentTotalSol);
+  const totalPnlSol = computeAllLaunchesPnl(launches, trades, currentTotalSol, activeTokenMint);
   const totalPnlUsd = totalPnlSol * (tokenPrice?.solPrice ?? 0);
   const isPositive = totalPnlSol >= 0;
 
@@ -173,7 +172,7 @@ export default function StatsBar() {
       onClose={() => setCardOpen(false)}
       totalPnlSol={totalPnlSol}
       totalPnlUsd={totalPnlUsd}
-      investedSol={activeLaunch?.initialSolEquity ?? 0}
+      investedSol={launches.reduce((s, l) => s + (l.initialSolEquity ?? 0), 0)}
       currentPositionSol={currentTotalSol}
       solPrice={tokenPrice?.solPrice ?? 0}
     />
