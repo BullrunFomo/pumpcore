@@ -33,10 +33,10 @@ export default function ProfilePage() {
     }
   }, [editingName]);
 
-  async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
+  function handleLogout() {
     clearAccessKey();
-    router.refresh();
+    fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
   }
 
   function startEditName() {
