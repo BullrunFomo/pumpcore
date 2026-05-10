@@ -114,6 +114,7 @@ export interface LaunchRecord {
   symbol: string;
   logoUri: string;
   launchedAt: string; // ISO
+  initialSolEquity?: number; // total SOL across all bundle wallets at launch time (pre-buy)
 }
 
 // ─── Price ────────────────────────────────────────────────────────────────────

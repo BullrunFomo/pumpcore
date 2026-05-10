@@ -181,7 +181,7 @@ export default function QuickLaunchModal({ prefillUrl, prefillImage, prefillName
               setIsLaunching(false);
               if (event.mintAddress) {
                 setActiveTokenMint(event.mintAddress);
-                addLaunch({ mintAddress: event.mintAddress, name, symbol, logoUri, launchedAt: new Date().toISOString() });
+                addLaunch({ mintAddress: event.mintAddress, name, symbol, logoUri, launchedAt: new Date().toISOString(), initialSolEquity: selectedWallets.reduce((acc, w) => acc + w.solBalance, 0) });
                 const now = new Date();
                 for (const w of selectedWallets) {
                   const solAmount = walletAmounts[w.id] ?? 0.1;

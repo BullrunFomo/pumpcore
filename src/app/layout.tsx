@@ -33,7 +33,7 @@ export default function RootLayout({
               background: "radial-gradient(ellipse 70% 100% at 50% 0%, rgba(79,131,255,0.09) 0%, transparent 100%)",
             }}
           />
-          <main className="fixed inset-0 top-14 bottom-9 overflow-y-auto flex flex-col z-10">{children}</main>
+          <main className="fixed inset-0 top-14 bottom-9 overflow-y-auto no-scrollbar flex flex-col z-10">{children}</main>
           <Footer />
         </AuthProvider>
       </body>

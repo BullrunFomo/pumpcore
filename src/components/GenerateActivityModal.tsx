@@ -224,31 +224,33 @@ export default function GenerateActivityModal({ open, onClose }: GenerateActivit
                     <div className="py-8 text-center text-xs text-zinc-500">No wallets available</div>
                   ) : (
                     wallets.map((w, i) => (
-                      <button
+                      <div
                         key={w.id}
-                        onClick={() => toggleWallet(w.id)}
-                        className="w-full flex items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-white/[0.02]"
+                        className="w-full flex items-center gap-3 px-3 py-2 text-left"
                         style={{
                           borderBottom: i < wallets.length - 1 ? "1px solid rgba(28,38,56,0.5)" : "none",
                         }}
                       >
                         {/* Checkbox */}
                         <div
-                          className="w-4 h-4 rounded shrink-0 flex items-center justify-center"
+                          onClick={() => toggleWallet(w.id)}
+                          className="w-4 h-4 rounded shrink-0 flex items-center justify-center cursor-pointer"
                           style={{
                             border: selectedIds.has(w.id)
                               ? "1.5px solid #4f83ff"
                               : "1.5px solid rgba(63,63,70,0.6)",
-                            background: selectedIds.has(w.id) ? "rgba(79,131,255,0.15)" : "transparent",
+                            background: selectedIds.has(w.id) ? "#4f83ff" : "transparent",
                           }}
                         >
                           {selectedIds.has(w.id) && (
-                            <div className="w-1.5 h-1.5 rounded-sm" style={{ background: "#4f83ff" }} />
+                            <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
                           )}
                         </div>
                         <span className="text-xs text-zinc-300 font-mono flex-1">{truncateAddress(w.address)}</span>
                         <span className="text-[10px] text-zinc-500">{w.solBalance.toFixed(3)} SOL</span>
-                      </button>
+                      </div>
                     ))
                   )}
                 </div>

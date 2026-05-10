@@ -138,21 +138,25 @@ export default function BundlePresetModal({ onClose }: Props) {
                   return (
                     <div
                       key={w.id}
-                      className="flex items-center gap-2 rounded px-3 py-2 cursor-pointer transition-all"
+                      className="flex items-center gap-2 rounded px-3 py-2 transition-all"
                       style={{
                         background: sel ? "rgba(79,131,255,0.07)" : "rgba(13,17,24,0.6)",
                         border: sel ? "1px solid rgba(79,131,255,0.2)" : "1px solid rgba(28,38,56,0.6)",
                       }}
-                      onClick={() => toggle(w.id)}
                     >
                       <div
-                        className="shrink-0 w-4 h-4 rounded flex items-center justify-center"
+                        className="shrink-0 w-4 h-4 rounded flex items-center justify-center cursor-pointer"
                         style={{
-                          background: sel ? "rgba(79,131,255,0.3)" : "rgba(28,38,56,0.8)",
-                          border: sel ? "1px solid rgba(79,131,255,0.5)" : "1px solid rgba(28,38,56,0.9)",
+                          background: sel ? "#4f83ff" : "rgba(28,38,56,0.8)",
+                          border: sel ? "1px solid #4f83ff" : "1px solid rgba(28,38,56,0.9)",
                         }}
+                        onClick={() => toggle(w.id)}
                       >
-                        {sel && <div className="w-2 h-2 rounded-sm bg-[#4f83ff]" />}
+                        {sel && (
+                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); setDevWalletId(w.id); }}

@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Rocket, Rss } from "lucide-react";
+import { LayoutDashboard, Rocket, Rss, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-{ href: "/xfeed", label: "Feed", icon: Rss },
+  { href: "/xfeed", label: "Feed", icon: Rss },
   { href: "/launch", label: "Launch", icon: Rocket },
+  { href: "/profile", label: "Profile", icon: User },
 ];
 
 export default function Navbar() {
@@ -57,7 +58,6 @@ export default function Navbar() {
             );
           })}
         </div>
-
       </div>
     </nav>
   );

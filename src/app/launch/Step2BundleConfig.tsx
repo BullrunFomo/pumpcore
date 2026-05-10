@@ -325,7 +325,7 @@ export default function Step2BundleConfig() {
             No wallets imported yet. Go to Dashboard first.
           </div>
         ) : (
-          <div className="max-h-[26rem] overflow-y-auto">
+          <div className="max-h-[22.5rem] overflow-y-auto">
             {(() => {
               // Pump.fun bonding curve constants
               const TOTAL_SUPPLY = 1_000_000_000;
@@ -353,13 +353,12 @@ export default function Step2BundleConfig() {
                 return (
                   <div
                     key={w.id}
-                    onClick={() => toggleWallet(w.id)}
-                    className="grid items-center px-1 py-1.5 cursor-pointer grid-cols-[28px_1fr_80px_70px] sm:grid-cols-[28px_1fr_84px_90px_80px]"
+                    className="grid items-center px-1 py-1.5 grid-cols-[28px_1fr_80px_70px] sm:grid-cols-[28px_1fr_84px_90px_80px]"
                     style={{
                       borderBottom: i < wallets.length - 1 ? "1px solid rgba(28,38,56,0.6)" : "none",
                     }}
                   >
-                    <Checkbox checked={sel} onCheckedChange={() => toggleWallet(w.id)} />
+                    <Checkbox checked={sel} onCheckedChange={() => toggleWallet(w.id)} className="cursor-pointer" />
                     <div className="flex items-center gap-2 px-2 min-w-0">
                       <span className="font-mono text-xs text-zinc-200 truncate">
                         {truncateAddress(w.address, 5)}

@@ -6,16 +6,28 @@ import { formatSol, formatUsd, truncateAddress } from "@/lib/utils";
 
 export default function StatsBar() {
   const wallets = useStore((s) => s.wallets);
-  const trades = useStore((s) => s.trades);
+  const launches = useStore((s) => s.launches);
   const tokenPrice = useStore((s) => s.tokenPrice);
   const activeTokenMint = useStore((s) => s.activeTokenMint);
+  const launch = useStore((s) => s.launch);
+
+  const bundleSelectedIds = launch.bundleConfig.selectedWalletIds;
+  const bundleWallets = bundleSelectedIds.length > 0
+    ? wallets.filter((w) => bundleSelectedIds.includes(w.id))
+    : wallets;
 
   const totalSol = wallets.reduce((sum, w) => sum + w.solBalance, 0);
-  const totalPnlSol = trades.reduce((acc, t) => {
-    if (t.type === "sell") return acc + t.solAmount;
-    if (t.type === "buy") return acc - t.solAmount;
-    return acc;
-  }, 0);
+
+  const activeLaunch = launches.find((l) => l.mintAddress === activeTokenMint);
+  const initialSolEquity = activeLaunch?.initialSolEquity ?? 0;
+  const currentSolInWallets = bundleWallets.reduce((acc, w) => acc + w.solBalance, 0);
+  const currentPositionSol = bundleWallets.reduce(
+    (acc, w) => acc + w.tokenBalance * (tokenPrice?.price ?? 0),
+    0
+  );
+  const totalPnlSol = initialSolEquity > 0
+    ? (currentSolInWallets + currentPositionSol) - initialSolEquity
+    : 0;
   const totalPnlUsd = totalPnlSol * (tokenPrice?.solPrice ?? 0);
   const isPositive = totalPnlSol >= 0;
 

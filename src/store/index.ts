@@ -131,6 +131,10 @@ interface AppState {
   } | null;
   setBundlePreset: (preset: AppState["bundlePreset"]) => void;
 
+  // Profile
+  profile: { name: string; pfpUrl: string };
+  setProfile: (patch: Partial<{ name: string; pfpUrl: string }>) => void;
+
   // UI
   importModalOpen: boolean;
   setImportModalOpen: (v: boolean) => void;
@@ -309,6 +313,10 @@ export const useStore = create<AppState>()(
       bundlePreset: null,
       setBundlePreset: (preset) => set({ bundlePreset: preset }),
 
+      // ── Profile ──────────────────────────────────────────────────────────────
+      profile: { name: "", pfpUrl: "" },
+      setProfile: (patch) => set((s) => ({ profile: { ...s.profile, ...patch } })),
+
       // ── UI ───────────────────────────────────────────────────────────────────
       importModalOpen: false,
       setImportModalOpen: (v) => set({ importModalOpen: v }),
@@ -337,6 +345,7 @@ export const useStore = create<AppState>()(
         launches: s.launches,
         walletFunding: s.walletFunding,
         bundlePreset: s.bundlePreset,
+        profile: s.profile,
       }),
     }
   )

@@ -136,6 +136,7 @@ export default function Step4ReviewLaunch() {
                     symbol: tokenConfig.symbol,
                     logoUri: tokenConfig.logoUri,
                     launchedAt: new Date().toISOString(),
+                    initialSolEquity: selectedWallets.reduce((acc, w) => acc + w.solBalance, 0),
                   });
                   // Record each bundle wallet's buy so PNL is accurate
                   const now = new Date();
