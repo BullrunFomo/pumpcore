@@ -18,12 +18,14 @@ import {
   priorityFeeIx,
 } from "@/lib/solana";
 
-// sha256("global:withdraw")[0..8]
-const WITHDRAW_DISCRIMINATOR = crypto
-  .createHash("sha256")
-  .update("global:withdraw")
-  .digest()
-  .subarray(0, 8);
+function disc(name: string): Buffer {
+  return Buffer.from(
+    crypto.createHash("sha256").update("global:" + name).digest().subarray(0, 8)
+  );
+}
+
+// Try both known candidate names for the creator fee withdrawal instruction
+const CANDIDATES = ["withdraw", "withdrawCreatorFees", "withdrawFees"];
 
 export async function POST(req: NextRequest) {
   try {
@@ -57,6 +59,49 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No fees to claim" }, { status: 400 });
     }
 
+    const { blockhash } = await connection.getLatestBlockhash();
+
+    // Try each candidate discriminator; use the first one that simulates without error
+    let chosenDisc: Buffer | null = null;
+    const simErrors: Record<string, string> = {};
+
+    for (const name of CANDIDATES) {
+      const d = disc(name);
+      const ix = new TransactionInstruction({
+        programId: PUMPFUN_PROGRAM_ID,
+        keys: [
+          { pubkey: creator.publicKey, isSigner: true, isWritable: true },
+          { pubkey: creatorVault, isSigner: false, isWritable: true },
+          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+          { pubkey: PUMPFUN_EVENT_AUTHORITY, isSigner: false, isWritable: false },
+          { pubkey: PUMPFUN_PROGRAM_ID, isSigner: false, isWritable: false },
+        ],
+        data: d,
+      });
+
+      const testTx = new Transaction().add(priorityFeeIx(50_000), ix);
+      testTx.feePayer = creator.publicKey;
+      testTx.recentBlockhash = blockhash;
+      testTx.sign(creator);
+
+      const sim = await connection.simulateTransaction(testTx);
+      console.log(`[creator-fees/claim] simulate ${name}:`, JSON.stringify(sim.value.err), sim.value.logs?.slice(-5));
+
+      if (!sim.value.err) {
+        chosenDisc = d;
+        console.log(`[creator-fees/claim] using discriminator: ${name}`);
+        break;
+      }
+      simErrors[name] = JSON.stringify(sim.value.err);
+    }
+
+    if (!chosenDisc) {
+      return NextResponse.json(
+        { error: "All discriminator candidates failed simulation", details: simErrors },
+        { status: 500 }
+      );
+    }
+
     const withdrawIx = new TransactionInstruction({
       programId: PUMPFUN_PROGRAM_ID,
       keys: [
@@ -66,21 +111,23 @@ export async function POST(req: NextRequest) {
         { pubkey: PUMPFUN_EVENT_AUTHORITY, isSigner: false, isWritable: false },
         { pubkey: PUMPFUN_PROGRAM_ID, isSigner: false, isWritable: false },
       ],
-      data: Buffer.from(WITHDRAW_DISCRIMINATOR),
+      data: chosenDisc,
     });
 
     const tx = new Transaction().add(priorityFeeIx(50_000), withdrawIx);
     tx.feePayer = creator.publicKey;
-    tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+    tx.recentBlockhash = blockhash;
 
     const txSig = await sendAndConfirmTransaction(connection, tx, [creator], {
       commitment: "confirmed",
     });
 
     const claimedSol = vaultBalance / LAMPORTS_PER_SOL;
+    console.log(`[creator-fees/claim] success: ${txSig}, claimed ${claimedSol} SOL`);
 
     return NextResponse.json({ txSig, claimedSol });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("[creator-fees/claim] error:", err.message, err.logs);
+    return NextResponse.json({ error: err.message, logs: err.logs }, { status: 500 });
   }
 }
