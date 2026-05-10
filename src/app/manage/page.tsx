@@ -717,16 +717,12 @@ export default function ManagePage() {
                         >
                           <td className="px-3 py-2.5">
                             <div className="flex items-center gap-1.5">
-                              {w.id === devWalletId && (
-                                <Crown className="h-2.5 w-2.5 flex-shrink-0" style={{ color: "#f59e0b" }} />
-                              )}
                               <span className="font-mono font-bold text-[11px] text-zinc-400">
                                 {truncateAddress(w.address, 3)}
                               </span>
-                              <CopyButton
-                                text={w.address}
-                                className="text-zinc-500 hover:text-zinc-300 transition-colors opacity-0 group-hover:opacity-100"
-                                iconClassName="h-2.5 w-2.5"
+                              <Crown
+                                className="h-2.5 w-2.5 flex-shrink-0"
+                                style={{ color: "#f59e0b", visibility: (w.id === devWalletId || (creatorAddress && w.address === creatorAddress)) ? "visible" : "hidden" }}
                               />
                             </div>
                           </td>
