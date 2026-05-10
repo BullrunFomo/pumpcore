@@ -456,8 +456,8 @@ export default function ManagePage() {
       setCreatorFeeSol(0);
       // Refresh balances so the creator wallet's SOL balance updates
       refreshBalances();
-    } catch {
-      // silent fail
+    } catch (err: any) {
+      console.error("[creator-fees] claim error:", err.message);
     } finally {
       setClaimingFees(false);
     }
