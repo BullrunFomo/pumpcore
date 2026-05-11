@@ -21,7 +21,6 @@ export const KNOWN_LABELS: Record<string, string> = {
   "GJRs4FwHtemZ5ZE9x3FNvJ8TMwitKTh21yxdRPqn7npE": "Coinbase",
   "CcEVyz2fJvJKaqJNMKFnW7hANBFBZkrSkdLCYLDWk7UE": "Coinbase",
   "Dn4noZ5jgGfkntzcQSUZ8czkreiZ1ForXYoV2H8Dm7S1": "Coinbase",
-  "G9nt2GazsDkAFx3sGVFQf78RuCwgpAR4bYKApMuJCG5P": "Coinbase",
   "A7RFkvFvMnTK7NAW8Y3NsrnVADM3hsMWGUMgCkEFD7VB": "Coinbase",
   "Gqe2HCgMM9DRBkNRoiXHJz4VsYwnMnXNT9GNomcaVAte": "Coinbase",
   "3PfMXaHaM2M3aE7bWBTGpvj3a6VXDMR1kQFb7NkCXSuL": "Coinbase",
@@ -35,7 +34,6 @@ export const KNOWN_LABELS: Record<string, string> = {
   "2AQdpHJ2JpcEgPiATUXjQxA8QmafFegfQwSLWSprPicm": "Kraken",
   "BLrBCEsecPCwFd9M5KCdiwqhVkxZSGQJmkGmBpVbxPBh": "Kraken",
   "rPQgRkAMqpLTvkZkRpVQAY2sV93mD1ERp1BoqNM4N5z":  "Kraken",
-  "GJRs4FwHtemZ5ZE9x3FNvJ8TMwitKTh21yxdRPqn7npE": "Kraken",
 
   // ── OKX ──────────────────────────────────────────────────────────────────
   "5VCwKtCXgCJ6kit5FybXjvriW3xELsFDhx5Lt2yBqLog": "OKX",
@@ -60,7 +58,6 @@ export const KNOWN_LABELS: Record<string, string> = {
   // ── KuCoin ────────────────────────────────────────────────────────────────
   "BmFdpraQhkiDnE9SmkQbQDSZ9retTGqpMnkPMCJhxcJW": "KuCoin",
   "FiHHoBW4NzNTCbNdRbXiZSHKHWmPvQkb4YZ8jh5mGQFH": "KuCoin",
-  "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM": "KuCoin",
   "3Nxwenxyx2sFynMnx4eMkLfrNUxjM1XBHE3dkRFkCHPT": "KuCoin",
   "GNtbKaEFbcQMWPJNcPY2EGF9qT7mP5zHUdYXFhx8MVBL": "KuCoin",
 
