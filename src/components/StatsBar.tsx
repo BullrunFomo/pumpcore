@@ -124,7 +124,7 @@ export default function StatsBar() {
         <div className="col-span-2 sm:hidden h-px mx-4" style={{ background: "rgba(28,38,56,0.9)" }} />
 
         {/* Wallets */}
-        <div className="px-3 py-3 sm:px-5 sm:py-4 relative before:absolute before:left-0 before:top-3 before:bottom-3 before:w-px before:bg-[rgba(28,38,56,0.9)]">
+        <div className="px-3 py-3 sm:px-5 sm:py-4 relative before:hidden sm:before:block before:absolute before:left-0 before:top-3 before:bottom-3 before:w-px before:bg-[rgba(28,38,56,0.9)]">
           <div className="flex items-center gap-1.5 sm:gap-2 mb-2">
             <Wallet className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-[#4f83ff]" />
             <span className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide sm:tracking-widest text-zinc-500 whitespace-nowrap">
