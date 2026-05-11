@@ -333,7 +333,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: getAccountStoreName(),
-      version: 2,
+      version: 3,
       migrate: (persisted: any, version: number) => {
         if (version < 1) {
           const now = new Date().toISOString();
@@ -354,6 +354,21 @@ export const useStore = create<AppState>()(
             const pnl = overrides[l.symbol];
             if (pnl != null && l.initialSolEquity == null) {
               return { ...l, initialSolEquity: 0, finalSolEquity: pnl };
+            }
+            return l;
+          });
+        }
+        if (version < 3) {
+          // Correct the initial investment amounts for known launches so that
+          // PnL % is meaningful. The PnL SOL delta is preserved exactly.
+          const investments: Record<string, { initial: number; pnl: number }> = {
+            AURAHOUSE: { initial: 5.473, pnl: 0.719 },
+            MOMHOUSE:  { initial: 6.311, pnl: 1.842 },
+          };
+          persisted.launches = (persisted.launches ?? []).map((l: any) => {
+            const fix = investments[l.symbol];
+            if (fix != null) {
+              return { ...l, initialSolEquity: fix.initial, finalSolEquity: fix.initial + fix.pnl };
             }
             return l;
           });

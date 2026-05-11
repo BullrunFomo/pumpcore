@@ -298,11 +298,13 @@ function SellAllModal({ open, onClose }: { open: boolean; onClose: () => void })
 
 export default function ManagePage() {
   const wallets = useStore((s) => s.wallets);
-  const trades = useStore((s) => s.trades);
   const launch = useStore((s) => s.launch);
   const launches = useStore((s) => s.launches);
   const tokenPrice = useStore((s) => s.tokenPrice);
   const activeTokenMint = useStore((s) => s.activeTokenMint);
+  const trades = useStore((s) =>
+    s.trades.filter((t) => !t.mintAddress || t.mintAddress === s.activeTokenMint)
+  );
   const refreshBalances = useStore((s) => s.refreshBalances);
   const setTokenPrice = useStore((s) => s.setTokenPrice);
   const addTrade = useStore((s) => s.addTrade);
@@ -558,7 +560,20 @@ export default function ManagePage() {
                 >
                   {totalPnlSol >= 0 ? "+" : ""}{formatSol(Math.abs(totalPnlSol), 3)} SOL
                 </span>
+                {investedSol > 0 && (
+                  <span
+                    className="text-[10px] font-semibold tabular-nums"
+                    style={{ color: totalPnlSol >= 0 ? "rgba(74,222,128,0.7)" : "rgba(248,113,113,0.7)" }}
+                  >
+                    ({totalPnlSol >= 0 ? "+" : ""}{((totalPnlSol / investedSol) * 100).toFixed(1)}%)
+                  </span>
+                )}
               </div>
+              {investedSol > 0 && (
+                <span className="text-[9px] tabular-nums" style={{ color: "rgba(100,116,139,0.5)" }}>
+                  in {formatSol(investedSol, 3)} SOL
+                </span>
+              )}
             </div>
             <button
               onClick={() => setPnlCardOpen(true)}
