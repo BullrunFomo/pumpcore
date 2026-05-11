@@ -52,6 +52,20 @@ function labelAddress(address: string): string {
   return KNOWN_LABELS[address] ?? address.slice(0, 4) + "..." + address.slice(-4);
 }
 
+// Helius enhanced transactions include a human-readable description like:
+//   "Binance transferred 1.5 SOL to AbCd..."
+//   "FWzn...ouN5 transferred 2 SOL to AbCd..."
+// Extract the sender label from the description when it looks like a name, not an address.
+function extractSenderFromDescription(description: string | undefined): string | null {
+  if (!description) return null;
+  const match = description.match(/^(.+?)\s+transferred\s/i);
+  if (!match) return null;
+  const candidate = match[1].trim();
+  // Solana addresses are 43–44 base58 chars; a real name is short
+  if (candidate.length > 25 || /^[1-9A-HJ-NP-Za-km-z]{32,}$/.test(candidate)) return null;
+  return candidate;
+}
+
 function getHeliusApiKey(): string | null {
   const rpc = process.env.SOLANA_RPC_URL ?? process.env.HELIUS_RPC_URL ?? "";
   const match = rpc.match(/api-key=([^&]+)/);
@@ -105,11 +119,17 @@ async function fetchFundingForAddress(address: string, apiKey: string): Promise<
         tx.nativeTransfers ?? [];
       const incoming = transfers.find((t) => t.toUserAccount === address && t.amount > 0);
       if (!incoming) continue;
+      const fromAddr = incoming.fromUserAccount;
+      const descLabel = extractSenderFromDescription(tx.description);
+      const staticLabel = KNOWN_LABELS[fromAddr];
+      // Prefer Helius description label (covers unlisted CEX hot wallets) then static list
+      const sourceLabel = descLabel ?? staticLabel ?? labelAddress(fromAddr);
+      const isCex = !!(descLabel || staticLabel);
       oldest = {
         address,
-        sourceAddress: incoming.fromUserAccount,
-        sourceLabel: labelAddress(incoming.fromUserAccount),
-        isCex: incoming.fromUserAccount in KNOWN_LABELS,
+        sourceAddress: fromAddr,
+        sourceLabel,
+        isCex,
         timestamp: tx.timestamp ? tx.timestamp * 1000 : null,
         amountSol: incoming.amount / 1_000_000_000,
       };
