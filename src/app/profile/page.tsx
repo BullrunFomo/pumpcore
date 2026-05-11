@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, Pencil, Check, X, Camera, Users, Zap, KeyRound, Eye, EyeOff } from "lucide-react";
+import { LogOut, Pencil, Check, X, Camera, Users, Zap, Key, Eye, EyeOff } from "lucide-react";
 import { clearUserId, getStoredUserId } from "@/lib/auth";
 import { useStore } from "@/store";
 
@@ -136,7 +136,7 @@ export default function ProfilePage() {
             {accessKey && !session?.user?.email ? (
               <>
                 <div className="flex items-center gap-1.5">
-                  <KeyRound className="h-3 w-3" style={{ color: "rgba(79,131,255,0.6)" }} />
+                  <Key className="h-3 w-3" style={{ color: "rgba(79,131,255,0.6)" }} />
                   <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "rgba(79,131,255,0.6)" }}>Access Key</p>
                 </div>
                 <div className="flex items-center gap-2 rounded-md px-4 py-3" style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(79,131,255,0.12)" }}>
