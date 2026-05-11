@@ -44,7 +44,7 @@ export default function StatsBar() {
       <div className="grid grid-cols-2 sm:grid-cols-4">
 
         {/* PnL */}
-        <div className="px-5 py-4 relative overflow-hidden">
+        <div className="px-3 py-3 sm:px-5 sm:py-4 relative overflow-hidden">
           {totalPnlSol !== 0 && (
             <div
               className="absolute inset-0 pointer-events-none opacity-40"
@@ -55,12 +55,12 @@ export default function StatsBar() {
               }}
             />
           )}
-          <div className="flex items-center gap-2 mb-2.5">
-            <TrendingUp className="h-3 w-3 text-[#4f83ff]" />
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
+          <div className="flex items-center gap-1 sm:gap-2 mb-2">
+            <TrendingUp className="h-2.5 w-2.5 shrink-0 sm:h-3 sm:w-3 text-[#4f83ff]" />
+            <span className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide sm:tracking-widest text-zinc-500 whitespace-nowrap">
               Overall PnL
             </span>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
               {[
                 { icon: Calendar,  onClick: () => setCalendarOpen(true), title: "PnL Calendar" },
                 { icon: BarChart2, onClick: () => setChartOpen(true),    title: "PnL Chart" },
@@ -71,7 +71,7 @@ export default function StatsBar() {
                   title={title}
                   className="flex items-center justify-center rounded p-0.5 transition-all text-zinc-500 hover:text-[#4f83ff] hover:bg-[rgba(79,131,255,0.12)]"
                 >
-                  <Icon className="h-3.5 w-3.5" />
+                  <Icon className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />
                 </button>
               ))}
               <button
@@ -79,7 +79,7 @@ export default function StatsBar() {
                 title="PnL Card"
                 className="flex items-center justify-center rounded p-0.5 transition-all text-zinc-500 hover:text-[#4f83ff] hover:bg-[rgba(79,131,255,0.12)]"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M6 3h12" />
                   <path d="M6 3v6a6 6 0 0 0 12 0V3" />
                   <path d="M4 3C4 3 2 3.5 2 7c0 2.5 2 4 4 4" />
@@ -92,30 +92,30 @@ export default function StatsBar() {
             </div>
           </div>
           <div
-            className="text-lg font-bold"
+            className="text-sm sm:text-lg font-bold"
             style={{ color: isPositive ? "#4f83ff" : "#f87171" }}
           >
             {isPositive ? "+" : ""}{formatSol(totalPnlSol, 4)}
-            <span className="text-xs font-normal ml-1 opacity-60">SOL</span>
+            <span className="text-[10px] sm:text-xs font-normal ml-1 opacity-60">SOL</span>
           </div>
-          <div className="text-xs mt-0.5 font-medium" style={{ color: isPositive ? "#4f83ff99" : "#f8717199" }}>
+          <div className="text-[10px] sm:text-xs mt-0.5 font-medium" style={{ color: isPositive ? "#4f83ff99" : "#f8717199" }}>
             {isPositive ? "+" : ""}{formatUsd(totalPnlUsd)}
           </div>
         </div>
 
         {/* Total SOL */}
-        <div className="px-5 py-4 relative before:absolute before:left-0 before:top-3 before:bottom-3 before:w-px before:bg-[rgba(28,38,56,0.9)]">
-          <div className="flex items-center gap-2 mb-2.5">
-            <Zap className="h-3 w-3 text-[#4f83ff]" />
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
+        <div className="px-3 py-3 sm:px-5 sm:py-4 relative before:absolute before:left-0 before:top-3 before:bottom-3 before:w-px before:bg-[rgba(28,38,56,0.9)]">
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-2">
+            <Zap className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-[#4f83ff]" />
+            <span className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide sm:tracking-widest text-zinc-500 whitespace-nowrap">
               Total SOL
             </span>
           </div>
-          <div className="text-lg font-bold text-zinc-100">
+          <div className="text-sm sm:text-lg font-bold text-zinc-100">
             {formatSol(totalSol, 4)}
-            <span className="text-xs font-normal ml-1 text-zinc-500">SOL</span>
+            <span className="text-[10px] sm:text-xs font-normal ml-1 text-zinc-500">SOL</span>
           </div>
-          <div className="text-xs text-zinc-500 mt-0.5 font-medium">
+          <div className="text-[10px] sm:text-xs text-zinc-500 mt-0.5 font-medium">
             ≈ {formatUsd(totalSol * (tokenPrice?.solPrice ?? 0))}
           </div>
         </div>
@@ -124,32 +124,32 @@ export default function StatsBar() {
         <div className="col-span-2 sm:hidden h-px mx-4" style={{ background: "rgba(28,38,56,0.9)" }} />
 
         {/* Wallets */}
-        <div className="px-5 py-4 relative before:absolute before:left-0 before:top-3 before:bottom-3 before:w-px before:bg-[rgba(28,38,56,0.9)]">
-          <div className="flex items-center gap-2 mb-2.5">
-            <Wallet className="h-3 w-3 text-[#4f83ff]" />
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
+        <div className="px-3 py-3 sm:px-5 sm:py-4 relative before:absolute before:left-0 before:top-3 before:bottom-3 before:w-px before:bg-[rgba(28,38,56,0.9)]">
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-2">
+            <Wallet className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-[#4f83ff]" />
+            <span className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide sm:tracking-widest text-zinc-500 whitespace-nowrap">
               Wallets
             </span>
           </div>
-          <div className="text-lg font-bold text-zinc-100">
+          <div className="text-sm sm:text-lg font-bold text-zinc-100">
             {wallets.length}
-            <span className="text-xs font-normal ml-1 text-zinc-500">loaded</span>
+            <span className="text-[10px] sm:text-xs font-normal ml-1 text-zinc-500">loaded</span>
           </div>
-          <div className="text-xs text-zinc-500 mt-0.5 font-medium">
+          <div className="text-[10px] sm:text-xs text-zinc-500 mt-0.5 font-medium">
             {wallets.filter((w) => w.tokenBalance > 0).length} holding tokens
           </div>
         </div>
 
         {/* Total Launches */}
-        <div className="px-5 py-4 relative before:absolute before:left-0 before:top-3 before:bottom-3 before:w-px before:bg-[rgba(28,38,56,0.9)]">
-          <div className="flex items-center gap-2 mb-2.5">
-            <Rocket className="h-3 w-3 text-[#4f83ff]" />
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
+        <div className="px-3 py-3 sm:px-5 sm:py-4 relative before:absolute before:left-0 before:top-3 before:bottom-3 before:w-px before:bg-[rgba(28,38,56,0.9)]">
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-2">
+            <Rocket className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-[#4f83ff]" />
+            <span className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide sm:tracking-widest text-zinc-500 whitespace-nowrap">
               Total Launches
             </span>
           </div>
-          <div className="text-base font-bold text-white">{launches.length}</div>
-          <div className="text-xs text-zinc-500 mt-0.5 font-medium">
+          <div className="text-sm sm:text-base font-bold text-white">{launches.length}</div>
+          <div className="text-[10px] sm:text-xs text-zinc-500 mt-0.5 font-medium">
             {launches.length === 1 ? "token launched" : "tokens launched"}
           </div>
         </div>
