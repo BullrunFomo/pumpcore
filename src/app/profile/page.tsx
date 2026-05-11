@@ -29,7 +29,7 @@ export default function ProfilePage() {
   async function handleLogout() {
     clearUserId()
     await signOut({ redirect: false })
-    router.push("/")
+    router.push("/login")
   }
 
   function startEditName() {
