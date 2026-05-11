@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { LogOut, Pencil, Check, X, Camera, Users, Zap } from "lucide-react";
-import { clearUserId } from "@/lib/auth";
+import { clearUserId, getStoredUserId } from "@/lib/auth";
 import { useStore } from "@/store";
 
 export default function ProfilePage() {
@@ -15,6 +15,12 @@ export default function ProfilePage() {
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const nameInputRef = useRef<HTMLInputElement>(null);
+
+  const [accessKey, setAccessKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    setAccessKey(getStoredUserId());
+  }, []);
 
   const profile = useStore((s) => s.profile);
   const setProfile = useStore((s) => s.setProfile);
@@ -132,9 +138,11 @@ export default function ProfilePage() {
                 <img src={session.user.image} alt="" width={28} height={28} className="rounded-full shrink-0" />
               )}
               <div className="flex flex-col min-w-0">
-                {session?.user?.email && (
+                {session?.user?.email ? (
                   <span className="text-sm font-medium text-zinc-100 truncate">{session.user.email}</span>
-                )}
+                ) : accessKey ? (
+                  <span className="text-sm font-medium text-zinc-100 truncate font-mono">{accessKey}</span>
+                ) : null}
               </div>
             </div>
           </div>
