@@ -1,13 +1,14 @@
 "use client"
 
 import { SessionProvider, useSession } from "next-auth/react"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { saveUserId, getStoredUserId } from "@/lib/auth"
 import LoginModal from "./LoginModal"
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
   const reloading = useRef(false)
+  const [accessKeyAuthed, setAccessKeyAuthed] = useState<boolean | null>(null)
 
   useEffect(() => {
     if (!session?.user?.id || reloading.current) return
@@ -19,11 +20,19 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     }
   }, [session])
 
-  if (status === "loading") {
+  // Check access key cookie when NextAuth says unauthenticated
+  useEffect(() => {
+    if (status !== "unauthenticated") return
+    fetch("/api/auth/me")
+      .then((r) => setAccessKeyAuthed(r.ok))
+      .catch(() => setAccessKeyAuthed(false))
+  }, [status])
+
+  if (status === "loading" || (status === "unauthenticated" && accessKeyAuthed === null)) {
     return <div className="fixed inset-0" style={{ background: "#07090f" }} />
   }
 
-  if (status === "unauthenticated") {
+  if (status === "unauthenticated" && !accessKeyAuthed) {
     return (
       <>
         <div

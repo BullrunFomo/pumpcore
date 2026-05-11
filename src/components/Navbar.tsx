@@ -1,10 +1,8 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
-import { LayoutDashboard, Rocket, Rss, User, LogOut } from "lucide-react";
+import { LayoutDashboard, Rocket, Rss, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { clearUserId } from "@/lib/auth";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -16,14 +14,9 @@ const navItems = [
 export default function Navbar() {
   const pathname = usePathname();
 
-  async function handleLogout() {
-    clearUserId()
-    await signOut({ callbackUrl: "/" })
-  }
-
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-zinc-800/80 bg-zinc-950/95 backdrop-blur">
-      <div className="w-full pl-4 sm:pl-6 pr-2 h-14 flex items-center justify-between">
+      <div className="w-full pl-4 sm:pl-6 pr-0 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
           <img
@@ -45,7 +38,7 @@ export default function Navbar() {
         </Link>
 
         {/* Nav links */}
-        <div className="flex items-center h-14 ml-8 flex-1">
+        <div className="flex items-center h-14 ml-8">
           {navItems.map(({ href, label, icon: Icon }) => {
             const active = pathname === href;
             return (
@@ -65,16 +58,6 @@ export default function Navbar() {
             );
           })}
         </div>
-
-        {/* Logout */}
-        <button
-          onClick={handleLogout}
-          title="Sign out"
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-all"
-        >
-          <LogOut className="h-3.5 w-3.5" />
-          <span className="hidden md:block">Sign out</span>
-        </button>
       </div>
     </nav>
   );
