@@ -51,6 +51,41 @@ async function fetchQualifyingTokens(): Promise<PumpToken[]> {
 
 // ─── Jupiter helpers ──────────────────────────────────────────────────────────
 
+async function sendAndConfirm(
+  connection: Connection,
+  tx: VersionedTransaction,
+  lastValidBlockHeight: number
+): Promise<string> {
+  const serialized = tx.serialize();
+  const blockhash = tx.message.recentBlockhash;
+
+  const txSig = await connection.sendRawTransaction(serialized, {
+    skipPreflight: true,
+    maxRetries: 0,
+  });
+
+  // Keep resending every 2s while waiting for confirmation — leaders drop txs
+  let confirmed = false;
+  const resendInterval = setInterval(async () => {
+    if (!confirmed) {
+      connection.sendRawTransaction(serialized, { skipPreflight: true, maxRetries: 0 }).catch(() => {});
+    }
+  }, 2000);
+
+  try {
+    const result = await connection.confirmTransaction(
+      { signature: txSig, blockhash, lastValidBlockHeight },
+      "confirmed"
+    );
+    confirmed = true;
+    if (result.value.err) throw new Error(`Transaction failed on-chain: ${JSON.stringify(result.value.err)}`);
+    return txSig;
+  } finally {
+    confirmed = true;
+    clearInterval(resendInterval);
+  }
+}
+
 async function jupiterBuy(
   connection: Connection,
   keypair: ReturnType<typeof keypairFromPrivateKey>,
@@ -60,7 +95,7 @@ async function jupiterBuy(
   const lamports = Math.floor(solAmount * LAMPORTS_PER_SOL);
 
   const quoteRes = await fetch(
-    `https://api.jup.ag/swap/v1/quote?inputMint=${SOL_MINT}&outputMint=${tokenMint}&amount=${lamports}&slippageBps=500`
+    `https://api.jup.ag/swap/v1/quote?inputMint=${SOL_MINT}&outputMint=${tokenMint}&amount=${lamports}&slippageBps=1000`
   );
   if (!quoteRes.ok) throw new Error(`Jupiter quote failed: ${quoteRes.status}`);
   const quote = await quoteRes.json();
@@ -74,20 +109,18 @@ async function jupiterBuy(
       userPublicKey: keypair.publicKey.toBase58(),
       wrapAndUnwrapSol: true,
       dynamicComputeUnitLimit: true,
-      prioritizationFeeLamports: 10_000,
+      prioritizationFeeLamports: 50_000,
     }),
   });
   if (!swapRes.ok) throw new Error(`Jupiter swap failed: ${swapRes.status}`);
-  const { swapTransaction, error: swapError } = await swapRes.json();
+  const { swapTransaction, lastValidBlockHeight, error: swapError } = await swapRes.json();
   if (swapError) throw new Error(`Jupiter swap error: ${swapError}`);
 
   const txBuf = Buffer.from(swapTransaction, "base64");
   const tx = VersionedTransaction.deserialize(txBuf);
   tx.sign([keypair]);
 
-  const txSig = await connection.sendRawTransaction(tx.serialize(), { skipPreflight: false, maxRetries: 3 });
-  await connection.confirmTransaction(txSig, "confirmed");
-
+  const txSig = await sendAndConfirm(connection, tx, lastValidBlockHeight);
   const outAmount = Number(quote.outAmount) / 1e6;
   return { txSig, tokenAmount: outAmount };
 }
@@ -97,12 +130,19 @@ async function getRawTokenBalance(
   owner: PublicKey,
   mint: string
 ): Promise<bigint> {
-  const accounts = await connection.getParsedTokenAccountsByOwner(owner, {
-    mint: new PublicKey(mint),
-  });
-  if (!accounts.value.length) return BigInt(0);
-  const raw = accounts.value[0].account.data.parsed.info.tokenAmount.amount as string;
-  return BigInt(raw);
+  // Retry up to 4 times — RPC propagation can lag behind confirmation
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const accounts = await connection.getParsedTokenAccountsByOwner(owner, {
+      mint: new PublicKey(mint),
+    });
+    if (accounts.value.length > 0) {
+      const raw = accounts.value[0].account.data.parsed.info.tokenAmount.amount as string;
+      const balance = BigInt(raw);
+      if (balance > BigInt(0)) return balance;
+    }
+    if (attempt < 3) await new Promise((r) => setTimeout(r, 1500));
+  }
+  return BigInt(0);
 }
 
 async function jupiterSell(
@@ -114,7 +154,7 @@ async function jupiterSell(
   if (rawAmount === BigInt(0)) throw new Error("No token balance to sell");
 
   const quoteRes = await fetch(
-    `https://api.jup.ag/swap/v1/quote?inputMint=${tokenMint}&outputMint=${SOL_MINT}&amount=${rawAmount.toString()}&slippageBps=500`
+    `https://api.jup.ag/swap/v1/quote?inputMint=${tokenMint}&outputMint=${SOL_MINT}&amount=${rawAmount.toString()}&slippageBps=1000`
   );
   if (!quoteRes.ok) throw new Error(`Jupiter quote failed: ${quoteRes.status}`);
   const quote = await quoteRes.json();
@@ -128,20 +168,18 @@ async function jupiterSell(
       userPublicKey: keypair.publicKey.toBase58(),
       wrapAndUnwrapSol: true,
       dynamicComputeUnitLimit: true,
-      prioritizationFeeLamports: 10_000,
+      prioritizationFeeLamports: 50_000,
     }),
   });
   if (!swapRes.ok) throw new Error(`Jupiter swap failed: ${swapRes.status}`);
-  const { swapTransaction, error: swapError } = await swapRes.json();
+  const { swapTransaction, lastValidBlockHeight, error: swapError } = await swapRes.json();
   if (swapError) throw new Error(`Jupiter swap error: ${swapError}`);
 
   const txBuf = Buffer.from(swapTransaction, "base64");
   const tx = VersionedTransaction.deserialize(txBuf);
   tx.sign([keypair]);
 
-  const txSig = await connection.sendRawTransaction(tx.serialize(), { skipPreflight: false, maxRetries: 3 });
-  await connection.confirmTransaction(txSig, "confirmed");
-
+  const txSig = await sendAndConfirm(connection, tx, lastValidBlockHeight);
   const solReceived = Number(quote.outAmount) / LAMPORTS_PER_SOL;
   return { txSig, solReceived };
 }
