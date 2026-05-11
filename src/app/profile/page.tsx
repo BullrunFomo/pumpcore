@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, Pencil, Check, X, Camera, Users, Zap } from "lucide-react";
+import { LogOut, Pencil, Check, X, Camera, Users, Zap, KeyRound, Eye, EyeOff } from "lucide-react";
 import { clearUserId, getStoredUserId } from "@/lib/auth";
 import { useStore } from "@/store";
 
@@ -17,6 +17,7 @@ export default function ProfilePage() {
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   const [accessKey, setAccessKey] = useState<string | null>(null);
+  const [showKey, setShowKey] = useState(false);
 
   useEffect(() => {
     setAccessKey(getStoredUserId());
@@ -132,19 +133,38 @@ export default function ProfilePage() {
         <div className="rounded-md p-5 relative overflow-hidden" style={{ background: "linear-gradient(160deg, rgba(15,22,45,0.98) 0%, rgba(18,18,24,0.95) 100%)", border: "1px solid rgba(79,131,255,0.25)", boxShadow: "0 0 20px rgba(79,131,255,0.06), inset 0 1px 0 rgba(79,131,255,0.08)" }}>
           <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 50% -10%, rgba(79,131,255,0.14) 0%, transparent 60%)" }} />
           <div className="relative flex flex-col gap-2">
-            <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "rgba(79,131,255,0.6)" }}>Signed in as</p>
-            <div className="flex items-center gap-3 rounded-md px-4 py-3" style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(79,131,255,0.12)" }}>
-              {session?.user?.image && (
-                <img src={session.user.image} alt="" width={28} height={28} className="rounded-full shrink-0" />
-              )}
-              <div className="flex flex-col min-w-0">
-                {session?.user?.email ? (
-                  <span className="text-sm font-medium text-zinc-100 truncate">{session.user.email}</span>
-                ) : accessKey ? (
-                  <span className="text-sm font-medium text-zinc-100 truncate font-mono">{accessKey}</span>
-                ) : null}
-              </div>
-            </div>
+            {accessKey && !session?.user?.email ? (
+              <>
+                <div className="flex items-center gap-1.5">
+                  <KeyRound className="h-3 w-3" style={{ color: "rgba(79,131,255,0.6)" }} />
+                  <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "rgba(79,131,255,0.6)" }}>Access Key</p>
+                </div>
+                <div className="flex items-center gap-2 rounded-md px-4 py-3" style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(79,131,255,0.12)" }}>
+                  <span className="flex-1 font-mono text-sm text-zinc-100 truncate tracking-widest">
+                    {showKey ? accessKey : "•".repeat(accessKey.length)}
+                  </span>
+                  <button onClick={() => setShowKey((v) => !v)} className="shrink-0 transition-colors" style={{ color: "rgba(79,131,255,0.5)" }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(79,131,255,1)"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(79,131,255,0.5)"; }}>
+                    {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "rgba(79,131,255,0.6)" }}>Signed in as</p>
+                <div className="flex items-center gap-3 rounded-md px-4 py-3" style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(79,131,255,0.12)" }}>
+                  {session?.user?.image && (
+                    <img src={session.user.image} alt="" width={28} height={28} className="rounded-full shrink-0" />
+                  )}
+                  <div className="flex flex-col min-w-0">
+                    {session?.user?.email && (
+                      <span className="text-sm font-medium text-zinc-100 truncate">{session.user.email}</span>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
