@@ -17,7 +17,6 @@ import {
   Activity,
   ExternalLink,
   Sparkles,
-  RefreshCw,
   ArrowDown,
 } from "lucide-react";
 
@@ -205,6 +204,9 @@ export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [barsAnimated, setBarsAnimated] = useState(false);
   const [rowsAnimated, setRowsAnimated] = useState(false);
+  const [activeTokenType, setActiveTokenType] = useState("Standard");
+  const [activeLaunchMode, setActiveLaunchMode] = useState<"classic" | "stagger">("classic");
+  const [bundlePhase, setBundlePhase] = useState(0);
 
   useEffect(() => {
     const t1 = setTimeout(() => setBarsAnimated(true), 400);
@@ -212,13 +214,21 @@ export default function LandingPage() {
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
+  useEffect(() => {
+    // Cycle: 0 idle → 1 assembling → 2 submitted → 3 confirmed → reset
+    const durations = [700, 1300, 1200, 1800];
+    let phase = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    const advance = () => {
+      phase = (phase + 1) % 4;
+      setBundlePhase(phase);
+      timer = setTimeout(advance, durations[phase]);
+    };
+    timer = setTimeout(advance, durations[0]);
+    return () => clearTimeout(timer);
+  }, []);
+
   const SPARKLINE = [30, 45, 35, 60, 55, 70, 50, 80, 65, 90, 75, 85, 60, 95, 72, 88];
-  const BUNDLE_WALLETS = [
-    { id: "W-01", sol: "12.4", pct: 8.2 },
-    { id: "W-02", sol: "9.8",  pct: 6.5 },
-    { id: "W-03", sol: "15.2", pct: 10.1 },
-    { id: "W-04", sol: "7.6",  pct: 5.0 },
-  ];
 
   return (
     <div className="relative min-h-full w-full overflow-x-hidden">
@@ -328,6 +338,26 @@ export default function LandingPage() {
         <ArrowDown className="w-4 h-4 text-zinc-600 animate-bounce z-10" />
       </section>
 
+      {/* ── STATS ── */}
+      <section className="px-4 sm:px-8 lg:px-0 mx-auto max-w-4xl mb-12">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-zinc-800 rounded-xl overflow-hidden border border-zinc-800">
+          {[
+            { value: "12,400+", label: "TOKENS LAUNCHED" },
+            { value: "84,000", unit: "SOL", label: "TOTAL BUNDLED" },
+            { value: "3,200+", label: "ACTIVE USERS" },
+            { value: "0.8", unit: "s", label: "AVG BUNDLE TIME" },
+          ].map(({ value, unit, label }) => (
+            <div key={label} className="bg-zinc-950 flex flex-col items-center justify-center py-6 px-4 gap-1">
+              <span className="text-2xl sm:text-3xl font-bold text-blue-400 tracking-tight">
+                {value}
+                {unit && <span className="text-base font-semibold text-zinc-400 ml-0.5">{unit}</span>}
+              </span>
+              <span className="text-[9px] font-bold tracking-[0.18em] uppercase text-zinc-500">{label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ── HOW IT WORKS ── */}
       <section className="px-4 sm:px-8 lg:px-0 mx-auto max-w-4xl mb-20">
         <div className="text-center mb-8">
@@ -394,171 +424,89 @@ export default function LandingPage() {
       </section>
 
       {/* divider */}
-      <div
-        className="mx-4 sm:mx-8 lg:mx-auto max-w-4xl h-px mb-20"
-        style={{ background: "linear-gradient(to right, transparent, rgba(79,131,255,0.15), transparent)" }}
-      />
+      <div className="mx-4 sm:mx-8 lg:mx-auto max-w-4xl h-px mb-24" style={{ background: "linear-gradient(to right, transparent, rgba(79,131,255,0.15), transparent)" }} />
 
-      {/* ── SECTION 01: LAUNCH ── */}
-      <section className="px-4 sm:px-8 lg:px-0 mx-auto max-w-4xl mb-24">
-        <SectionLabel index="01" label="Launch" />
-        <h2 className="text-2xl sm:text-3xl font-bold text-zinc-100 tracking-tight mb-3">
-          Built for the leading Solana launchpads
-        </h2>
-        <p className="text-sm text-zinc-500 max-w-lg mb-10 leading-relaxed">
-          Deploy to any supported platform without switching tools. BundleX
-          maintains a single unified interface across every integration.
-        </p>
-
-        {/* platform grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10">
-          {PLATFORMS.map((name) => (
-            <div
-              key={name}
-              className="flex items-center justify-center gap-2 px-4 py-3 rounded-md text-xs font-semibold text-zinc-400 transition-all duration-200 hover:text-zinc-200 cursor-default"
-              style={{
-                background: "rgba(13,17,24,0.6)",
-                border: "1px solid rgba(28,38,56,0.8)",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(79,131,255,0.2)";
-                (e.currentTarget as HTMLDivElement).style.color = "#93b4ff";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(28,38,56,0.8)";
-                (e.currentTarget as HTMLDivElement).style.color = "";
-              }}
-            >
-              <div className="w-1.5 h-1.5 rounded-full" style={{ background: "rgba(79,131,255,0.5)" }} />
-              {name}
-            </div>
-          ))}
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-3">
-          <FeatureCard
-            icon={Layers}
-            title="Unified Launch Interface"
-            description="Deploy to any supported launchpad from a single creation flow. No switching tabs, no copy-pasting — one action across all platforms."
-          />
-          <FeatureCard
-            icon={Zap}
-            title="Jito Bundle Execution"
-            description="Every launch is submitted as an atomic Jito bundle. Your token creation and bundle buys land in the same block or not at all."
-          />
-        </div>
-      </section>
-
-      {/* divider */}
-      <div
-        className="mx-4 sm:mx-8 lg:mx-auto max-w-4xl h-px mb-24"
-        style={{ background: "linear-gradient(to right, transparent, rgba(79,131,255,0.15), transparent)" }}
-      />
-
-      {/* ── SECTION 02: CREATE ── */}
+      {/* ── SECTION 01: TOKEN SETUP ── */}
       <section className="px-4 sm:px-8 lg:px-0 mx-auto max-w-4xl mb-24">
         <div className="grid lg:grid-cols-2 gap-12 items-start">
           <div>
-            <SectionLabel index="02" label="Create" />
+            <SectionLabel index="01" label="Token Setup" />
             <h2 className="text-2xl sm:text-3xl font-bold text-zinc-100 tracking-tight mb-3">
-              Create and deploy with professional infrastructure
+              Design your token and pick your launch type
             </h2>
             <p className="text-sm text-zinc-500 mb-8 leading-relaxed">
-              Configure your token once — metadata, supply, token type, and
-              bundle parameters — then deploy with a single click.
+              Configure name, symbol, logo, and social links in one screen — then choose from four token types. Everything set once, deployed with a click.
             </p>
             <div className="flex flex-col gap-3">
               <FeatureCard
-                icon={Rocket}
-                title="Unified Creation Flow"
-                description="Name, symbol, description, logo, and token type all configured in one guided wizard. Pick Standard, Mayhem, Cashback, or AI Agent token types."
+                icon={Layers}
+                title="Four Token Types"
+                description="Standard PumpFun launch, Mayhem Mode for max volatility, Cashback so holders earn SOL on every trade, or AI Agent for autonomous strategies."
               />
               <FeatureCard
-                icon={Wallet}
-                title="Centralised Wallet Funding"
-                description="Fund all bundle wallets from your dev wallet in a single transaction. Set amounts per wallet and confirm once — BundleX handles the distribution."
+                icon={Zap}
+                title="Social Links at Creation"
+                description="Attach Twitter, Telegram, and website directly at token creation — community links go live the moment the token does."
               />
             </div>
           </div>
 
-          {/* mock: token config */}
-          <div
-            className="rounded-lg overflow-hidden"
-            style={{
-              background: "rgba(13,17,24,0.9)",
-              border: "1px solid rgba(28,38,56,0.8)",
-              boxShadow: "0 0 40px rgba(79,131,255,0.04)",
-            }}
-          >
-            <div
-              className="flex items-center gap-2 px-4 py-3 border-b"
-              style={{ borderColor: "rgba(28,38,56,0.8)" }}
-            >
+          {/* Interactive token type selector */}
+          <div className="rounded-lg overflow-hidden" style={{ background: "rgba(13,17,24,0.9)", border: "1px solid rgba(28,38,56,0.8)" }}>
+            <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ borderColor: "rgba(28,38,56,0.8)" }}>
               <div className="flex gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
                 <span className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
                 <span className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
               </div>
-              <span className="text-[10px] font-bold tracking-widest uppercase text-zinc-600 ml-2">
-                Token Configuration
-              </span>
+              <span className="text-[10px] font-bold tracking-widest uppercase text-zinc-600 ml-2">Token Setup</span>
             </div>
             <div className="p-5 flex flex-col gap-4">
-              {[
-                { label: "Token Name", value: "SupremeToken" },
-                { label: "Symbol", value: "SPRM" },
-                { label: "Initial Supply", value: "1,000,000,000" },
-              ].map(({ label, value }) => (
-                <div key={label} className="flex flex-col gap-1">
-                  <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-600">
-                    {label}
-                  </span>
-                  <div
-                    className="rounded px-3 py-2 text-xs text-zinc-300 font-mono"
-                    style={{
-                      background: "rgba(7,9,15,0.8)",
-                      border: "1px solid rgba(28,38,56,0.8)",
-                    }}
-                  >
-                    {value}
+              <div className="grid grid-cols-2 gap-3">
+                {[{ label: "Name", value: "BundleX" }, { label: "Symbol", value: "$BDX" }].map(({ label, value }) => (
+                  <div key={label} className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-600">{label}</span>
+                    <div className="rounded px-3 py-2 text-xs text-zinc-300 font-mono" style={{ background: "rgba(7,9,15,0.8)", border: "1px solid rgba(28,38,56,0.8)" }}>{value}</div>
                   </div>
-                </div>
-              ))}
-              <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-600">
-                  Token Type
-                </span>
-                <div className="flex gap-2 flex-wrap">
-                  {[
-                    { label: "Standard", color: "#4f83ff" },
-                    { label: "Mayhem", color: "#ff4f4f" },
-                    { label: "Cashback", color: "#4fff91" },
-                    { label: "AI Agent", color: "#a855f7" },
-                  ].map(({ label, color }) => (
-                    <span
-                      key={label}
-                      className="text-[10px] font-bold tracking-wider px-2.5 py-1 rounded"
-                      style={{
-                        background: label === "Standard" ? "rgba(79,131,255,0.14)" : "rgba(255,255,255,0.04)",
-                        border: `1px solid ${label === "Standard" ? "rgba(79,131,255,0.35)" : "rgba(255,255,255,0.07)"}`,
-                        color: label === "Standard" ? color : "#445068",
-                      }}
-                    >
-                      {label}
-                    </span>
-                  ))}
+                ))}
+              </div>
+              <div>
+                <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-600 block mb-2">Token Type</span>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { key: "Standard",    label: "Standard",   desc: "Classic PumpFun launch",   color: "#4f83ff" },
+                    { key: "Mayhem Mode", label: "Mayhem",     desc: "Max volatility pump",       color: "#ff4f4f" },
+                    { key: "Cashback",    label: "Cashback",   desc: "SOL rewards on trades",     color: "#4fff91" },
+                    { key: "Agent",       label: "AI Agent",   desc: "Autonomous trading",        color: "#a855f7" },
+                  ] as const).map(({ key, label, desc, color }) => {
+                    const sel = activeTokenType === key;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => setActiveTokenType(key)}
+                        className="flex flex-col gap-0.5 px-3 py-2.5 rounded text-left transition-all duration-200"
+                        style={{
+                          background: sel ? `${color}14` : "rgba(7,9,15,0.8)",
+                          border: `1px solid ${sel ? color + "55" : "rgba(28,38,56,0.8)"}`,
+                          boxShadow: sel ? `0 0 12px ${color}22` : "none",
+                        }}
+                      >
+                        <span className="text-xs font-semibold" style={{ color: sel ? color : "#a1a1aa" }}>{label}</span>
+                        <span className="text-[10px]" style={{ color: sel ? color + "99" : "#52525b" }}>{desc}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-              <div
-                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-xs font-bold tracking-wider mt-1"
-                style={{
-                  background: "rgba(79,131,255,0.1)",
-                  border: "1px solid rgba(79,131,255,0.3)",
-                  color: "#4f83ff",
-                }}
-              >
-                <Rocket className="w-3.5 h-3.5" />
-                Deploy Token
+              <div className="flex gap-2">
+                {["x.com/bdx", "t.me/bdx", "bdx.app"].map((v) => (
+                  <div key={v} className="flex-1 rounded px-2 py-1.5 text-[10px] font-mono text-zinc-600 truncate" style={{ background: "rgba(7,9,15,0.8)", border: "1px solid rgba(28,38,56,0.8)" }}>{v}</div>
+                ))}
+              </div>
+              <div className="flex justify-end">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold" style={{ background: "rgba(79,131,255,0.1)", border: "1px solid rgba(79,131,255,0.3)", color: "#4f83ff" }}>
+                  Bundle Config →
+                </div>
               </div>
             </div>
           </div>
@@ -566,37 +514,58 @@ export default function LandingPage() {
       </section>
 
       {/* divider */}
-      <div
-        className="mx-4 sm:mx-8 lg:mx-auto max-w-4xl h-px mb-24"
-        style={{ background: "linear-gradient(to right, transparent, rgba(79,131,255,0.15), transparent)" }}
-      />
+      <div className="mx-4 sm:mx-8 lg:mx-auto max-w-4xl h-px mb-24" style={{ background: "linear-gradient(to right, transparent, rgba(79,131,255,0.15), transparent)" }} />
 
-      {/* ── SECTION 03: BUNDLE ── */}
+      {/* ── SECTION 02: BUNDLE CONFIG ── */}
       <section className="px-4 sm:px-8 lg:px-0 mx-auto max-w-4xl mb-24">
         <div className="grid lg:grid-cols-2 gap-12 items-start">
-          {/* mock: bundle config with animated rows */}
-          <div
-            className="rounded-lg overflow-hidden order-2 lg:order-1"
-            style={{
-              background: "rgba(13,17,24,0.9)",
-              border: "1px solid rgba(28,38,56,0.8)",
-            }}
-          >
-            <div
-              className="flex items-center gap-2 px-4 py-3 border-b"
-              style={{ borderColor: "rgba(28,38,56,0.8)" }}
-            >
+          {/* Interactive bundle config mock */}
+          <div className="rounded-lg overflow-hidden order-2 lg:order-1" style={{ background: "rgba(13,17,24,0.9)", border: "1px solid rgba(28,38,56,0.8)" }}>
+            <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ borderColor: "rgba(28,38,56,0.8)" }}>
               <div className="flex gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
                 <span className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
                 <span className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
               </div>
-              <span className="text-[10px] font-bold tracking-widest uppercase text-zinc-600 ml-2">
-                Bundle Configuration
-              </span>
+              <span className="text-[10px] font-bold tracking-widest uppercase text-zinc-600 ml-2">Bundle Config</span>
             </div>
             <div className="p-5 flex flex-col gap-3">
-              {BUNDLE_WALLETS.map((w, i) => (
+              {/* Classic / Stagger toggle */}
+              <div className="grid grid-cols-2 gap-2">
+                {(["classic", "stagger"] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => setActiveLaunchMode(mode)}
+                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded text-xs font-semibold capitalize transition-all duration-200"
+                    style={{
+                      background: activeLaunchMode === mode ? "rgba(79,131,255,0.12)" : "rgba(7,10,18,0.6)",
+                      border: `1px solid ${activeLaunchMode === mode ? "rgba(79,131,255,0.4)" : "rgba(28,38,56,0.9)"}`,
+                      color: activeLaunchMode === mode ? "#4f83ff" : "#71717a",
+                      boxShadow: activeLaunchMode === mode ? "0 0 10px rgba(79,131,255,0.15)" : "none",
+                    }}
+                  >
+                    {mode === "classic" ? <Zap className="w-3 h-3" /> : <Layers className="w-3 h-3" />}
+                    {mode}
+                  </button>
+                ))}
+              </div>
+              {/* Stagger delay indicator */}
+              {activeLaunchMode === "stagger" && (
+                <div className="flex items-center gap-3 px-1">
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider shrink-0">Delay</span>
+                  <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "rgba(28,38,56,0.8)" }}>
+                    <div className="h-full w-2/5 rounded-full" style={{ background: "linear-gradient(to right, #4f83ff, #93b4ff)" }} />
+                  </div>
+                  <span className="text-xs font-semibold tabular-nums shrink-0" style={{ color: "#4f83ff" }}>400ms</span>
+                </div>
+              )}
+              {/* Wallet rows */}
+              {([
+                { id: "W-01", sol: "12.4", pct: 8.2,  bar: 41 },
+                { id: "W-02", sol: "9.8",  pct: 6.5,  bar: 33 },
+                { id: "W-03", sol: "15.2", pct: 10.1, bar: 51 },
+                { id: "W-04", sol: "7.6",  pct: 5.0,  bar: 25 },
+              ]).map((w, i) => (
                 <div
                   key={w.id}
                   className="flex items-center justify-between px-3 py-2 rounded"
@@ -604,71 +573,45 @@ export default function LandingPage() {
                     background: "rgba(7,9,15,0.8)",
                     border: "1px solid rgba(28,38,56,0.8)",
                     opacity: rowsAnimated ? 1 : 0,
-                    transform: rowsAnimated ? "translateY(0)" : "translateY(8px)",
+                    transform: rowsAnimated ? "none" : "translateY(6px)",
                     transition: `opacity 0.4s ease ${i * 80}ms, transform 0.4s ease ${i * 80}ms`,
                   }}
                 >
                   <span className="text-[10px] font-mono text-zinc-500">{w.id}</span>
                   <div className="flex items-center gap-3">
-                    <div
-                      className="w-24 h-1 rounded-full overflow-hidden"
-                      style={{ background: "rgba(28,38,56,0.8)" }}
-                    >
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: rowsAnimated ? `${w.pct * 5}%` : "0%",
-                          background: "linear-gradient(to right, #4f83ff, #93b4ff)",
-                          transition: `width 0.7s cubic-bezier(.4,0,.2,1) ${i * 80 + 200}ms`,
-                        }}
-                      />
+                    <div className="w-20 h-1 rounded-full overflow-hidden" style={{ background: "rgba(28,38,56,0.8)" }}>
+                      <div className="h-full rounded-full" style={{ width: rowsAnimated ? `${w.bar}%` : "0%", background: "linear-gradient(to right, #4f83ff, #93b4ff)", transition: `width 0.7s cubic-bezier(.4,0,.2,1) ${i * 80 + 200}ms` }} />
                     </div>
-                    <span className="text-[11px] font-mono text-zinc-300 w-12 text-right">
-                      {w.sol} SOL
-                    </span>
-                    <span className="text-[10px] font-bold w-10 text-right" style={{ color: "#4f83ff" }}>
-                      {w.pct}%
-                    </span>
+                    <span className="text-[10px] font-mono text-zinc-300 w-14 text-right">{w.sol} SOL</span>
+                    <span className="text-[10px] font-bold w-10 text-right" style={{ color: "#4f83ff" }}>{w.pct}%</span>
                   </div>
                 </div>
               ))}
-              <div
-                className="flex items-center justify-between px-3 py-2 rounded mt-1"
-                style={{
-                  background: "rgba(79,131,255,0.04)",
-                  border: "1px solid rgba(79,131,255,0.15)",
-                }}
-              >
-                <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-500">
-                  Total Bundle
-                </span>
-                <span className="text-xs font-bold" style={{ color: "#4f83ff" }}>
-                  45.0 SOL · 29.8%
-                </span>
+              <div className="flex items-center justify-between px-3 py-2 rounded mt-1" style={{ background: "rgba(79,131,255,0.04)", border: "1px solid rgba(79,131,255,0.15)" }}>
+                <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-500">Total Bundle</span>
+                <span className="text-xs font-bold" style={{ color: "#4f83ff" }}>45.0 SOL · 29.8%</span>
               </div>
             </div>
           </div>
 
           <div className="order-1 lg:order-2">
-            <SectionLabel index="03" label="Bundle" />
+            <SectionLabel index="02" label="Bundle Config" />
             <h2 className="text-2xl sm:text-3xl font-bold text-zinc-100 tracking-tight mb-3">
-              Take control of your token's supply
+              Configure exactly who buys and how much
             </h2>
             <p className="text-sm text-zinc-500 mb-8 leading-relaxed">
-              Distribute supply across wallets with precision. BundleX
-              coordinates allocation logic so every wallet buys its target
-              percentage atomically.
+              Pick which wallets join the launch, assign exact SOL amounts, and choose Classic or Stagger mode. Supply percentages update live against the PumpFun bonding curve.
             </p>
             <div className="flex flex-col gap-3">
               <FeatureCard
                 icon={Target}
-                title="Strategic Supply Acquisition"
-                description="Secure your desired percentage across multiple wallets with a single bundle. Set per-wallet SOL amounts and let BundleX calculate the rest."
+                title="Per-Wallet SOL Allocation"
+                description="Set precise buy amounts for each wallet. Hit shuffle to randomize within available balance. Supply percentages calculate live against the bonding curve."
               />
               <FeatureCard
-                icon={Shield}
-                title="Atomic Execution Layer"
-                description="All bundle transactions either land together or none do. No partial fills, no front-running exposure — Jito bundles guarantee atomic settlement."
+                icon={Layers}
+                title="Classic vs Stagger Mode"
+                description="Classic packs all buys into one Jito bundle. Stagger sends them sequentially with a configurable delay — useful when avoiding supply concentration flags."
               />
             </div>
           </div>
@@ -676,110 +619,100 @@ export default function LandingPage() {
       </section>
 
       {/* divider */}
-      <div
-        className="mx-4 sm:mx-8 lg:mx-auto max-w-4xl h-px mb-24"
-        style={{ background: "linear-gradient(to right, transparent, rgba(79,131,255,0.15), transparent)" }}
-      />
+      <div className="mx-4 sm:mx-8 lg:mx-auto max-w-4xl h-px mb-24" style={{ background: "linear-gradient(to right, transparent, rgba(79,131,255,0.15), transparent)" }} />
 
-      {/* ── SECTION 04: MANAGE ── */}
+      {/* ── SECTION 03: ATOMIC LAUNCH ── */}
       <section className="px-4 sm:px-8 lg:px-0 mx-auto max-w-4xl mb-24">
         <div className="grid lg:grid-cols-2 gap-12 items-start">
           <div>
-            <SectionLabel index="04" label="Manage" />
+            <SectionLabel index="03" label="Atomic Launch" />
             <h2 className="text-2xl sm:text-3xl font-bold text-zinc-100 tracking-tight mb-3">
-              Automate and manage market performance
+              Token creation and every buy land in one block
             </h2>
             <p className="text-sm text-zinc-500 mb-8 leading-relaxed">
-              Run volume strategies, rebalance wallets, and execute bulk
-              operations — all from the dashboard without writing a single
-              script.
+              BundleX packages your token creation and all bundle buys into a single Jito bundle. Every transaction lands atomically — or none of them do.
             </p>
             <div className="flex flex-col gap-3">
               <FeatureCard
-                icon={Activity}
-                title="Automated Activity Generation"
-                description="Configure volume parameters and deploy a self-running activity strategy. Set min/max SOL per trade, interval, and wallet selection — BundleX does the rest."
+                icon={Shield}
+                title="Zero Front-Run Exposure"
+                description="Your wallets are the first buyers because they're in the same block as the token creation. No bot can see the creation and front-run the buy."
               />
               <FeatureCard
-                icon={RefreshCw}
-                title="Full Portfolio Operations"
-                description="Buy, sell, burn, transfer, and rebalance across your entire wallet portfolio in a single click. No more manual coordination between wallets."
+                icon={Zap}
+                title="Tunable Jito Tip"
+                description="Higher tip = higher priority in the block builder queue. Adjust per-launch to match network congestion and land when it matters."
               />
             </div>
           </div>
 
-          {/* mock: activity monitor with animated sparkline */}
-          <div
-            className="rounded-lg overflow-hidden"
-            style={{
-              background: "rgba(13,17,24,0.9)",
-              border: "1px solid rgba(28,38,56,0.8)",
-            }}
-          >
-            <div
-              className="flex items-center justify-between px-4 py-3 border-b"
-              style={{ borderColor: "rgba(28,38,56,0.8)" }}
-            >
+          {/* Animated Jito bundle flow */}
+          <div className="rounded-lg overflow-hidden" style={{ background: "rgba(13,17,24,0.9)", border: "1px solid rgba(28,38,56,0.8)" }}>
+            <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "rgba(28,38,56,0.8)" }}>
               <div className="flex items-center gap-2">
                 <div className="flex gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
                   <span className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
                   <span className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
                 </div>
-                <span className="text-[10px] font-bold tracking-widest uppercase text-zinc-600 ml-2">
-                  Activity Monitor
-                </span>
+                <span className="text-[10px] font-bold tracking-widest uppercase text-zinc-600 ml-2">Jito Bundle</span>
               </div>
               <span
-                className="flex items-center gap-1 text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded"
+                className="flex items-center gap-1.5 text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded transition-all duration-500"
                 style={{
-                  background: "rgba(79,131,255,0.08)",
-                  border: "1px solid rgba(79,131,255,0.2)",
-                  color: "#4f83ff",
+                  background: bundlePhase >= 3 ? "rgba(79,255,145,0.08)" : bundlePhase >= 2 ? "rgba(79,131,255,0.1)" : "rgba(28,38,56,0.4)",
+                  border: `1px solid ${bundlePhase >= 3 ? "rgba(79,255,145,0.3)" : bundlePhase >= 2 ? "rgba(79,131,255,0.35)" : "rgba(28,38,56,0.9)"}`,
+                  color: bundlePhase >= 3 ? "#4fff91" : bundlePhase >= 2 ? "#4f83ff" : "#52525b",
                 }}
               >
-                <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: "#4f83ff" }} />
-                Running
+                <span className="w-1 h-1 rounded-full" style={{ background: bundlePhase >= 3 ? "#4fff91" : bundlePhase >= 2 ? "#4f83ff" : "#52525b", boxShadow: bundlePhase >= 2 ? `0 0 4px ${bundlePhase >= 3 ? "#4fff91" : "#4f83ff"}` : "none" }} />
+                {bundlePhase >= 3 ? "Confirmed" : bundlePhase >= 2 ? "Submitted" : bundlePhase >= 1 ? "Assembling" : "Idle"}
               </span>
             </div>
-            <div className="p-5">
-              {/* animated sparkline */}
-              <div className="flex items-end gap-1 h-20 mb-4">
-                {SPARKLINE.map((h, i) => (
-                  <div
-                    key={i}
-                    className="flex-1 rounded-sm"
-                    style={{
-                      height: barsAnimated ? `${h}%` : "0%",
-                      background:
-                        i >= 13
-                          ? "linear-gradient(to top, #4f83ff, #93b4ff)"
-                          : "rgba(79,131,255,0.2)",
-                      boxShadow: i >= 13 ? "0 0 6px rgba(79,131,255,0.3)" : "none",
-                      transition: `height 0.5s cubic-bezier(.4,0,.2,1) ${i * 35}ms`,
-                    }}
-                  />
-                ))}
-              </div>
-              {/* stats row */}
-              <div className="grid grid-cols-3 gap-3 mt-2">
-                {[
-                  { label: "Trades Today", value: "247" },
-                  { label: "SOL Volume", value: "18.4" },
-                  { label: "Active Wallets", value: "8/12" },
-                ].map(({ label, value }) => (
-                  <div
-                    key={label}
-                    className="flex flex-col gap-0.5 px-3 py-2 rounded"
-                    style={{
-                      background: "rgba(7,9,15,0.8)",
-                      border: "1px solid rgba(28,38,56,0.8)",
-                    }}
+            <div className="p-5 flex flex-col gap-2">
+              {([
+                { label: "Token Creation",  tag: "CREATE", color: "#a855f7" },
+                { label: "W-01 · 12.4 SOL", tag: "BUY",   color: "#4f83ff" },
+                { label: "W-02 · 9.8 SOL",  tag: "BUY",   color: "#4f83ff" },
+                { label: "W-03 · 15.2 SOL", tag: "BUY",   color: "#4f83ff" },
+                { label: "W-04 · 7.6 SOL",  tag: "BUY",   color: "#4f83ff" },
+              ]).map(({ label, tag, color }, i) => (
+                <div
+                  key={label}
+                  className="flex items-center justify-between px-3 py-2 rounded transition-colors duration-500"
+                  style={{
+                    background: "rgba(7,9,15,0.8)",
+                    border: `1px solid ${bundlePhase >= 3 ? "rgba(79,255,145,0.12)" : "rgba(28,38,56,0.8)"}`,
+                    opacity: bundlePhase >= 1 ? 1 : 0,
+                    transform: bundlePhase >= 1 ? "none" : "translateY(6px)",
+                    transition: `opacity 0.35s ease ${i * 65}ms, transform 0.35s ease ${i * 65}ms, border-color 0.5s ease`,
+                  }}
+                >
+                  <span className="text-xs text-zinc-400 font-mono">{label}</span>
+                  <span
+                    className="text-[9px] font-bold tracking-widest px-2 py-0.5 rounded uppercase"
+                    style={{ background: `${color}14`, border: `1px solid ${color}40`, color }}
                   >
-                    <span className="text-[10px] text-zinc-600 font-medium">{label}</span>
-                    <span className="text-sm font-bold text-zinc-200">{value}</span>
-                  </div>
-                ))}
+                    {tag}
+                  </span>
+                </div>
+              ))}
+              {/* Block row */}
+              <div
+                className="flex items-center justify-between px-3 py-2.5 rounded mt-1 transition-all duration-500"
+                style={{
+                  background: bundlePhase >= 3 ? "rgba(79,255,145,0.04)" : "rgba(79,131,255,0.04)",
+                  border: `1px solid ${bundlePhase >= 3 ? "rgba(79,255,145,0.2)" : "rgba(79,131,255,0.12)"}`,
+                  opacity: bundlePhase >= 2 ? 1 : 0,
+                  transform: bundlePhase >= 2 ? "none" : "translateY(4px)",
+                }}
+              >
+                <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: bundlePhase >= 3 ? "#4fff91" : "#4f83ff" }}>
+                  {bundlePhase >= 3 ? "Block #12,847,293" : "Submitting to validators…"}
+                </span>
+                <span className="text-[10px] font-bold" style={{ color: bundlePhase >= 3 ? "#4fff91" : "#4f83ff" }}>
+                  {bundlePhase >= 3 ? "5 / 5 txs ✓" : "5 txs"}
+                </span>
               </div>
             </div>
           </div>
@@ -787,10 +720,112 @@ export default function LandingPage() {
       </section>
 
       {/* divider */}
-      <div
-        className="mx-4 sm:mx-8 lg:mx-auto max-w-4xl h-px mb-24"
-        style={{ background: "linear-gradient(to right, transparent, rgba(79,131,255,0.15), transparent)" }}
-      />
+      <div className="mx-4 sm:mx-8 lg:mx-auto max-w-4xl h-px mb-24" style={{ background: "linear-gradient(to right, transparent, rgba(79,131,255,0.15), transparent)" }} />
+
+      {/* ── SECTION 04: POST-LAUNCH CONTROL ── */}
+      <section className="px-4 sm:px-8 lg:px-0 mx-auto max-w-4xl mb-24">
+        <div className="grid lg:grid-cols-2 gap-12 items-start">
+          {/* Activity + per-wallet trade mock */}
+          <div className="rounded-lg overflow-hidden order-2 lg:order-1" style={{ background: "rgba(13,17,24,0.9)", border: "1px solid rgba(28,38,56,0.8)" }}>
+            <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "rgba(28,38,56,0.8)" }}>
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                </div>
+                <span className="text-[10px] font-bold tracking-widest uppercase text-zinc-600 ml-2">Dashboard</span>
+              </div>
+              <span className="flex items-center gap-1.5 text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded" style={{ background: "rgba(79,131,255,0.08)", border: "1px solid rgba(79,131,255,0.2)", color: "#4f83ff" }}>
+                <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: "#4f83ff" }} />
+                Running
+              </span>
+            </div>
+            <div className="p-5 flex flex-col gap-3">
+              {/* Sparkline */}
+              <div className="flex items-end gap-1 h-16">
+                {SPARKLINE.map((h, i) => (
+                  <div key={i} className="flex-1 rounded-sm" style={{
+                    height: barsAnimated ? `${h}%` : "0%",
+                    background: i >= 13 ? "linear-gradient(to top, #4f83ff, #93b4ff)" : "rgba(79,131,255,0.2)",
+                    boxShadow: i >= 13 ? "0 0 6px rgba(79,131,255,0.3)" : "none",
+                    transition: `height 0.5s cubic-bezier(.4,0,.2,1) ${i * 35}ms`,
+                  }} />
+                ))}
+              </div>
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { label: "Trades Today", value: "247" },
+                  { label: "SOL Volume",   value: "18.4" },
+                  { label: "Active Wallets", value: "8/12" },
+                ].map(({ label, value }) => (
+                  <div key={label} className="flex flex-col gap-0.5 px-3 py-2 rounded" style={{ background: "rgba(7,9,15,0.8)", border: "1px solid rgba(28,38,56,0.8)" }}>
+                    <span className="text-[10px] text-zinc-600">{label}</span>
+                    <span className="text-sm font-bold text-zinc-200">{value}</span>
+                  </div>
+                ))}
+              </div>
+              {/* Per-wallet rows with Buy/Sell + PnL */}
+              {([
+                { id: "W-01", sol: "12.4", pnl: "+4.2%", pos: true  },
+                { id: "W-02", sol: "9.8",  pnl: "+1.8%", pos: true  },
+                { id: "W-03", sol: "15.2", pnl: "-0.9%", pos: false },
+              ]).map((w, i) => (
+                <div
+                  key={w.id}
+                  className="flex items-center justify-between px-3 py-2 rounded"
+                  style={{
+                    background: "rgba(7,9,15,0.8)",
+                    border: "1px solid rgba(28,38,56,0.8)",
+                    opacity: rowsAnimated ? 1 : 0,
+                    transform: rowsAnimated ? "none" : "translateY(6px)",
+                    transition: `opacity 0.4s ease ${i * 80 + 400}ms, transform 0.4s ease ${i * 80 + 400}ms`,
+                  }}
+                >
+                  <span className="text-[10px] font-mono text-zinc-500">{w.id}</span>
+                  <span className="text-xs font-mono text-zinc-400">{w.sol} SOL</span>
+                  <span className="text-[10px] font-bold" style={{ color: w.pos ? "#4fff91" : "#ff4f4f" }}>{w.pnl}</span>
+                  <div className="flex gap-1">
+                    {(["Buy", "Sell"] as const).map((action) => (
+                      <span key={action} className="text-[9px] font-bold px-2 py-1 rounded" style={{
+                        background: action === "Buy" ? "rgba(79,131,255,0.1)" : "rgba(255,79,79,0.1)",
+                        border: `1px solid ${action === "Buy" ? "rgba(79,131,255,0.25)" : "rgba(255,79,79,0.25)"}`,
+                        color: action === "Buy" ? "#4f83ff" : "#ff4f4f",
+                      }}>{action}</span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="order-1 lg:order-2">
+            <SectionLabel index="04" label="Post-Launch Control" />
+            <h2 className="text-2xl sm:text-3xl font-bold text-zinc-100 tracking-tight mb-3">
+              Trade, automate, and track every wallet
+            </h2>
+            <p className="text-sm text-zinc-500 mb-8 leading-relaxed">
+              Buy, sell, burn, and rebalance across your entire wallet portfolio from one dashboard. Run automated volume strategies without writing a single script.
+            </p>
+            <div className="flex flex-col gap-3">
+              <FeatureCard
+                icon={TrendingUp}
+                title="Per-Wallet Trading"
+                description="Buy or sell any percentage from any wallet with one click. SOL balance, token holdings, and PnL are tracked per wallet in real time."
+              />
+              <FeatureCard
+                icon={Activity}
+                title="Automated Activity"
+                description="Set min/max SOL per trade, interval, and which wallets participate — BundleX runs the strategy continuously. Start, pause, or stop any time."
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* divider */}
+      <div className="mx-4 sm:mx-8 lg:mx-auto max-w-4xl h-px mb-24" style={{ background: "linear-gradient(to right, transparent, rgba(79,131,255,0.15), transparent)" }} />
 
       {/* ── FAQ ── */}
       <section className="px-4 sm:px-8 lg:px-0 mx-auto max-w-4xl mb-24">
