@@ -51,6 +51,16 @@ async function fetchQualifyingTokens(): Promise<PumpToken[]> {
 
 // ─── Jupiter helpers ──────────────────────────────────────────────────────────
 
+async function jupiterFetch(url: string, init?: RequestInit): Promise<Response> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const res = await fetch(url, init);
+    if (res.status !== 429) return res;
+    // Exponential backoff: 1s, 2s, 4s, 8s
+    await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)));
+  }
+  throw new Error("Jupiter rate limit: too many retries");
+}
+
 async function sendAndConfirm(
   connection: Connection,
   tx: VersionedTransaction,
@@ -94,14 +104,14 @@ async function jupiterBuy(
 ): Promise<{ txSig: string; tokenAmount: number }> {
   const lamports = Math.floor(solAmount * LAMPORTS_PER_SOL);
 
-  const quoteRes = await fetch(
+  const quoteRes = await jupiterFetch(
     `https://api.jup.ag/swap/v1/quote?inputMint=${SOL_MINT}&outputMint=${tokenMint}&amount=${lamports}&slippageBps=1000`
   );
   if (!quoteRes.ok) throw new Error(`Jupiter quote failed: ${quoteRes.status}`);
   const quote = await quoteRes.json();
   if (quote.error) throw new Error(`Jupiter quote error: ${quote.error}`);
 
-  const swapRes = await fetch("https://api.jup.ag/swap/v1/swap", {
+  const swapRes = await jupiterFetch("https://api.jup.ag/swap/v1/swap", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -153,14 +163,14 @@ async function jupiterSell(
 ): Promise<{ txSig: string; solReceived: number }> {
   if (rawAmount === BigInt(0)) throw new Error("No token balance to sell");
 
-  const quoteRes = await fetch(
+  const quoteRes = await jupiterFetch(
     `https://api.jup.ag/swap/v1/quote?inputMint=${tokenMint}&outputMint=${SOL_MINT}&amount=${rawAmount.toString()}&slippageBps=1000`
   );
   if (!quoteRes.ok) throw new Error(`Jupiter quote failed: ${quoteRes.status}`);
   const quote = await quoteRes.json();
   if (quote.error) throw new Error(`Jupiter quote error: ${quote.error}`);
 
-  const swapRes = await fetch("https://api.jup.ag/swap/v1/swap", {
+  const swapRes = await jupiterFetch("https://api.jup.ag/swap/v1/swap", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -257,10 +267,11 @@ export async function POST(req: NextRequest) {
             token: tokens[Math.floor(Math.random() * tokens.length)],
           }));
 
-          // Buy . all wallets in parallel, each on its own token
+          // Buy . all wallets staggered 400ms apart to avoid Jupiter rate limits
           log(controller, `Buying ${solAmount} SOL on ${wallets.length} wallet(s) via Jupiter → PumpSwap...`);
           const buyResults = await Promise.allSettled(
-            walletTokens.map(async ({ wallet: w, token }) => {
+            walletTokens.map(async ({ wallet: w, token }, i) => {
+              await new Promise((r) => setTimeout(r, i * 400));
               const keypair = keypairFromPrivateKey(w.privateKey);
               const result = await jupiterBuy(connection, keypair, token.mint, solAmount);
               log(
