@@ -290,11 +290,21 @@ export default function LandingPage() {
           in one atomic transaction
         </h1>
 
-        <p className="relative z-10 text-sm sm:text-base text-zinc-400 max-w-xl leading-relaxed mb-10">
+        <p className="relative z-10 text-sm sm:text-base text-zinc-400 max-w-xl leading-relaxed mb-8">
           Deploy your Solana token and have multiple wallets buy supply simultaneously —
           all settled atomically via Jito. One dashboard for wallet management,
           token launches, and post-launch automation.
         </p>
+
+        {/* ── STATS ── */}
+        <div className="relative z-10 w-full max-w-2xl mb-10">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-zinc-800/60 rounded-xl overflow-hidden border border-zinc-800/60">
+            <AnimatedStatCard target={12400}  suffix="+"    label="Tokens Launched" />
+            <AnimatedStatCard target={84000}  suffix=" SOL" label="Total Bundled"   />
+            <AnimatedStatCard target={3200}   suffix="+"    label="Active Users"    />
+            <AnimatedStatCard target={0.8}    suffix="s"    label="Avg Bundle Time" decimals={1} />
+          </div>
+        </div>
 
         {/* CTAs */}
         <div className="relative z-10 flex flex-col sm:flex-row items-center gap-3 mb-10">
@@ -384,22 +394,6 @@ export default function LandingPage() {
               </div>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* ── STATS ── */}
-      <section
-        className="mx-4 sm:mx-8 lg:mx-auto max-w-4xl rounded-lg px-8 py-6 mb-20"
-        style={{
-          background: "rgba(13,17,24,0.8)",
-          border: "1px solid rgba(28,38,56,0.8)",
-        }}
-      >
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 divide-y sm:divide-y-0 sm:divide-x divide-zinc-800/60">
-          <AnimatedStatCard target={12400}  suffix="+"   label="Tokens Launched"  />
-          <AnimatedStatCard target={84000}  suffix=" SOL" label="Total Bundled"   />
-          <AnimatedStatCard target={3200}   suffix="+"   label="Active Users"     />
-          <AnimatedStatCard target={0.8}    suffix="s"   label="Avg Bundle Time"  decimals={1} />
         </div>
       </section>
 
