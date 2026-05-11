@@ -112,19 +112,27 @@ function AnimatedStatCard({
   prefix = "",
   suffix = "",
   decimals = 0,
+  showDivider = false,
 }: {
   target: number;
   label: string;
   prefix?: string;
   suffix?: string;
   decimals?: number;
+  showDivider?: boolean;
 }) {
   const value = useCountUp(target);
   return (
     <div
-      className="flex flex-col items-center justify-center py-7 px-4 gap-1.5"
+      className="relative flex flex-col items-center justify-center py-7 px-4 gap-1.5"
       style={{ background: "rgba(10,13,20,0.97)" }}
     >
+      {showDivider && (
+        <div
+          className="hidden sm:block absolute left-0 top-4 bottom-4 w-px"
+          style={{ background: "rgba(79,131,255,0.14)" }}
+        />
+      )}
       <span
         className="text-2xl sm:text-3xl font-bold tracking-tight"
         style={{ color: "#4f83ff", textShadow: "0 0 24px rgba(79,131,255,0.4)" }}
@@ -348,7 +356,7 @@ export default function LandingPage() {
         {/* ── STATS ── */}
         <div className="relative z-10 w-full max-w-4xl mb-10">
           <div
-            className="grid grid-cols-2 sm:grid-cols-4 gap-px rounded-xl overflow-hidden"
+            className="grid grid-cols-2 sm:grid-cols-4 gap-px sm:gap-0 rounded-xl overflow-hidden"
             style={{
               background: "rgba(79,131,255,0.07)",
               border: "1px solid rgba(79,131,255,0.14)",
@@ -356,9 +364,9 @@ export default function LandingPage() {
             }}
           >
             <AnimatedStatCard target={12400}  suffix="+"   label="Tokens Launched" />
-            <AnimatedStatCard target={84000}  suffix="SOL" label="Total Bundled"   />
-            <AnimatedStatCard target={3200}   suffix="+"   label="Active Users"    />
-            <AnimatedStatCard target={0.8}    suffix="s"   label="Avg Bundle Time" decimals={1} />
+            <AnimatedStatCard target={84000}  suffix="SOL" label="Total Bundled"   showDivider />
+            <AnimatedStatCard target={3200}   suffix="+"   label="Active Users"    showDivider />
+            <AnimatedStatCard target={0.8}    suffix="s"   label="Avg Bundle Time" decimals={1} showDivider />
           </div>
         </div>
 
