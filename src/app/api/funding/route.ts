@@ -1,52 +1,5 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
-
-// ─── Known exchange / entity labels ──────────────────────────────────────────
-const KNOWN_LABELS: Record<string, string> = {
-  // Binance
-  "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM": "Binance",
-  "5tzFkiKscXHK5ZXCGbXZxdw7gE8Gc7t5zjX3ZE3gAnAK": "Binance",
-  "AC5RDfQFmDS1deWZos921JpqBlSPHnZGnHeGaWBL4Bxn": "Binance",
-  "2ojv9BAiHUrvsm9gxDe7fJSzbNZSJcxZvf8dqmWGHG8S": "Binance",
-  "4pKtBR6EUTBzgDPzAQ4QS5KuJV7R7xCHhSF9MK6eQcz2": "Binance",
-  "DdFPRnccQqyeleLyQGLLkno4zDQs9GREEjn6eL5C5Dq4": "Binance",
-  "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBymtzvY": "Binance",
-  // Coinbase
-  "H8sMJSCQxfKiFTCfDR3DUMLPwcRbM61LGFJ8N4dK3WjS": "Coinbase",
-  "GJRs4FwHtemZ5ZE9x3FNvJ8TMwitKTh21yxdRPqn7npE": "Coinbase",
-  "CcEVyz2fJvJKaqJNMKFnW7hANBFBZkrSkdLCYLDWk7UE": "Coinbase",
-  "Dn4noZ5jgGfkntzcQSUZ8czkreiZ1ForXYoV2H8Dm7S1": "Coinbase",
-  "G9nt2GazsDkAFx3sGVFQf78RuCwgpAR4bYKApMuJCG5P": "Coinbase",
-  // Kraken
-  "FWznbcNXWQuHTawe9RxvQ2LdCENssh12dsznf4RiouN5": "Kraken",
-  "BtQSKm7z4DFMRCFZoH3SZ6W6P9ZkPAuqZbD6VhZMZgYW": "Kraken",
-  // OKX
-  "5VCwKtCXgCJ6kit5FybXjvriW3xELsFDhx5Lt2yBqLog": "OKX",
-  "FKzsQrGgBmUJkwBqwMgdRvPV7x6NSLM5Lqtse9GQMFS": "OKX",
-  "6UsGbaMgchgj4wiwKKuE1v5URHdcDfFB7GtMaJRHFiLv": "OKX",
-  // Bybit
-  "2SiSpNowr7zUv7ZWZbbb5Bm4FGR5jSNoBSQFpNBRsaqu": "Bybit",
-  "9nkSxWNQwHEjEQ3z5TMCiGn6JNEb2n5eDVJb2VyQ7kno": "Bybit",
-  "A7mKVgkJF3ZH8Yp1YGBn2T7FMnRxkm3T6WrDDY5nA3e": "Bybit",
-  // KuCoin
-  "BmFdpraQhkiDnE9SmkQbQDSZ9retTGqpMnkPMCJhxcJW": "KuCoin",
-  "FiHHoBW4NzNTCbNdRbXiZSHKHWmPvQkb4YZ8jh5mGQFH": "KuCoin",
-  // Gate.io
-  "GHtrqAFHjVAGFFFGbHALrqLBkxDoGFx3bFbMdkdkqW4a": "Gate.io",
-  "9XS1JsXHBJqEPpXFraNLZLhgJKzF8R4h1d6vMzGrQqhB": "Gate.io",
-  // Bitget
-  "3Czpa4KNqigz4JBfMBm15mwsSHdLHbJRGv1MWEhPkfvf": "Bitget",
-  "66fhTLhPERqGnAQr3RiMfHRA6hPR5WxhQBJcF4cFRwcC": "Bitget",
-  // MEXC
-  "9U9MYk5JxYP7PZFL4PFTiXCHHvNdBXfVkEhb4UXDvjEZ": "MEXC",
-  // Huobi / HTX
-  "EMgBn6MkN9mMpqxS6KXQqZ8BxoEsJe4NyGe2s3Fpump": "HTX",
-  "AVzP2GeRmKkFMKCZJSBznkFBHewcqXkBFPNKfkqMsX5J": "HTX",
-  // Crypto.com
-  "6DeMzFzB6Ep4dCmPQGCF6VoQFQFAHxBdNTi9JNkxzxVH": "Crypto.com",
-  // Phantom (not a CEX but a common wallet that seeds from CEX)
-  // Robinhood
-  "7afqVEBnLBcmCQFkLHZHPc3u7WGpgGKMQTB1WzVkWHh": "Robinhood",
-};
+import { KNOWN_LABELS } from "@/lib/cex-labels";
 
 function labelAddress(address: string): string {
   return KNOWN_LABELS[address] ?? address.slice(0, 4) + "..." + address.slice(-4);

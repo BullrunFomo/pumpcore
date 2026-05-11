@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { KNOWN_LABELS } from "@/lib/cex-labels";
 
 function formatFundingDate(ms: string | number): string {
   const d = new Date(typeof ms === "number" ? ms : ms);
@@ -104,6 +105,8 @@ export default function WalletTable({ wallets, devWalletId }: WalletTableProps) 
         const f = walletFunding[w.address];
         if (!f?.fetched) return true;
         if (f.sourceLabel === null && f.timestamp === null && !retriedRef.current.has(w.address)) return true;
+        // Re-fetch records cached before isCex was added (field will be undefined at runtime)
+        if ((f as any).isCex === undefined && !retriedRef.current.has(w.address)) return true;
         return false;
       })
       .map((w) => w.address);
@@ -222,16 +225,21 @@ const totalSol = wallets.reduce((s, w) => s + w.solBalance, 0);
 
             {/* Funding source */}
             <div className="min-w-0">
-              {walletFunding[w.address]?.sourceLabel
-                ? walletFunding[w.address].isCex
+              {(() => {
+                const f = walletFunding[w.address];
+                if (!f?.sourceAddress && !f?.sourceLabel) return <span className="text-zinc-600">—</span>;
+                // Resolve label live so cached records benefit from updated KNOWN_LABELS immediately
+                const cexName = f.sourceAddress ? KNOWN_LABELS[f.sourceAddress] : undefined;
+                const isCex = !!(cexName || f.isCex);
+                const label = cexName ?? f.sourceLabel ?? "";
+                return isCex
                   ? <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold bg-blue-500/15 text-blue-300 border border-blue-500/25 truncate">
-                      {walletFunding[w.address].sourceLabel}
+                      {label}
                     </span>
                   : <span className="text-xs text-zinc-400 font-mono truncate block">
-                      {walletFunding[w.address].sourceLabel}
-                    </span>
-                : <span className="text-zinc-600">—</span>
-              }
+                      {label}
+                    </span>;
+              })()}
             </div>
 
             {/* Funding date */}
