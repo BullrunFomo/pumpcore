@@ -34,8 +34,7 @@ export default function AccessKeyModal({ onAuthenticated }: Props) {
 
       if (res.ok) {
         saveUserId(key.trim())
-        // Reload so the Zustand store reinitializes with the account-scoped name
-        window.location.reload()
+        window.location.href = "/"
       } else {
         setError("Invalid access key. Please try again.")
         setKey("")
@@ -109,12 +108,13 @@ export default function AccessKeyModal({ onAuthenticated }: Props) {
             />
           </div>
 
-          {error && (
-            <p className="text-xs text-red-400 flex items-center gap-1.5">
-              <span className="inline-block w-1 h-1 rounded-full bg-red-400" />
-              {error}
-            </p>
-          )}
+          <p
+            className="text-xs text-red-400 flex items-center gap-1.5"
+            style={{ visibility: error ? "visible" : "hidden" }}
+          >
+            <span className="inline-block w-1 h-1 rounded-full bg-red-400 shrink-0" />
+            {error || " "}
+          </p>
 
           <button
             type="submit"

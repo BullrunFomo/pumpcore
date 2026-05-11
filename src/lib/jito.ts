@@ -104,10 +104,38 @@ async function submitEncodedBundle(
 }
 
 /**
- * Try every endpoint in sequence . stop as soon as one accepts.
- * Continues past non-429 errors (e.g. 400, 503) so a bad regional node
- * doesn't block the whole bundle; collects errors for diagnosis.
+ * Submit to all endpoints simultaneously and take the first acceptance.
+ * Parallel submission is safe with Jito (identical bundle content) and avoids
+ * wasting block time on sequential 15s timeouts.
  */
+async function sendBundleParallel(
+  encodedTxs: string[],
+  signatures: string[]
+): Promise<{ bundleId: string; signatures: string[]; endpoint: string }> {
+  const attempts = JITO_ENDPOINTS.map(async (endpoint) => {
+    const bundleId = await submitEncodedBundle(encodedTxs, endpoint);
+    return { bundleId, signatures, endpoint };
+  });
+
+  const results = await Promise.allSettled(attempts);
+  const errors: string[] = [];
+  for (const r of results) {
+    if (r.status === "fulfilled") return r.value;
+    const msg = (r.reason as any)?.message ?? String(r.reason);
+    errors.push(msg);
+  }
+
+  const allRateLimited = errors.every((e) => e.includes("RATE_LIMITED") || e.includes("429"));
+  const e = new Error(
+    allRateLimited
+      ? "All Jito endpoints rate-limited (429)"
+      : `All Jito endpoints rejected the bundle:\n${errors.join("\n")}`
+  );
+  (e as any).isRateLimit = allRateLimited;
+  throw e;
+}
+
+/** Sequential fallback — used only when parallel submission itself errors out. */
 async function sendBundleSequential(
   encodedTxs: string[],
   signatures: string[]
@@ -123,7 +151,6 @@ async function sendBundleSequential(
       if ((err as any).isRateLimit) {
         await new Promise((r) => setTimeout(r, 1_000));
       }
-      // always try the next endpoint regardless of error type
     }
   }
   const allRateLimited = errors.every((e) => e.includes("RATE_LIMITED") || e.includes("429"));
@@ -142,7 +169,7 @@ export async function sendJitoBundle(
   _endpoint?: string
 ): Promise<{ bundleId: string; signatures: string[] }> {
   const { encodedTxs, signatures } = signBundle(transactions, signers);
-  const { bundleId, signatures: sigs } = await sendBundleSequential(encodedTxs, signatures);
+  const { bundleId, signatures: sigs } = await sendBundleParallel(encodedTxs, signatures);
   return { bundleId, signatures: sigs };
 }
 
@@ -224,7 +251,7 @@ export async function executeClassicBundle(
 
   let jitoFailed = false;
   try {
-    const { bundleId, signatures } = await sendJitoBundle(transactions, signerSets, JITO_ENDPOINTS[0]);
+    const { bundleId, signatures } = await sendJitoBundle(transactions, signerSets);
     onProgress(`Bundle submitted: ${bundleId}, waiting for confirmation...`, "info");
     const landed = await waitForBundleLanding(bundleId, JITO_ENDPOINTS[0], connection, signatures);
     if (landed) {
@@ -296,7 +323,7 @@ export interface AtomicLaunchParams {
 // Token2022:  tx[0]=create,        tx[1]=devbuy, tx[2..4]=wallet buys (max 3 wallets)
 const JITO_MAX_TXS = 5;
 
-const BUNDLE_MAX_RETRIES = 3;
+const BUNDLE_MAX_RETRIES = 5;
 
 export async function executeAtomicLaunchBundle(
   params: AtomicLaunchParams,
@@ -417,7 +444,7 @@ export async function executeAtomicLaunchBundle(
   // Token2022: tx[0]=create only, tx[1]=devbuy (Token2022 create+devbuy would be
   //            ~1668 bytes, over the 1232-byte raw limit), tx[2..4]=wallet buys.
   //            Tip goes on tx[1] (creator) if no wallets, else on tx[2] (first wallet).
-  function assembleTxs(blockhash: string): { encodedTxs: string[]; signatures: string[] } {
+  function assembleTxs(blockhash: string, effectiveTip: number): { encodedTxs: string[]; signatures: string[] } {
     const tipAccount = randomTipAccount();
     const encodedTxs: string[] = [];
     const signatures: string[] = [];
@@ -433,7 +460,7 @@ export async function executeAtomicLaunchBundle(
           ? [...createAndDevBuyIxs]
           : [
               ...createAndDevBuyIxs,
-              SystemProgram.transfer({ fromPubkey: creatorKeypair.publicKey, toPubkey: tipAccount, lamports: tipLamports }),
+              SystemProgram.transfer({ fromPubkey: creatorKeypair.publicKey, toPubkey: tipAccount, lamports: effectiveTip }),
             ],
       }).compileToV0Message()
     );
@@ -451,7 +478,7 @@ export async function executeAtomicLaunchBundle(
             priorityFeeIx(300_000),
             computeUnitLimitIx(300_000),
             ...(!hasBuyWallets
-              ? [SystemProgram.transfer({ fromPubkey: creatorKeypair.publicKey, toPubkey: tipAccount, lamports: tipLamports })]
+              ? [SystemProgram.transfer({ fromPubkey: creatorKeypair.publicKey, toPubkey: tipAccount, lamports: effectiveTip })]
               : []),
             ...devBuyIxs!,
           ],
@@ -473,7 +500,7 @@ export async function executeAtomicLaunchBundle(
             priorityFeeIx(300_000),
             computeUnitLimitIx(300_000),
             ...(i === 0
-              ? [SystemProgram.transfer({ fromPubkey: entry.keypair.publicKey, toPubkey: tipAccount, lamports: tipLamports })]
+              ? [SystemProgram.transfer({ fromPubkey: entry.keypair.publicKey, toPubkey: tipAccount, lamports: effectiveTip })]
               : []),
             ...entry.ixs,
           ],
@@ -487,7 +514,7 @@ export async function executeAtomicLaunchBundle(
     return { encodedTxs, signatures };
   }
 
-  async function submitBundle(): Promise<{
+  async function submitBundle(attemptTip: number): Promise<{
     bundleId: string;
     signatures: string[];
     blockhash: string;
@@ -495,9 +522,15 @@ export async function executeAtomicLaunchBundle(
     submittedEndpoint: string;
   }> {
     const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("processed");
-    const { encodedTxs, signatures } = assembleTxs(blockhash);
-    const { bundleId, endpoint: submittedEndpoint } = await sendBundleSequential(encodedTxs, signatures);
-    return { bundleId, signatures, blockhash, lastValidBlockHeight, submittedEndpoint };
+    const { encodedTxs, signatures } = assembleTxs(blockhash, attemptTip);
+    // Try all endpoints in parallel; fall back to sequential if parallel itself errors
+    let result: { bundleId: string; signatures: string[]; endpoint: string };
+    try {
+      result = await sendBundleParallel(encodedTxs, signatures);
+    } catch {
+      result = await sendBundleSequential(encodedTxs, signatures);
+    }
+    return { bundleId: result.bundleId, signatures, blockhash, lastValidBlockHeight, submittedEndpoint: result.endpoint };
   }
 
   const walletCount = Math.min(buyEntries.length, MAX_BUY_TXS);
@@ -507,11 +540,34 @@ export async function executeAtomicLaunchBundle(
     "info"
   );
 
+  // Verify if the create tx actually landed (RPC check, used after ambiguous outcomes)
+  async function verifyLandingViaRpc(sig: string): Promise<boolean> {
+    try {
+      const status = await connection.getSignatureStatus(sig, { searchTransactionHistory: false });
+      const cs = status.value?.confirmationStatus;
+      if ((cs === "confirmed" || cs === "finalized") && !status.value?.err) return true;
+    } catch {}
+    return false;
+  }
+
   let lastError = "";
+  let lastSigs: string[] = [];
   for (let attempt = 1; attempt <= BUNDLE_MAX_RETRIES; attempt++) {
-    if (attempt > 1) {
-      onProgress(`Retry ${attempt}/${BUNDLE_MAX_RETRIES}...`, "warn");
+    // Before retrying: check if previous attempt's create tx actually landed
+    if (attempt > 1 && lastSigs.length > 0) {
+      const prevLanded = await verifyLandingViaRpc(lastSigs[0]);
+      if (prevLanded) {
+        onProgress("Bundle confirmed on-chain (detected via RPC on retry check).", "success");
+        return {
+          bundleId: "rpc-confirmed",
+          results: buyEntries.map((e) => ({ address: e.address, tokenAmount: e.tokenAmount })),
+        };
+      }
+      onProgress(`Retry ${attempt}/${BUNDLE_MAX_RETRIES} (tip ×${attempt})...`, "warn");
     }
+
+    // Progressive tip: double each retry, cap at 5× original
+    const attemptTip = Math.min(tipLamports * attempt, tipLamports * 5);
 
     let bundleId: string;
     let submittedSigs: string[];
@@ -519,13 +575,17 @@ export async function executeAtomicLaunchBundle(
     let confirmedLVBH: number;
     let submittedEndpoint: string;
     try {
-      const result = await submitBundle();
+      const result = await submitBundle(attemptTip);
       bundleId = result.bundleId;
       submittedSigs = result.signatures;
+      lastSigs = submittedSigs;
       confirmedBlockhash = result.blockhash;
       confirmedLVBH = result.lastValidBlockHeight;
       submittedEndpoint = result.submittedEndpoint;
-      onProgress(`Bundle accepted via ${submittedEndpoint.match(/\/\/([^.]+)/)?.[1] ?? "jito"} (${bundleId.slice(0, 16)}...)`, "info");
+      onProgress(
+        `Bundle accepted via ${submittedEndpoint.match(/\/\/([^.]+)/)?.[1] ?? "jito"} (${bundleId.slice(0, 16)}...) tip=${(attemptTip / 1e9).toFixed(4)} SOL`,
+        "info"
+      );
     } catch (err: any) {
       lastError = err.message;
       onProgress(`Submit failed: ${err.message}`, "warn");
@@ -534,32 +594,34 @@ export async function executeAtomicLaunchBundle(
     }
 
     // Race two signals:
-    // 1. Jito status API polling . detects simulation failures within seconds,
-    //    so we don't wait 60s for block expiry when Jito has already rejected us.
-    // 2. confirmTransaction (WebSocket) . detects on-chain landing fast.
-    // Whichever resolves first wins.
+    // 1. Jito status API polling — detects simulation failures within seconds.
+    // 2. confirmTransaction (WebSocket) — detects on-chain landing fast.
+    // Whichever resolves first wins. If status says "Failed", we still do an RPC
+    // check before giving up, because Jito's status API can lag or lie.
     type BundleOutcome = "landed" | "failed" | "expired";
     let outcome: BundleOutcome;
     let outcomeError = "";
 
     const statusPoll = (async (): Promise<BundleOutcome> => {
-      // Must query the SAME endpoint that accepted the bundle . other regions won't have it
-      const statusEndpoint = submittedEndpoint;
       for (let tick = 0; tick < 20; tick++) {
         await new Promise((r) => setTimeout(r, 3_000));
         try {
           const res = await axios.post(
-            statusEndpoint,
+            submittedEndpoint,
             { jsonrpc: "2.0", id: 1, method: "getInflightBundleStatuses", params: [[bundleId]] },
             { timeout: 5_000, headers: { "Content-Type": "application/json" } }
           );
           const status: string | undefined = res.data?.result?.value?.[0]?.status;
           onProgress(`Jito bundle status: ${status ?? "unknown"}`, "info");
-          if (status === "Failed" || status === "Invalid") return "failed";
           if (status === "Landed") return "landed";
-        } catch { /* status endpoint unavailable . keep waiting */ }
+          if (status === "Failed" || status === "Invalid") {
+            // Jito says failed — do a quick RPC sanity check before trusting it
+            const actuallyLanded = await verifyLandingViaRpc(submittedSigs[0]);
+            return actuallyLanded ? "landed" : "failed";
+          }
+        } catch { /* status endpoint unavailable — keep waiting */ }
       }
-      return "expired"; // status stayed Pending for full 60s
+      return "expired";
     })();
 
     const wsConfirm = (async (): Promise<BundleOutcome> => {
@@ -569,11 +631,16 @@ export async function executeAtomicLaunchBundle(
           "confirmed"
         );
         if (conf.value.err) {
+          // Tx landed on-chain but failed execution — check if it's a "mint already exists"
+          // which means a prior attempt succeeded and we can stop.
           outcomeError = `On-chain tx error: ${JSON.stringify(conf.value.err)}`;
           return "failed";
         }
         return "landed";
       } catch (err: any) {
+        // WebSocket timeout or connection drop — fall back to RPC poll
+        const actuallyLanded = await verifyLandingViaRpc(submittedSigs[0]);
+        if (actuallyLanded) return "landed";
         outcomeError = err.message;
         return "expired";
       }
@@ -590,7 +657,17 @@ export async function executeAtomicLaunchBundle(
     }
 
     if (outcomeError.startsWith("On-chain tx error")) {
-      throw new Error(outcomeError); // fatal . tx landed but failed; don't retry
+      // Before throwing, verify the token exists — a prior retry may have landed it
+      const { getBondingCurveData } = await import("./solana");
+      const curveExists = await getBondingCurveData(connection, mint);
+      if (curveExists) {
+        onProgress("Token confirmed on-chain (recovered from status mismatch).", "success");
+        return {
+          bundleId: "recovered",
+          results: buyEntries.map((e) => ({ address: e.address, tokenAmount: e.tokenAmount })),
+        };
+      }
+      throw new Error(outcomeError);
     }
 
     lastError = outcomeError || `bundle status: ${outcome}`;
@@ -600,6 +677,19 @@ export async function executeAtomicLaunchBundle(
     );
     if (attempt < BUNDLE_MAX_RETRIES) await new Promise((r) => setTimeout(r, 1_000));
   }
+
+  // Final safety net: check if the token was created by any of the attempts
+  try {
+    const { getBondingCurveData } = await import("./solana");
+    const curveExists = await getBondingCurveData(connection, mint);
+    if (curveExists) {
+      onProgress("Token confirmed on-chain (detected after all retries).", "success");
+      return {
+        bundleId: "recovered",
+        results: buyEntries.map((e) => ({ address: e.address, tokenAmount: e.tokenAmount })),
+      };
+    }
+  } catch {}
 
   throw new Error(
     `Bundle failed after ${BUNDLE_MAX_RETRIES} attempts (${lastError}). ` +

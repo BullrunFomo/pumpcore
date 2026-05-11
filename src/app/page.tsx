@@ -1,8 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, RefreshCw, Rocket, Wallet, Sparkles, Zap, Coins, ArrowDownToLine, Activity } from "lucide-react";
 import { useStore } from "@/store";
+import { formatSol } from "@/lib/utils";
+import type { WalletInfo } from "@/types";
 import StatsBar from "@/components/StatsBar";
 import WalletTable from "@/components/WalletTable";
 import ImportWalletsModal from "@/components/ImportWalletsModal";
@@ -10,6 +12,118 @@ import WithdrawModal from "@/components/WithdrawModal";
 import FundModal from "@/components/FundModal";
 import GenerateActivityModal from "@/components/GenerateActivityModal";
 import { Button } from "@/components/ui/button";
+
+const CHART_COLORS = [
+  "#4f83ff","#7aa3ff","#5a8eff","#3d6fe8","#93b4ff",
+  "#6b9aff","#2d5fd4","#b8cfff","#4475e8","#3360d4",
+];
+
+function WalletDistributionChart({ wallets }: { wallets: WalletInfo[] }) {
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const [animated, setAnimated] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setAnimated(true), 150);
+    return () => clearTimeout(t);
+  }, []);
+
+  const total = wallets.reduce((s, w) => s + w.solBalance, 0);
+  const sorted = useMemo(
+    () => [...wallets].sort((a, b) => b.solBalance - a.solBalance).slice(0, 10),
+    [wallets],
+  );
+
+  const r = 42;
+  const cx = 60;
+  const cy = 60;
+  const circumference = 2 * Math.PI * r;
+  const gapLen = (3 / 360) * circumference;
+
+  const segments = useMemo(() => {
+    let cumulative = 0;
+    return sorted.map((w) => {
+      const pct = w.solBalance / total;
+      const arcLen = Math.max(circumference * pct - gapLen, 0);
+      const offset = circumference * (1 - cumulative);
+      cumulative += pct;
+      return { arcLen, offset, wallet: w, pct };
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sorted, total]);
+
+  if (total === 0) {
+    return (
+      <div className="flex items-center justify-center py-6 text-xs text-zinc-600">
+        No SOL to display
+      </div>
+    );
+  }
+
+  const hov = hoveredIdx !== null ? segments[hoveredIdx] : null;
+
+  return (
+    <div className="p-4 pb-3">
+      <svg
+        viewBox="0 0 120 120"
+        className="w-full max-w-[148px] mx-auto block"
+        style={{ overflow: "visible" }}
+      >
+        {/* Track */}
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(28,38,56,0.9)" strokeWidth="10" />
+        {segments.map((seg, i) => (
+          <circle
+            key={seg.wallet.id}
+            cx={cx}
+            cy={cy}
+            r={r}
+            fill="none"
+            stroke={CHART_COLORS[i % CHART_COLORS.length]}
+            strokeWidth={hoveredIdx === i ? 14 : 10}
+            strokeDasharray={`${animated ? seg.arcLen : 0} ${circumference}`}
+            strokeDashoffset={seg.offset}
+            transform={`rotate(-90, ${cx}, ${cy})`}
+            style={{
+              transition: "stroke-dasharray 0.9s cubic-bezier(.4,0,.2,1), stroke-width 0.2s, opacity 0.2s",
+              cursor: "pointer",
+              opacity: hoveredIdx !== null && hoveredIdx !== i ? 0.3 : 1,
+            }}
+            onMouseEnter={() => setHoveredIdx(i)}
+            onMouseLeave={() => setHoveredIdx(null)}
+          />
+        ))}
+        {/* Center text */}
+        <text x={cx} y={cy - 5} textAnchor="middle" fill="white" fontSize="11" fontWeight="700" fontFamily="monospace">
+          {formatSol(hov ? hov.wallet.solBalance : total, 2)}
+        </text>
+        <text x={cx} y={cy + 8} textAnchor="middle" fill="rgba(161,161,170,0.65)" fontSize="7.5">
+          {hov ? `${(hov.pct * 100).toFixed(1)}% of total` : "total SOL"}
+        </text>
+        {hov && (
+          <text x={cx} y={cy + 19} textAnchor="middle" fill="rgba(161,161,170,0.4)" fontSize="6" fontFamily="monospace">
+            {hov.wallet.address.slice(0, 4)}…{hov.wallet.address.slice(-4)}
+          </text>
+        )}
+      </svg>
+      {/* Legend */}
+      <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-3">
+        {segments.map((seg, i) => (
+          <button
+            key={seg.wallet.id}
+            className="flex items-center gap-1 transition-opacity"
+            style={{ opacity: hoveredIdx !== null && hoveredIdx !== i ? 0.3 : 1 }}
+            onMouseEnter={() => setHoveredIdx(i)}
+            onMouseLeave={() => setHoveredIdx(null)}
+          >
+            <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
+            <span className="text-[9px] font-mono text-zinc-500">
+              {seg.wallet.address.slice(0, 4)}…{seg.wallet.address.slice(-3)}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -268,6 +382,25 @@ export default function DashboardPage() {
               </button>
             </div>
           </div>
+
+          {/* SOL Distribution */}
+          {wallets.length > 0 && (
+            <div
+              className="shrink-0 rounded-md overflow-hidden"
+              style={{
+                background: "rgba(13,17,24,0.8)",
+                border: "1px solid rgba(28,38,56,0.8)",
+              }}
+            >
+              <div className="flex items-center justify-between px-3 pt-3 pb-0">
+                <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest">
+                  SOL Distribution
+                </span>
+                <span className="text-[10px] text-zinc-600">{wallets.length} wallets</span>
+              </div>
+              <WalletDistributionChart wallets={wallets} />
+            </div>
+          )}
 
           {/* Latest Launches */}
           <div className="flex flex-col min-h-0">

@@ -60,7 +60,7 @@ export default function LoginModal() {
         // saveUserId so Zustand picks the right store on reload
         const { saveUserId } = await import("@/lib/auth")
         saveUserId(key.trim())
-        window.location.reload()
+        window.location.href = "/"
       } else {
         setError("Invalid access key. Please try again.")
         setKey("")
@@ -76,7 +76,7 @@ export default function LoginModal() {
     setGoogleLoading(true)
     setError("")
     try {
-      await signIn("google", { callbackUrl: "/" })
+      await signIn("google", { callbackUrl: "/", redirect: true })
     } catch {
       setError("Google sign-in failed. Please try again.")
       setGoogleLoading(false)
@@ -196,12 +196,13 @@ export default function LoginModal() {
 
         </div>
 
-        {error && (
-          <p className="text-xs text-red-400 flex items-center gap-1.5">
-            <span className="inline-block w-1 h-1 rounded-full bg-red-400 shrink-0" />
-            {error}
-          </p>
-        )}
+        <p
+          className="text-xs text-red-400 flex items-center gap-1.5"
+          style={{ visibility: error ? "visible" : "hidden" }}
+        >
+          <span className="inline-block w-1 h-1 rounded-full bg-red-400 shrink-0" />
+          {error || " "}
+        </p>
       </div>
     </div>
   )

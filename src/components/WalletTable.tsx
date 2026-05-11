@@ -216,11 +216,26 @@ const totalSol = wallets.reduce((s, w) => s + w.solBalance, 0);
 
 
             {/* Balance */}
-            <div className="flex items-center gap-1.5">
-              <SolanaLogo className="h-3 w-3 shrink-0" />
-              <span className="text-xs text-zinc-200 font-medium tabular-nums">
-                {formatSol(w.solBalance, 3)}
-              </span>
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-1.5">
+                <SolanaLogo className="h-3 w-3 shrink-0" />
+                <span className="text-xs text-zinc-200 font-medium tabular-nums">
+                  {formatSol(w.solBalance, 3)}
+                </span>
+              </div>
+              {totalSol > 0 && (
+                <div style={{ height: "2px", background: "rgba(28,38,56,0.9)", borderRadius: "1px", overflow: "hidden", maxWidth: "72px" }}>
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${Math.min((w.solBalance / totalSol) * 100, 100)}%`,
+                      background: "linear-gradient(90deg, rgba(79,131,255,0.55), rgba(122,163,255,0.85))",
+                      borderRadius: "1px",
+                      transition: "width 1s cubic-bezier(.4,0,.2,1)",
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Funding source */}
