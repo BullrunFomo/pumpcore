@@ -1,27 +1,21 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Eye, EyeOff, LogOut, Pencil, Check, X, Camera, Key, Users, Zap } from "lucide-react";
-import { clearAccessKey, getStoredAccessKey } from "@/lib/auth";
+import { useSession, signOut } from "next-auth/react";
+import { LogOut, Pencil, Check, X, Camera, Users, Zap } from "lucide-react";
+import { clearUserId } from "@/lib/auth";
 import { useStore } from "@/store";
 
 export default function ProfilePage() {
-  const router = useRouter();
+  const { data: session } = useSession();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [keyVisible, setKeyVisible] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
-  const [accessKey, setAccessKey] = useState("");
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   const profile = useStore((s) => s.profile);
   const setProfile = useStore((s) => s.setProfile);
-
-  useEffect(() => {
-    setAccessKey(getStoredAccessKey() ?? "");
-  }, []);
 
   useEffect(() => {
     if (editingName && nameInputRef.current) {
@@ -30,10 +24,9 @@ export default function ProfilePage() {
     }
   }, [editingName]);
 
-  function handleLogout() {
-    clearAccessKey();
-    fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
+  async function handleLogout() {
+    clearUserId()
+    await signOut({ callbackUrl: "/" })
   }
 
   function startEditName() {
@@ -59,8 +52,7 @@ export default function ProfilePage() {
     e.target.value = "";
   }
 
-  const displayName = profile.name || accessKey.split("-")[0] || "Account";
-  const redactedKey = accessKey.replace(/./g, "•");
+  const displayName = profile.name || session?.user?.name || "Account";
 
   return (
     <main className="h-full overflow-y-auto pt-8 pb-6 px-4" style={{ background: "#07090f" }}>
@@ -126,25 +118,22 @@ export default function ProfilePage() {
           </div>
         </div>
 
-{/* ── Access key ────────────────────────────────────────────────────── */}
+{/* ── Account info ─────────────────────────────────────────────────── */}
         <div className="rounded-md p-5 relative overflow-hidden" style={{ background: "linear-gradient(160deg, rgba(15,22,45,0.98) 0%, rgba(18,18,24,0.95) 100%)", border: "1px solid rgba(79,131,255,0.25)", boxShadow: "0 0 20px rgba(79,131,255,0.06), inset 0 1px 0 rgba(79,131,255,0.08)" }}>
           <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 50% -10%, rgba(79,131,255,0.14) 0%, transparent 60%)" }} />
-          <div className="relative flex items-center gap-2 mb-4">
-            <Key className="h-3.5 w-3.5" style={{ color: "rgba(79,131,255,0.6)" }} />
-            <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "rgba(79,131,255,0.6)" }}>Access Key</p>
-          </div>
-          <div className="relative flex items-center gap-3 rounded-md px-4 py-3" style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(79,131,255,0.12)" }}>
-            <span className="flex-1 font-mono text-sm tracking-widest" style={{ color: keyVisible ? "#93b4ff" : "rgba(79,131,255,0.25)", letterSpacing: keyVisible ? undefined : "0.15em" }}>
-              {keyVisible ? accessKey : redactedKey}
-            </span>
-            <button
-              onClick={() => setKeyVisible((v) => !v)}
-              className="shrink-0 transition-colors"
-              style={{ color: keyVisible ? "#4f83ff" : "rgba(79,131,255,0.35)" }}
-              title={keyVisible ? "Hide" : "Reveal"}
-            >
-              {keyVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
+          <div className="relative flex flex-col gap-2">
+            <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "rgba(79,131,255,0.6)" }}>Signed in as</p>
+            <div className="flex items-center gap-3 rounded-md px-4 py-3" style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(79,131,255,0.12)" }}>
+              {session?.user?.image && (
+                <img src={session.user.image} alt="" width={28} height={28} className="rounded-full shrink-0" />
+              )}
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-medium text-zinc-100 truncate">{session?.user?.name ?? "—"}</span>
+                {session?.user?.email && (
+                  <span className="text-xs text-zinc-500 truncate">{session.user.email}</span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 

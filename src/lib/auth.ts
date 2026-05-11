@@ -1,21 +1,22 @@
-export const AUTH_STORAGE_KEY = 'bundlex-auth-key'
+const USER_ID_KEY = 'bundlex-user-id'
 
-export function getStoredAccessKey(): string | null {
+export function getStoredUserId(): string | null {
   if (typeof window === 'undefined') return null
-  return localStorage.getItem(AUTH_STORAGE_KEY)
+  return localStorage.getItem(USER_ID_KEY)
 }
 
-export function saveAccessKey(key: string): void {
-  localStorage.setItem(AUTH_STORAGE_KEY, key)
-}
-
-export function clearAccessKey(): void {
+export function saveUserId(id: string): void {
   if (typeof window === 'undefined') return
-  localStorage.removeItem(AUTH_STORAGE_KEY)
+  localStorage.setItem(USER_ID_KEY, id)
+}
+
+export function clearUserId(): void {
+  if (typeof window === 'undefined') return
+  localStorage.removeItem(USER_ID_KEY)
 }
 
 export function getAccountStoreName(): string {
   if (typeof window === 'undefined') return 'bundlex-default'
-  const key = localStorage.getItem(AUTH_STORAGE_KEY)
-  return key ? `bundlex-${key}` : 'bundlex-default'
+  const id = localStorage.getItem(USER_ID_KEY)
+  return id ? `bundlex-${id}` : 'bundlex-default'
 }

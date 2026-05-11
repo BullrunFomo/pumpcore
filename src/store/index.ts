@@ -14,6 +14,7 @@ import type {
   TradeRecord,
   TokenPrice,
   LaunchRecord,
+  LaunchPreset,
 } from "@/types";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -120,7 +121,7 @@ interface AppState {
   priceHistory: Array<{ time: number; price: number }>; // SOL per token, unix seconds
   clearPriceHistory: () => void;
 
-  // Bundle preset
+  // Bundle preset (feed page single preset)
   bundlePreset: {
     selectedWalletIds: string[];
     devWalletId: string;
@@ -130,6 +131,10 @@ interface AppState {
     staggerDelayMs: number;
   } | null;
   setBundlePreset: (preset: AppState["bundlePreset"]) => void;
+
+  // Launch page presets (up to 3)
+  bundlePresets: LaunchPreset[];
+  setBundlePresets: (presets: LaunchPreset[]) => void;
 
   // Profile
   profile: { name: string; pfpUrl: string };
@@ -315,6 +320,8 @@ export const useStore = create<AppState>()(
       // ── Bundle preset ────────────────────────────────────────────────────────
       bundlePreset: null,
       setBundlePreset: (preset) => set({ bundlePreset: preset }),
+      bundlePresets: [],
+      setBundlePresets: (presets) => set({ bundlePresets: presets.slice(0, 2) }),
 
       // ── Profile ──────────────────────────────────────────────────────────────
       profile: { name: "", pfpUrl: "" },
@@ -364,6 +371,7 @@ export const useStore = create<AppState>()(
         launches: s.launches,
         walletFunding: s.walletFunding,
         bundlePreset: s.bundlePreset,
+        bundlePresets: s.bundlePresets,
         profile: s.profile,
       }),
     }

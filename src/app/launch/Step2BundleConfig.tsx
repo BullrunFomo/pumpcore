@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { Crown, Timer, TrendingUp, Zap, Layers, ChevronDown, X, Shuffle } from "lucide-react";
+import { Crown, Zap, Layers, ChevronDown, Shuffle } from "lucide-react";
 import { truncateAddress, formatSol } from "@/lib/utils";
-import type { LaunchType, AutoSellMode } from "@/types";
+import type { LaunchType } from "@/types";
+import LaunchPresetPanel from "./LaunchPresetPanel";
 
 const cardStyle = {
   background: "rgba(13,17,24,0.8)",
@@ -21,8 +21,6 @@ export default function Step2BundleConfig() {
   const wallets = useStore((s) => s.wallets);
   const bundleConfig = useStore((s) => s.launch.bundleConfig);
   const updateBundleConfig = useStore((s) => s.updateBundleConfig);
-  const autoSell = useStore((s) => s.launch.autoSell);
-  const updateAutoSell = useStore((s) => s.updateAutoSell);
   const setLaunchStep = useStore((s) => s.setLaunchStep);
 
   const toggleWallet = (id: string) => {
@@ -54,7 +52,6 @@ export default function Step2BundleConfig() {
   };
 
   const [tipOpen, setTipOpen] = useState(false);
-  const [autoSellOpen, setAutoSellOpen] = useState(false);
   const tipRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -73,37 +70,37 @@ export default function Step2BundleConfig() {
   return (
     <div className="space-y-4">
 
-      {/* Toolbar */}
-      <div className="rounded-lg px-3 sm:px-4 py-3 flex flex-col gap-2" style={cardStyle}>
-        {/* Row 1: Launch mode */}
-        <div className="grid grid-cols-2 gap-2">
-          {([
-            { value: "classic" as LaunchType, label: "Classic", icon: <Zap className="h-3.5 w-3.5" /> },
-            { value: "stagger" as LaunchType, label: "Stagger", icon: <Layers className="h-3.5 w-3.5" /> },
-          ]).map((t) => {
-            const active = bundleConfig.launchType === t.value;
-            return (
-              <button
-                key={t.value}
-                onClick={() => updateBundleConfig({ launchType: t.value })}
-                className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
-                style={{
-                  background: active ? "rgba(79,131,255,0.12)" : "rgba(7,10,18,0.6)",
-                  border: `1px solid ${active ? "rgba(79,131,255,0.4)" : "rgba(28,38,56,0.9)"}`,
-                  color: active ? "#4f83ff" : "#71717a",
-                  boxShadow: active ? "0 0 10px rgba(79,131,255,0.15)" : "none",
-                }}
-              >
-                {t.icon}
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
+      {/* Toolbar + Presets row */}
+      <div className="flex gap-3 items-stretch">
+        {/* Toolbar */}
+        <div className="rounded-lg px-3 py-3 flex flex-col gap-2 flex-1" style={cardStyle}>
+          {/* Row 1: Launch mode */}
+          <div className="grid grid-cols-2 gap-2">
+            {([
+              { value: "classic" as LaunchType, label: "Classic", icon: <Zap className="h-3.5 w-3.5" /> },
+              { value: "stagger" as LaunchType, label: "Stagger", icon: <Layers className="h-3.5 w-3.5" /> },
+            ]).map((t) => {
+              const active = bundleConfig.launchType === t.value;
+              return (
+                <button
+                  key={t.value}
+                  onClick={() => updateBundleConfig({ launchType: t.value })}
+                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
+                  style={{
+                    background: active ? "rgba(79,131,255,0.12)" : "rgba(7,10,18,0.6)",
+                    border: `1px solid ${active ? "rgba(79,131,255,0.4)" : "rgba(28,38,56,0.9)"}`,
+                    color: active ? "#4f83ff" : "#71717a",
+                    boxShadow: active ? "0 0 10px rgba(79,131,255,0.15)" : "none",
+                  }}
+                >
+                  {t.icon}
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
 
-        {/* Row 2: Tip + Auto-Sell */}
-        <div className="grid grid-cols-2 gap-2">
-          {/* Tip button */}
+          {/* Row 2: Tip */}
           <div className="relative" ref={tipRef}>
             <button
               onClick={() => setTipOpen((o) => !o)}
@@ -138,149 +135,30 @@ export default function Step2BundleConfig() {
             )}
           </div>
 
-          {/* Auto-Sell button */}
-          <button
-            onClick={() => setAutoSellOpen(true)}
-            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
-            style={{
-              background: autoSell.enabled ? "rgba(79,131,255,0.08)" : "rgba(7,10,18,0.6)",
-              border: `1px solid ${autoSell.enabled ? "rgba(79,131,255,0.35)" : "rgba(28,38,56,0.9)"}`,
-              color: autoSell.enabled ? "#4f83ff" : "#a1a1aa",
-            }}
-          >
-            <Timer className="h-3.5 w-3.5" />
-            Auto-Sell
-            {autoSell.enabled && (
-              <span className="w-1.5 h-1.5 rounded-full bg-[#4f83ff]" style={{ boxShadow: "0 0 6px rgba(79,131,255,0.8)" }} />
-            )}
-          </button>
+          {/* Row 3: Stagger delay (when stagger selected) */}
+          {bundleConfig.launchType === "stagger" && (
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] text-zinc-500 uppercase tracking-wider shrink-0">Delay</span>
+              <Slider
+                min={0}
+                max={10000}
+                step={100}
+                value={[bundleConfig.staggerDelayMs]}
+                onValueChange={([v]) => updateBundleConfig({ staggerDelayMs: v })}
+                className="flex-1"
+              />
+              <span className="text-xs font-semibold tabular-nums shrink-0" style={{ color: "#4f83ff" }}>
+                {bundleConfig.staggerDelayMs}ms
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Row 3: Stagger delay (when stagger selected) */}
-        {bundleConfig.launchType === "stagger" && (
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] text-zinc-500 uppercase tracking-wider shrink-0">Delay</span>
-            <Slider
-              min={0}
-              max={10000}
-              step={100}
-              value={[bundleConfig.staggerDelayMs]}
-              onValueChange={([v]) => updateBundleConfig({ staggerDelayMs: v })}
-              className="flex-1"
-            />
-            <span className="text-xs font-semibold tabular-nums shrink-0" style={{ color: "#4f83ff" }}>
-              {bundleConfig.staggerDelayMs}ms
-            </span>
-          </div>
-        )}
+        {/* Bundle Presets */}
+        <div className="flex-1">
+          <LaunchPresetPanel />
+        </div>
       </div>
-
-      {/* Auto-Sell modal */}
-      {autoSellOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: "rgba(0,0,0,0.7)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setAutoSellOpen(false); }}
-        >
-          <div
-            className="rounded-lg w-full max-w-sm mx-4"
-            style={{
-              background: "rgba(13,17,24,0.95)",
-              border: "1px solid rgba(28,38,56,0.8)",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-            }}
-          >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(28,38,56,0.8)]">
-              <div className="flex items-center gap-3">
-                <Timer className="h-4 w-4" style={{ color: autoSell.enabled ? "#4f83ff" : "#3f3f46" }} />
-                <span className="text-sm font-semibold text-zinc-100">Auto-Sell</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Switch checked={autoSell.enabled} onCheckedChange={(v) => updateAutoSell({ enabled: v })} />
-                <button onClick={() => setAutoSellOpen(false)} className="text-zinc-600 hover:text-zinc-300">
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-            <div className="px-5 py-5 space-y-4">
-              <div className="grid grid-cols-2 gap-2">
-                {([
-                  { mode: "time" as AutoSellMode, icon: <Timer className="h-3.5 w-3.5" />, label: "Time-based", desc: "Sell after X seconds" },
-                  { mode: "mcap" as AutoSellMode, icon: <TrendingUp className="h-3.5 w-3.5" />, label: "MCap-based", desc: "Sell at target MCap" },
-                ] as const).map((opt) => {
-                  const sel = autoSell.mode === opt.mode;
-                  return (
-                    <button
-                      key={opt.mode}
-                      onClick={() => updateAutoSell({ mode: opt.mode })}
-                      className="p-3.5 rounded text-left"
-                      style={{
-                        background: sel ? "rgba(79,131,255,0.08)" : "rgba(7,10,18,0.6)",
-                        border: `1px solid ${sel ? "rgba(79,131,255,0.4)" : "rgba(28,38,56,0.9)"}`,
-                        boxShadow: sel ? "0 0 12px rgba(79,131,255,0.12)" : "none",
-                      }}
-                    >
-                      <div className="mb-2" style={{ color: sel ? "#4f83ff" : "#3f3f46" }}>{opt.icon}</div>
-                      <div className="text-xs font-semibold mb-0.5" style={{ color: sel ? "#e4e4e7" : "#a1a1aa" }}>{opt.label}</div>
-                      <div className="text-[10px]" style={{ color: sel ? "rgba(79,131,255,0.6)" : "#52525b" }}>{opt.desc}</div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {autoSell.mode === "time" && (
-                <div className="flex items-center gap-2 w-full">
-                  <span className="text-xs text-zinc-400 shrink-0">Sell</span>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={100}
-                    step={1}
-                    value={autoSell.sellPct}
-                    onChange={(e) => updateAutoSell({ sellPct: Math.min(100, parseInt(e.target.value) || 1) })}
-                    className="flex-1 h-8 text-sm"
-                  />
-                  <span className="text-xs text-zinc-500 shrink-0">%</span>
-                  <span className="text-xs text-zinc-400 shrink-0">every</span>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={autoSell.timeSeconds}
-                    onChange={(e) => updateAutoSell({ timeSeconds: parseInt(e.target.value) || 1 })}
-                    className="flex-1 h-8 text-sm"
-                  />
-                  <span className="text-xs text-zinc-500 shrink-0">sec</span>
-                </div>
-              )}
-
-              {autoSell.mode === "mcap" && (
-                <div className="flex items-center gap-2 w-full">
-                  <span className="text-xs text-zinc-400 shrink-0">Sell</span>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={100}
-                    step={1}
-                    value={autoSell.sellPct}
-                    onChange={(e) => updateAutoSell({ sellPct: Math.min(100, parseInt(e.target.value) || 1) })}
-                    className="flex-1 h-8 text-sm"
-                  />
-                  <span className="text-xs text-zinc-500 shrink-0">% at</span>
-                  <span className="text-xs text-zinc-500 shrink-0">$</span>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={autoSell.mcapTarget}
-                    onChange={(e) => updateAutoSell({ mcapTarget: parseFloat(e.target.value) || 0 })}
-                    className="flex-1 h-8 text-sm"
-                  />
-                  <span className="text-xs text-zinc-500 shrink-0">MCap</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Wallet list */}
       <div className="rounded-lg p-5" style={cardStyle}>

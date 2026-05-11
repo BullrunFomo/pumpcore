@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
-import { saveAccessKey } from "@/lib/auth"
+import { saveUserId } from "@/lib/auth"
 
 interface Props {
   onAuthenticated: () => void
@@ -33,7 +33,7 @@ export default function AccessKeyModal({ onAuthenticated }: Props) {
       })
 
       if (res.ok) {
-        saveAccessKey(key.trim())
+        saveUserId(key.trim())
         // Reload so the Zustand store reinitializes with the account-scoped name
         window.location.reload()
       } else {

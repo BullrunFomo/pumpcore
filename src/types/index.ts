@@ -106,6 +106,19 @@ export interface TradeRecord {
   mintAddress?: string;
 }
 
+// ─── Launch Preset ────────────────────────────────────────────────────────────
+
+export interface LaunchPreset {
+  id: string;
+  name: string;
+  selectedWalletIds: string[];
+  devWalletId: string;
+  walletBuyAmounts: Record<string, number>;
+  jitoTipSol: number;
+  launchType: LaunchType;
+  staggerDelayMs: number;
+}
+
 // ─── Launch Record ────────────────────────────────────────────────────────────
 
 export interface LaunchRecord {

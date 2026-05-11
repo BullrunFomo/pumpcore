@@ -53,7 +53,7 @@ export default function Step4ReviewLaunch() {
   const addTrade = useStore((s) => s.addTrade);
   const logEndRef = useRef<HTMLDivElement>(null);
 
-  const { tokenConfig, bundleConfig, autoSell } = launch;
+  const { tokenConfig, bundleConfig } = launch;
   const selectedWallets = wallets.filter((w) =>
     bundleConfig.selectedWalletIds.includes(w.id)
   );
@@ -93,7 +93,6 @@ export default function Step4ReviewLaunch() {
             launchType: bundleConfig.launchType,
             staggerDelayMs: bundleConfig.staggerDelayMs,
           },
-          autoSell,
         })
       );
 
@@ -273,16 +272,6 @@ export default function Step4ReviewLaunch() {
                     </>
                   );
                 })()}
-              </div>
-            </div>
-            <div>
-              <div className="text-[10px] uppercase tracking-wider text-zinc-600 mb-1">Auto-Sell</div>
-              <div className="text-sm font-medium">
-                {autoSell.enabled
-                  ? <span className="text-zinc-200">{autoSell.mode === "time"
-                      ? `${autoSell.sellPct}% every ${autoSell.timeSeconds}s`
-                      : `${autoSell.sellPct}% at $${autoSell.mcapTarget.toLocaleString()}`}</span>
-                  : <span className="text-zinc-600">Disabled</span>}
               </div>
             </div>
           </div>
