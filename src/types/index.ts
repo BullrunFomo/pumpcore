@@ -3,6 +3,7 @@
 export interface WalletFundingRecord {
   sourceAddress: string | null;
   sourceLabel: string | null;
+  isCex: boolean;
   timestamp: number | null; // ms
   amountSol: number;
   // True once we've attempted a fetch . prevents repeated API calls for wallets

@@ -125,6 +125,7 @@ export default function WalletTable({ wallets, devWalletId }: WalletTableProps) 
           update[addr] = {
             sourceAddress: f?.sourceAddress ?? null,
             sourceLabel: f?.sourceLabel ?? null,
+            isCex: f?.isCex ?? false,
             timestamp: f?.timestamp ?? null,
             amountSol: f?.amountSol ?? 0,
             fetched: true,
@@ -221,9 +222,16 @@ const totalSol = wallets.reduce((s, w) => s + w.solBalance, 0);
 
             {/* Funding source */}
             <div className="min-w-0">
-              <span className="text-xs text-zinc-200 truncate block">
-                {walletFunding[w.address]?.sourceLabel ?? <span className="text-zinc-600">—</span>}
-              </span>
+              {walletFunding[w.address]?.sourceLabel
+                ? walletFunding[w.address].isCex
+                  ? <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold bg-blue-500/15 text-blue-300 border border-blue-500/25 truncate">
+                      {walletFunding[w.address].sourceLabel}
+                    </span>
+                  : <span className="text-xs text-zinc-400 font-mono truncate block">
+                      {walletFunding[w.address].sourceLabel}
+                    </span>
+                : <span className="text-zinc-600">—</span>
+              }
             </div>
 
             {/* Funding date */}
