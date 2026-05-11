@@ -1,5 +1,5 @@
 ﻿"use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Crown,
   ExternalLink,
@@ -302,8 +302,10 @@ export default function ManagePage() {
   const launches = useStore((s) => s.launches);
   const tokenPrice = useStore((s) => s.tokenPrice);
   const activeTokenMint = useStore((s) => s.activeTokenMint);
-  const trades = useStore((s) =>
-    s.trades.filter((t) => !t.mintAddress || t.mintAddress === s.activeTokenMint)
+  const allTrades = useStore((s) => s.trades);
+  const trades = useMemo(
+    () => allTrades.filter((t) => !t.mintAddress || t.mintAddress === activeTokenMint),
+    [allTrades, activeTokenMint]
   );
   const refreshBalances = useStore((s) => s.refreshBalances);
   const setTokenPrice = useStore((s) => s.setTokenPrice);
