@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Rocket,
   Zap,
@@ -15,10 +15,10 @@ import {
   TrendingUp,
   Wallet,
   Activity,
-  Check,
   ExternalLink,
   Sparkles,
   RefreshCw,
+  ArrowDown,
 } from "lucide-react";
 
 /* ─────────────────────────── helpers ─────────────────────────── */
@@ -89,19 +89,42 @@ function FeatureCard({
   );
 }
 
-function StatCard({
-  value,
+function useCountUp(target: number, duration = 1600) {
+  const [value, setValue] = useState(0);
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setValue(target * eased);
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [target, duration]);
+  return value;
+}
+
+function AnimatedStatCard({
+  target,
   label,
+  prefix = "",
   suffix = "",
+  decimals = 0,
 }: {
-  value: string;
+  target: number;
   label: string;
+  prefix?: string;
   suffix?: string;
+  decimals?: number;
 }) {
+  const value = useCountUp(target);
   return (
     <div className="flex flex-col items-center gap-1">
       <span className="text-2xl sm:text-3xl font-bold" style={{ color: "#4f83ff" }}>
-        {value}
+        {prefix}{value.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
         <span className="text-lg font-semibold text-zinc-400">{suffix}</span>
       </span>
       <span className="text-[11px] font-medium tracking-wider uppercase text-zinc-500">
@@ -122,10 +145,41 @@ const PLATFORMS = [
   "Raydium",
 ];
 
+const HOW_IT_WORKS = [
+  {
+    step: "01",
+    title: "Import Wallets",
+    desc: "Load your dev wallet and generate bundle wallets instantly. Fund all of them from your dev wallet in a single transaction.",
+    icon: Wallet,
+  },
+  {
+    step: "02",
+    title: "Configure Token",
+    desc: "Set your token name, symbol, logo, and type. Choose which wallets participate in the bundle buy and how much each one spends.",
+    icon: Layers,
+  },
+  {
+    step: "03",
+    title: "Atomic Launch",
+    desc: "Hit launch. Token creation and all bundle buys are submitted as a single Jito bundle — they land in the same block or not at all.",
+    icon: Rocket,
+  },
+  {
+    step: "04",
+    title: "Manage & Automate",
+    desc: "Run volume strategies, sell, rebalance, or burn across every wallet from the dashboard. No scripts, no manual coordination.",
+    icon: Activity,
+  },
+];
+
 const FAQ_ITEMS = [
   {
     q: "What is BundleX?",
     a: "BundleX is an all-in-one professional infrastructure platform for Solana token lifecycle management. It lets you create, bundle, and manage tokens across every major Solana launchpad from a single unified interface.",
+  },
+  {
+    q: "What does 'bundle buying' actually mean?",
+    a: "When you launch a token, BundleX simultaneously submits the token creation transaction and buy transactions from multiple wallets as a single Jito bundle. All transactions land in the same block atomically — your wallets accumulate supply at launch price without any exposure to front-running.",
   },
   {
     q: "How many wallets do I need?",
@@ -149,11 +203,27 @@ const FAQ_ITEMS = [
 
 export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [barsAnimated, setBarsAnimated] = useState(false);
+  const [rowsAnimated, setRowsAnimated] = useState(false);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setBarsAnimated(true), 400);
+    const t2 = setTimeout(() => setRowsAnimated(true), 200);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
+  const SPARKLINE = [30, 45, 35, 60, 55, 70, 50, 80, 65, 90, 75, 85, 60, 95, 72, 88];
+  const BUNDLE_WALLETS = [
+    { id: "W-01", sol: "12.4", pct: 8.2 },
+    { id: "W-02", sol: "9.8",  pct: 6.5 },
+    { id: "W-03", sol: "15.2", pct: 10.1 },
+    { id: "W-04", sol: "7.6",  pct: 5.0 },
+  ];
 
   return (
     <div className="relative min-h-full w-full overflow-x-hidden">
       {/* ── HERO ── */}
-      <section className="relative flex flex-col items-center justify-center text-center px-4 pt-16 pb-24 overflow-hidden">
+      <section className="relative flex flex-col items-center justify-center text-center px-4 pt-16 pb-20 overflow-hidden">
         {/* ambient orbs */}
         <div
           className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] pointer-events-none"
@@ -196,7 +266,7 @@ export default function LandingPage() {
 
         {/* headline */}
         <h1 className="relative z-10 text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-zinc-50 max-w-3xl leading-[1.1] mb-6">
-          The platform for{" "}
+          Launch tokens and{" "}
           <span
             className="inline-block"
             style={{
@@ -204,20 +274,20 @@ export default function LandingPage() {
               textShadow: "0 0 32px rgba(79,131,255,0.45)",
             }}
           >
-            token lifecycle
+            bundle-buy
           </span>
           <br />
-          management
+          in one atomic transaction
         </h1>
 
         <p className="relative z-10 text-sm sm:text-base text-zinc-400 max-w-xl leading-relaxed mb-10">
-          Create, bundle, and manage Solana tokens across every major launchpad
-          from one unified dashboard. Professional infrastructure built for
-          serious launchers.
+          Deploy your Solana token and have multiple wallets buy supply simultaneously —
+          all settled atomically via Jito. One dashboard for wallet management,
+          token launches, and post-launch automation.
         </p>
 
         {/* CTAs */}
-        <div className="relative z-10 flex flex-col sm:flex-row items-center gap-3">
+        <div className="relative z-10 flex flex-col sm:flex-row items-center gap-3 mb-10">
           <Link
             href="/"
             className="flex items-center gap-2 px-6 py-2.5 rounded-md text-sm font-semibold transition-all duration-200"
@@ -228,16 +298,12 @@ export default function LandingPage() {
               boxShadow: "0 0 12px rgba(79,131,255,0.12)",
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.background =
-                "rgba(79,131,255,0.24)";
-              (e.currentTarget as HTMLAnchorElement).style.boxShadow =
-                "0 0 20px rgba(79,131,255,0.25)";
+              (e.currentTarget as HTMLAnchorElement).style.background = "rgba(79,131,255,0.24)";
+              (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 0 20px rgba(79,131,255,0.25)";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.background =
-                "rgba(79,131,255,0.16)";
-              (e.currentTarget as HTMLAnchorElement).style.boxShadow =
-                "0 0 12px rgba(79,131,255,0.12)";
+              (e.currentTarget as HTMLAnchorElement).style.background = "rgba(79,131,255,0.16)";
+              (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 0 12px rgba(79,131,255,0.12)";
             }}
           >
             <Rocket className="w-4 h-4" />
@@ -246,22 +312,68 @@ export default function LandingPage() {
           <Link
             href="/docs"
             className="flex items-center gap-2 px-6 py-2.5 rounded-md text-sm font-semibold transition-all duration-200 text-zinc-400 hover:text-zinc-200"
-            style={{
-              background: "transparent",
-              border: "1px solid rgba(42,54,76,0.8)",
-            }}
+            style={{ background: "transparent", border: "1px solid rgba(42,54,76,0.8)" }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.border =
-                "1px solid rgba(79,131,255,0.2)";
+              (e.currentTarget as HTMLAnchorElement).style.border = "1px solid rgba(79,131,255,0.2)";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.border =
-                "1px solid rgba(42,54,76,0.8)";
+              (e.currentTarget as HTMLAnchorElement).style.border = "1px solid rgba(42,54,76,0.8)";
             }}
           >
             View Documentation
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
+        </div>
+
+        <ArrowDown className="w-4 h-4 text-zinc-600 animate-bounce z-10" />
+      </section>
+
+      {/* ── HOW IT WORKS ── */}
+      <section className="px-4 sm:px-8 lg:px-0 mx-auto max-w-4xl mb-20">
+        <div className="text-center mb-8">
+          <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-500">How it works</span>
+          <h2 className="text-xl sm:text-2xl font-bold text-zinc-100 tracking-tight mt-1">
+            From wallets to launch in four steps
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 relative">
+          {/* connector line on desktop */}
+          <div
+            className="absolute top-[28px] left-[12.5%] right-[12.5%] h-px hidden sm:block pointer-events-none"
+            style={{ background: "linear-gradient(to right, transparent, rgba(79,131,255,0.15), rgba(79,131,255,0.15), transparent)" }}
+          />
+          {HOW_IT_WORKS.map(({ step, title, desc, icon: Icon }, i) => (
+            <div
+              key={step}
+              className="relative flex flex-col gap-3 p-4 rounded-lg transition-all duration-300"
+              style={{
+                background: "rgba(13,17,24,0.6)",
+                border: "1px solid rgba(28,38,56,0.8)",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(79,131,255,0.3)";
+                (e.currentTarget as HTMLDivElement).style.background = "rgba(13,17,24,0.95)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(28,38,56,0.8)";
+                (e.currentTarget as HTMLDivElement).style.background = "rgba(13,17,24,0.6)";
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-7 h-7 rounded-md flex items-center justify-center shrink-0"
+                  style={{ background: "rgba(79,131,255,0.1)", border: "1px solid rgba(79,131,255,0.25)" }}
+                >
+                  <Icon className="w-3.5 h-3.5" style={{ color: "#4f83ff" }} />
+                </div>
+                <span className="text-[10px] font-bold tracking-widest" style={{ color: "#4f83ff" }}>{step}</span>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-zinc-100 mb-1">{title}</p>
+                <p className="text-xs text-zinc-500 leading-relaxed">{desc}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -274,10 +386,10 @@ export default function LandingPage() {
         }}
       >
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 divide-y sm:divide-y-0 sm:divide-x divide-zinc-800/60">
-          <StatCard value="12,400" suffix="+" label="Tokens Launched" />
-          <StatCard value="84,000" suffix=" SOL" label="Total Bundled" />
-          <StatCard value="3,200" suffix="+" label="Active Users" />
-          <StatCard value="0.8" suffix="s" label="Avg Bundle Time" />
+          <AnimatedStatCard target={12400}  suffix="+"   label="Tokens Launched"  />
+          <AnimatedStatCard target={84000}  suffix=" SOL" label="Total Bundled"   />
+          <AnimatedStatCard target={3200}   suffix="+"   label="Active Users"     />
+          <AnimatedStatCard target={0.8}    suffix="s"   label="Avg Bundle Time"  decimals={1} />
         </div>
       </section>
 
@@ -303,26 +415,21 @@ export default function LandingPage() {
           {PLATFORMS.map((name) => (
             <div
               key={name}
-              className="flex items-center justify-center gap-2 px-4 py-3 rounded-md text-xs font-semibold text-zinc-400 transition-all duration-200 hover:text-zinc-200"
+              className="flex items-center justify-center gap-2 px-4 py-3 rounded-md text-xs font-semibold text-zinc-400 transition-all duration-200 hover:text-zinc-200 cursor-default"
               style={{
                 background: "rgba(13,17,24,0.6)",
                 border: "1px solid rgba(28,38,56,0.8)",
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLDivElement).style.border =
-                  "1px solid rgba(79,131,255,0.2)";
+                (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(79,131,255,0.2)";
                 (e.currentTarget as HTMLDivElement).style.color = "#93b4ff";
               }}
               onMouseLeave={(e) => {
-                (e.currentTarget as HTMLDivElement).style.border =
-                  "1px solid rgba(28,38,56,0.8)";
+                (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(28,38,56,0.8)";
                 (e.currentTarget as HTMLDivElement).style.color = "";
               }}
             >
-              <div
-                className="w-1.5 h-1.5 rounded-full"
-                style={{ background: "rgba(79,131,255,0.5)" }}
-              />
+              <div className="w-1.5 h-1.5 rounded-full" style={{ background: "rgba(79,131,255,0.5)" }} />
               {name}
             </div>
           ))}
@@ -351,7 +458,6 @@ export default function LandingPage() {
       {/* ── SECTION 02: CREATE ── */}
       <section className="px-4 sm:px-8 lg:px-0 mx-auto max-w-4xl mb-24">
         <div className="grid lg:grid-cols-2 gap-12 items-start">
-          {/* left: copy */}
           <div>
             <SectionLabel index="02" label="Create" />
             <h2 className="text-2xl sm:text-3xl font-bold text-zinc-100 tracking-tight mb-3">
@@ -375,7 +481,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* right: mock UI */}
+          {/* mock: token config */}
           <div
             className="rounded-lg overflow-hidden"
             style={{
@@ -384,7 +490,6 @@ export default function LandingPage() {
               boxShadow: "0 0 40px rgba(79,131,255,0.04)",
             }}
           >
-            {/* mock title bar */}
             <div
               className="flex items-center gap-2 px-4 py-3 border-b"
               style={{ borderColor: "rgba(28,38,56,0.8)" }}
@@ -419,7 +524,6 @@ export default function LandingPage() {
                   </div>
                 </div>
               ))}
-              {/* token type pills */}
               <div className="flex flex-col gap-1">
                 <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-600">
                   Token Type
@@ -435,15 +539,8 @@ export default function LandingPage() {
                       key={label}
                       className="text-[10px] font-bold tracking-wider px-2.5 py-1 rounded"
                       style={{
-                        background:
-                          label === "Standard"
-                            ? "rgba(79,131,255,0.14)"
-                            : "rgba(255,255,255,0.04)",
-                        border: `1px solid ${
-                          label === "Standard"
-                            ? "rgba(79,131,255,0.35)"
-                            : "rgba(255,255,255,0.07)"
-                        }`,
+                        background: label === "Standard" ? "rgba(79,131,255,0.14)" : "rgba(255,255,255,0.04)",
+                        border: `1px solid ${label === "Standard" ? "rgba(79,131,255,0.35)" : "rgba(255,255,255,0.07)"}`,
                         color: label === "Standard" ? color : "#445068",
                       }}
                     >
@@ -452,7 +549,6 @@ export default function LandingPage() {
                   ))}
                 </div>
               </div>
-              {/* fake deploy button */}
               <div
                 className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-xs font-bold tracking-wider mt-1"
                 style={{
@@ -478,7 +574,7 @@ export default function LandingPage() {
       {/* ── SECTION 03: BUNDLE ── */}
       <section className="px-4 sm:px-8 lg:px-0 mx-auto max-w-4xl mb-24">
         <div className="grid lg:grid-cols-2 gap-12 items-start">
-          {/* left: mock UI */}
+          {/* mock: bundle config with animated rows */}
           <div
             className="rounded-lg overflow-hidden order-2 lg:order-1"
             style={{
@@ -500,43 +596,38 @@ export default function LandingPage() {
               </span>
             </div>
             <div className="p-5 flex flex-col gap-3">
-              {/* wallet rows */}
-              {[
-                { id: "W-01", sol: "12.4", pct: "8.2%" },
-                { id: "W-02", sol: "9.8", pct: "6.5%" },
-                { id: "W-03", sol: "15.2", pct: "10.1%" },
-                { id: "W-04", sol: "7.6", pct: "5.0%" },
-              ].map((w) => (
+              {BUNDLE_WALLETS.map((w, i) => (
                 <div
                   key={w.id}
                   className="flex items-center justify-between px-3 py-2 rounded"
                   style={{
                     background: "rgba(7,9,15,0.8)",
                     border: "1px solid rgba(28,38,56,0.8)",
+                    opacity: rowsAnimated ? 1 : 0,
+                    transform: rowsAnimated ? "translateY(0)" : "translateY(8px)",
+                    transition: `opacity 0.4s ease ${i * 80}ms, transform 0.4s ease ${i * 80}ms`,
                   }}
                 >
                   <span className="text-[10px] font-mono text-zinc-500">{w.id}</span>
                   <div className="flex items-center gap-3">
                     <div
-                      className="text-right w-24 h-1 rounded-full overflow-hidden"
+                      className="w-24 h-1 rounded-full overflow-hidden"
                       style={{ background: "rgba(28,38,56,0.8)" }}
                     >
                       <div
                         className="h-full rounded-full"
                         style={{
-                          width: w.pct,
+                          width: rowsAnimated ? `${w.pct * 5}%` : "0%",
                           background: "linear-gradient(to right, #4f83ff, #93b4ff)",
+                          transition: `width 0.7s cubic-bezier(.4,0,.2,1) ${i * 80 + 200}ms`,
                         }}
                       />
                     </div>
                     <span className="text-[11px] font-mono text-zinc-300 w-12 text-right">
                       {w.sol} SOL
                     </span>
-                    <span
-                      className="text-[10px] font-bold w-10 text-right"
-                      style={{ color: "#4f83ff" }}
-                    >
-                      {w.pct}
+                    <span className="text-[10px] font-bold w-10 text-right" style={{ color: "#4f83ff" }}>
+                      {w.pct}%
                     </span>
                   </div>
                 </div>
@@ -558,7 +649,6 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* right: copy */}
           <div className="order-1 lg:order-2">
             <SectionLabel index="03" label="Bundle" />
             <h2 className="text-2xl sm:text-3xl font-bold text-zinc-100 tracking-tight mb-3">
@@ -594,7 +684,6 @@ export default function LandingPage() {
       {/* ── SECTION 04: MANAGE ── */}
       <section className="px-4 sm:px-8 lg:px-0 mx-auto max-w-4xl mb-24">
         <div className="grid lg:grid-cols-2 gap-12 items-start">
-          {/* left: copy */}
           <div>
             <SectionLabel index="04" label="Manage" />
             <h2 className="text-2xl sm:text-3xl font-bold text-zinc-100 tracking-tight mb-3">
@@ -619,7 +708,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* right: mock chart */}
+          {/* mock: activity monitor with animated sparkline */}
           <div
             className="rounded-lg overflow-hidden"
             style={{
@@ -649,32 +738,28 @@ export default function LandingPage() {
                   color: "#4f83ff",
                 }}
               >
-                <span
-                  className="w-1 h-1 rounded-full animate-pulse"
-                  style={{ background: "#4f83ff" }}
-                />
+                <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: "#4f83ff" }} />
                 Running
               </span>
             </div>
             <div className="p-5">
-              {/* sparkline bars */}
+              {/* animated sparkline */}
               <div className="flex items-end gap-1 h-20 mb-4">
-                {[30, 45, 35, 60, 55, 70, 50, 80, 65, 90, 75, 85, 60, 95, 72, 88].map(
-                  (h, i) => (
-                    <div
-                      key={i}
-                      className="flex-1 rounded-sm transition-all"
-                      style={{
-                        height: `${h}%`,
-                        background:
-                          i >= 13
-                            ? "linear-gradient(to top, #4f83ff, #93b4ff)"
-                            : "rgba(79,131,255,0.2)",
-                        boxShadow: i >= 13 ? "0 0 6px rgba(79,131,255,0.3)" : "none",
-                      }}
-                    />
-                  )
-                )}
+                {SPARKLINE.map((h, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 rounded-sm"
+                    style={{
+                      height: barsAnimated ? `${h}%` : "0%",
+                      background:
+                        i >= 13
+                          ? "linear-gradient(to top, #4f83ff, #93b4ff)"
+                          : "rgba(79,131,255,0.2)",
+                      boxShadow: i >= 13 ? "0 0 6px rgba(79,131,255,0.3)" : "none",
+                      transition: `height 0.5s cubic-bezier(.4,0,.2,1) ${i * 35}ms`,
+                    }}
+                  />
+                ))}
               </div>
               {/* stats row */}
               <div className="grid grid-cols-3 gap-3 mt-2">
@@ -762,8 +847,7 @@ export default function LandingPage() {
         <div
           className="absolute inset-0 rounded-xl pointer-events-none"
           style={{
-            background:
-              "radial-gradient(ellipse 70% 80% at 50% 50%, rgba(79,131,255,0.07) 0%, transparent 70%)",
+            background: "radial-gradient(ellipse 70% 80% at 50% 50%, rgba(79,131,255,0.07) 0%, transparent 70%)",
           }}
         />
         <div
@@ -805,16 +889,12 @@ export default function LandingPage() {
                 boxShadow: "0 0 16px rgba(79,131,255,0.12)",
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLAnchorElement).style.background =
-                  "rgba(79,131,255,0.24)";
-                (e.currentTarget as HTMLAnchorElement).style.boxShadow =
-                  "0 0 24px rgba(79,131,255,0.25)";
+                (e.currentTarget as HTMLAnchorElement).style.background = "rgba(79,131,255,0.24)";
+                (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 0 24px rgba(79,131,255,0.25)";
               }}
               onMouseLeave={(e) => {
-                (e.currentTarget as HTMLAnchorElement).style.background =
-                  "rgba(79,131,255,0.16)";
-                (e.currentTarget as HTMLAnchorElement).style.boxShadow =
-                  "0 0 16px rgba(79,131,255,0.12)";
+                (e.currentTarget as HTMLAnchorElement).style.background = "rgba(79,131,255,0.16)";
+                (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 0 16px rgba(79,131,255,0.12)";
               }}
             >
               <Rocket className="w-4 h-4" />
