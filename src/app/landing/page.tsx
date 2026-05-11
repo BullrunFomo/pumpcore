@@ -122,9 +122,9 @@ function AnimatedStatCard({
   const value = useCountUp(target);
   return (
     <div className="bg-zinc-950 flex flex-col items-center justify-center py-6 px-4 gap-1">
-      <span className="text-2xl sm:text-3xl font-bold" style={{ color: "#4f83ff" }}>
+      <span className="text-2xl sm:text-3xl font-bold text-blue-400 tracking-tight">
         {prefix}{value.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-        <span className="text-base font-semibold text-zinc-400 ml-0.5">{suffix}</span>
+        {suffix && <span className="text-base font-semibold text-zinc-400 ml-0.5">{suffix}</span>}
       </span>
       <span className="text-[9px] font-bold tracking-[0.18em] uppercase text-zinc-500">
         {label}
@@ -336,12 +336,12 @@ export default function LandingPage() {
         </div>
 
         {/* ── STATS ── */}
-        <div className="relative z-10 w-full max-w-2xl mb-10">
+        <div className="relative z-10 w-full max-w-4xl mb-10">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-zinc-800 rounded-xl overflow-hidden border border-zinc-800">
-            <AnimatedStatCard target={12400}  suffix="+"    label="Tokens Launched" />
-            <AnimatedStatCard target={84000}  suffix=" SOL" label="Total Bundled"   />
-            <AnimatedStatCard target={3200}   suffix="+"    label="Active Users"    />
-            <AnimatedStatCard target={0.8}    suffix="s"    label="Avg Bundle Time" decimals={1} />
+            <AnimatedStatCard target={12400}  suffix="+"   label="Tokens Launched" />
+            <AnimatedStatCard target={84000}  suffix="SOL" label="Total Bundled"   />
+            <AnimatedStatCard target={3200}   suffix="+"   label="Active Users"    />
+            <AnimatedStatCard target={0.8}    suffix="s"   label="Avg Bundle Time" decimals={1} />
           </div>
         </div>
 
