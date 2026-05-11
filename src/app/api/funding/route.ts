@@ -1,20 +1,48 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { KNOWN_LABELS } from "@/lib/cex-labels";
 
-function labelAddress(address: string): string {
-  return KNOWN_LABELS[address] ?? address.slice(0, 4) + "..." + address.slice(-4);
+// ─── SolanaFM label cache ──────────────────────────────────────────────────
+// Caches per-address results for 24 h to avoid repeated API calls.
+// null = "checked, not a CEX"  |  string = CEX name
+const sfmCache = new Map<string, { name: string | null; at: number }>();
+const SFM_TTL = 24 * 60 * 60 * 1_000;
+
+async function lookupSolanaFM(address: string): Promise<string | null> {
+  const hit = sfmCache.get(address);
+  if (hit && Date.now() - hit.at < SFM_TTL) return hit.name;
+
+  try {
+    const res = await fetch(
+      `https://api.solana.fm/v0/accounts?accountHashes[]=${address}`,
+      { cache: "no-store", signal: AbortSignal.timeout(4_000) }
+    );
+    if (!res.ok) return null;
+    const json = await res.json();
+    const entry = json?.result?.data?.[address];
+    // SolanaFM categories: "exchange", "cex", "centralized-exchange" etc.
+    const isCex =
+      entry?.category === "exchange" ||
+      entry?.category === "cex" ||
+      entry?.category === "centralized-exchange";
+    const name: string | null = isCex ? (entry?.name ?? null) : null;
+    sfmCache.set(address, { name, at: Date.now() });
+    return name;
+  } catch {
+    return null;
+  }
 }
 
-// Helius enhanced transactions include a human-readable description like:
-//   "Binance transferred 1.5 SOL to AbCd..."
-//   "FWzn...ouN5 transferred 2 SOL to AbCd..."
-// Extract the sender label from the description when it looks like a name, not an address.
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function labelAddress(address: string): string {
+  return address.slice(0, 4) + "..." + address.slice(-4);
+}
+
 function extractSenderFromDescription(description: string | undefined): string | null {
   if (!description) return null;
   const match = description.match(/^(.+?)\s+transferred\s/i);
   if (!match) return null;
   const candidate = match[1].trim();
-  // Solana addresses are 43–44 base58 chars; a real name is short
   if (candidate.length > 25 || /^[1-9A-HJ-NP-Za-km-z]{32,}$/.test(candidate)) return null;
   return candidate;
 }
@@ -25,6 +53,8 @@ function getHeliusApiKey(): string | null {
   return match ? match[1] : null;
 }
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 export interface FundingInfo {
   address: string;
   sourceAddress: string | null;
@@ -34,15 +64,23 @@ export interface FundingInfo {
   amountSol: number;
 }
 
-async function fetchFundingForAddress(address: string, apiKey: string): Promise<FundingInfo> {
-  const empty: FundingInfo = { address, sourceAddress: null, sourceLabel: null, isCex: false, timestamp: null, amountSol: 0 };
+// ─── Per-address fetch ────────────────────────────────────────────────────────
 
-  // We want the OLDEST inbound SOL transfer . that's the original funding, not a recent
-  // sell-proceeds deposit from an AMM. Helius returns newest-first, so we paginate up to
-  // MAX_PAGES and keep overwriting the result; the last match found is the oldest.
+async function fetchFundingForAddress(address: string, apiKey: string): Promise<FundingInfo> {
+  const empty: FundingInfo = {
+    address,
+    sourceAddress: null,
+    sourceLabel: null,
+    isCex: false,
+    timestamp: null,
+    amountSol: 0,
+  };
+
+  // Helius returns newest-first; paginate up to MAX_PAGES and keep overwriting
+  // so `oldest` ends up as the earliest inbound SOL transfer (original funding).
   const MAX_PAGES = 3;
   let before: string | undefined;
-  let oldest: FundingInfo | null = null;
+  let oldest: { fromAddr: string; descLabel: string | null; timestamp: number | null; amountSol: number } | null = null;
 
   for (let page = 0; page < MAX_PAGES; page++) {
     if (page > 0) await new Promise((r) => setTimeout(r, 200));
@@ -66,36 +104,41 @@ async function fetchFundingForAddress(address: string, apiKey: string): Promise<
       break;
     }
 
-    // Scan newest→oldest; keep overwriting so `oldest` ends up as the earliest inbound
     for (const tx of txs) {
       const transfers: { fromUserAccount: string; toUserAccount: string; amount: number }[] =
         tx.nativeTransfers ?? [];
       const incoming = transfers.find((t) => t.toUserAccount === address && t.amount > 0);
       if (!incoming) continue;
-      const fromAddr = incoming.fromUserAccount;
-      const descLabel = extractSenderFromDescription(tx.description);
-      const staticLabel = KNOWN_LABELS[fromAddr];
-      // Prefer Helius description label (covers unlisted CEX hot wallets) then static list
-      const sourceLabel = descLabel ?? staticLabel ?? labelAddress(fromAddr);
-      const isCex = !!(descLabel || staticLabel);
       oldest = {
-        address,
-        sourceAddress: fromAddr,
-        sourceLabel,
-        isCex,
+        fromAddr: incoming.fromUserAccount,
+        descLabel: extractSenderFromDescription(tx.description),
         timestamp: tx.timestamp ? tx.timestamp * 1000 : null,
         amountSol: incoming.amount / 1_000_000_000,
       };
     }
 
-    // Fewer than 100 results means we've seen the full history . stop paginating
     if (txs.length < 100) break;
-
     before = txs[txs.length - 1].signature;
   }
 
-  return oldest ?? empty;
+  if (!oldest) return empty;
+
+  const { fromAddr, descLabel, timestamp, amountSol } = oldest;
+
+  // CEX resolution priority:
+  //   1. Static list (instant, no I/O)
+  //   2. Helius description label (already in tx data)
+  //   3. SolanaFM labels API (cached 24h, ~50ms)
+  const staticLabel = KNOWN_LABELS[fromAddr];
+  const sfmLabel = (!staticLabel && !descLabel) ? await lookupSolanaFM(fromAddr) : null;
+
+  const isCex = !!(staticLabel || descLabel || sfmLabel);
+  const sourceLabel = staticLabel ?? descLabel ?? sfmLabel ?? labelAddress(fromAddr);
+
+  return { address, sourceAddress: fromAddr, sourceLabel, isCex, timestamp, amountSol };
 }
+
+// ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
   const param = req.nextUrl.searchParams.get("addresses");
@@ -103,12 +146,14 @@ export async function GET(req: NextRequest) {
 
   const apiKey = getHeliusApiKey();
   if (!apiKey) {
-    return NextResponse.json({ error: "No Helius API key found in SOLANA_RPC_URL" }, { status: 500 });
+    return NextResponse.json(
+      { error: "No Helius API key found in SOLANA_RPC_URL" },
+      { status: 500 }
+    );
   }
 
   const addresses = param.split(",").filter(Boolean);
 
-  // Sequential with a small delay to avoid Helius rate limits.
   const funding: FundingInfo[] = [];
   for (const addr of addresses) {
     funding.push(await fetchFundingForAddress(addr, apiKey));

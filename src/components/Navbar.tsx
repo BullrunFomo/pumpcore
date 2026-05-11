@@ -17,7 +17,7 @@ export default function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-zinc-800/80 bg-zinc-950/95 backdrop-blur">
-      <div className="w-full pl-4 sm:pl-6 pr-4 sm:pr-6 h-14 flex items-center justify-between">
+      <div className="w-full pl-4 sm:pl-6 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link href="/landing" className="flex items-center gap-2 shrink-0">
           <img
