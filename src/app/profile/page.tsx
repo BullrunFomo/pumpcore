@@ -30,7 +30,7 @@ export default function ProfilePage() {
     clearUserId()
     await fetch("/api/auth/logout", { method: "POST" })
     await signOut({ redirect: false })
-    router.push("/login")
+    window.location.href = "/login"
   }
 
   function startEditName() {
