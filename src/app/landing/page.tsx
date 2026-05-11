@@ -121,12 +121,12 @@ function AnimatedStatCard({
 }) {
   const value = useCountUp(target);
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="bg-zinc-950 flex flex-col items-center justify-center py-6 px-4 gap-1">
       <span className="text-2xl sm:text-3xl font-bold" style={{ color: "#4f83ff" }}>
         {prefix}{value.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-        <span className="text-lg font-semibold text-zinc-400">{suffix}</span>
+        <span className="text-base font-semibold text-zinc-400 ml-0.5">{suffix}</span>
       </span>
-      <span className="text-[11px] font-medium tracking-wider uppercase text-zinc-500">
+      <span className="text-[9px] font-bold tracking-[0.18em] uppercase text-zinc-500">
         {label}
       </span>
     </div>
@@ -290,21 +290,11 @@ export default function LandingPage() {
           in one atomic transaction
         </h1>
 
-        <p className="relative z-10 text-sm sm:text-base text-zinc-400 max-w-xl leading-relaxed mb-8">
+        <p className="relative z-10 text-sm sm:text-base text-zinc-400 max-w-xl leading-relaxed mb-10">
           Deploy your Solana token and have multiple wallets buy supply simultaneously —
           all settled atomically via Jito. One dashboard for wallet management,
           token launches, and post-launch automation.
         </p>
-
-        {/* ── STATS ── */}
-        <div className="relative z-10 w-full max-w-2xl mb-10">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-zinc-800/60 rounded-xl overflow-hidden border border-zinc-800/60">
-            <AnimatedStatCard target={12400}  suffix="+"    label="Tokens Launched" />
-            <AnimatedStatCard target={84000}  suffix=" SOL" label="Total Bundled"   />
-            <AnimatedStatCard target={3200}   suffix="+"    label="Active Users"    />
-            <AnimatedStatCard target={0.8}    suffix="s"    label="Avg Bundle Time" decimals={1} />
-          </div>
-        </div>
 
         {/* CTAs */}
         <div className="relative z-10 flex flex-col sm:flex-row items-center gap-3 mb-10">
@@ -343,6 +333,16 @@ export default function LandingPage() {
             View Documentation
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
+        </div>
+
+        {/* ── STATS ── */}
+        <div className="relative z-10 w-full max-w-2xl mb-10">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-zinc-800 rounded-xl overflow-hidden border border-zinc-800">
+            <AnimatedStatCard target={12400}  suffix="+"    label="Tokens Launched" />
+            <AnimatedStatCard target={84000}  suffix=" SOL" label="Total Bundled"   />
+            <AnimatedStatCard target={3200}   suffix="+"    label="Active Users"    />
+            <AnimatedStatCard target={0.8}    suffix="s"    label="Avg Bundle Time" decimals={1} />
+          </div>
         </div>
 
         <ArrowDown className="w-4 h-4 text-zinc-600 animate-bounce z-10" />
