@@ -72,6 +72,53 @@ function signBundle(
   return { encodedTxs, signatures };
 }
 
+/**
+ * Pre-flight: simulate the bundle through Jito's simulateBundle endpoint.
+ * Runs all transactions sequentially in a simulated environment so we can see
+ * which transaction fails and why, before paying any tip.
+ * Returns the first per-tx error string found, or null if all pass (or if the
+ * endpoint is unavailable — treated as non-fatal so the real submission still runs).
+ */
+async function simulateJitoBundle(
+  encodedTxs: string[],
+  endpoint: string
+): Promise<string | null> {
+  try {
+    const res = await axios.post(
+      endpoint,
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "simulateBundle",
+        params: [
+          { encodedTransactions: encodedTxs },
+          { skipSigVerify: true, replaceRecentBlockhash: true },
+        ],
+      },
+      { timeout: 20_000, headers: { "Content-Type": "application/json" } }
+    );
+
+    const value = res.data?.result?.value;
+    if (!value) return null;
+
+    // summary: "succeeded" or { failed: { error, tx_signature } }
+    const txResults: Array<{ err?: unknown; logs?: string[] }> = value.transactionResults ?? [];
+    for (let i = 0; i < txResults.length; i++) {
+      const r = txResults[i];
+      if (r?.err) {
+        const tail = (r.logs ?? []).slice(-6).join(" | ");
+        return `tx[${i}] failed: ${JSON.stringify(r.err)}${tail ? ` — ${tail}` : ""}`;
+      }
+    }
+    if (value.summary?.failed) {
+      return `bundle failed: ${JSON.stringify(value.summary.failed.error ?? value.summary.failed)}`;
+    }
+    return null; // all passed
+  } catch {
+    return null; // endpoint unavailable or format mismatch — non-fatal
+  }
+}
+
 /** Submit pre-signed (encoded) bundle to a single endpoint. */
 async function submitEncodedBundle(
   encodedTxs: string[],
@@ -476,7 +523,7 @@ export async function executeAtomicLaunchBundle(
           recentBlockhash: blockhash,
           instructions: [
             priorityFeeIx(300_000),
-            computeUnitLimitIx(300_000),
+            computeUnitLimitIx(400_000),
             ...(!hasBuyWallets
               ? [SystemProgram.transfer({ fromPubkey: creatorKeypair.publicKey, toPubkey: tipAccount, lamports: effectiveTip })]
               : []),
@@ -498,7 +545,7 @@ export async function executeAtomicLaunchBundle(
           recentBlockhash: blockhash,
           instructions: [
             priorityFeeIx(300_000),
-            computeUnitLimitIx(300_000),
+            computeUnitLimitIx(400_000),
             ...(i === 0
               ? [SystemProgram.transfer({ fromPubkey: entry.keypair.publicKey, toPubkey: tipAccount, lamports: effectiveTip })]
               : []),
@@ -514,7 +561,7 @@ export async function executeAtomicLaunchBundle(
     return { encodedTxs, signatures };
   }
 
-  async function submitBundle(attemptTip: number): Promise<{
+  async function submitBundle(attemptTip: number, runPreSim = false): Promise<{
     bundleId: string;
     signatures: string[];
     blockhash: string;
@@ -523,6 +570,21 @@ export async function executeAtomicLaunchBundle(
   }> {
     const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("processed");
     const { encodedTxs, signatures } = assembleTxs(blockhash, attemptTip);
+
+    // On the first attempt, pre-simulate the full bundle through Jito so we can
+    // surface per-transaction errors before burning any tip.
+    if (runPreSim) {
+      const simErr = await simulateJitoBundle(encodedTxs, JITO_ENDPOINTS[0]);
+      if (simErr) {
+        onProgress(`Bundle pre-simulation failed — ${simErr}`, "warn");
+        // Treat as a hard failure so the caller can throw early rather than
+        // spending tips on a bundle that will never land.
+        throw new Error(`Bundle simulation failed: ${simErr}`);
+      } else {
+        onProgress("Bundle pre-simulation passed.", "info");
+      }
+    }
+
     // Try all endpoints in parallel; fall back to sequential if parallel itself errors
     let result: { bundleId: string; signatures: string[]; endpoint: string };
     try {
@@ -575,7 +637,7 @@ export async function executeAtomicLaunchBundle(
     let confirmedLVBH: number;
     let submittedEndpoint: string;
     try {
-      const result = await submitBundle(attemptTip);
+      const result = await submitBundle(attemptTip, attempt === 1);
       bundleId = result.bundleId;
       submittedSigs = result.signatures;
       lastSigs = submittedSigs;
