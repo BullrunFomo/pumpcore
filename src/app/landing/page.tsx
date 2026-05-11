@@ -121,12 +121,22 @@ function AnimatedStatCard({
 }) {
   const value = useCountUp(target);
   return (
-    <div className="bg-zinc-950 flex flex-col items-center justify-center py-6 px-4 gap-1">
-      <span className="text-2xl sm:text-3xl font-bold text-blue-400 tracking-tight">
+    <div
+      className="flex flex-col items-center justify-center py-7 px-4 gap-1.5"
+      style={{ background: "rgba(10,13,20,0.97)" }}
+    >
+      <span
+        className="text-2xl sm:text-3xl font-bold tracking-tight"
+        style={{ color: "#4f83ff", textShadow: "0 0 24px rgba(79,131,255,0.4)" }}
+      >
         {prefix}{value.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-        {suffix && <span className="text-base font-semibold text-zinc-400 ml-0.5">{suffix}</span>}
+        {suffix && (
+          <span className="text-base font-semibold ml-0.5" style={{ color: "rgba(79,131,255,0.55)" }}>
+            {suffix}
+          </span>
+        )}
       </span>
-      <span className="text-[9px] font-bold tracking-[0.18em] uppercase text-zinc-500">
+      <span className="text-[9px] font-bold tracking-[0.2em] uppercase" style={{ color: "rgba(79,131,255,0.35)" }}>
         {label}
       </span>
     </div>
@@ -337,7 +347,14 @@ export default function LandingPage() {
 
         {/* ── STATS ── */}
         <div className="relative z-10 w-full max-w-4xl mb-10">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-zinc-800 rounded-xl overflow-hidden border border-zinc-800">
+          <div
+            className="grid grid-cols-2 sm:grid-cols-4 gap-px rounded-xl overflow-hidden"
+            style={{
+              background: "rgba(79,131,255,0.07)",
+              border: "1px solid rgba(79,131,255,0.14)",
+              boxShadow: "0 0 40px rgba(79,131,255,0.07), inset 0 1px 0 rgba(79,131,255,0.08)",
+            }}
+          >
             <AnimatedStatCard target={12400}  suffix="+"   label="Tokens Launched" />
             <AnimatedStatCard target={84000}  suffix="SOL" label="Total Bundled"   />
             <AnimatedStatCard target={3200}   suffix="+"   label="Active Users"    />
