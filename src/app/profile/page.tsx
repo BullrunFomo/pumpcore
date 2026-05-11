@@ -28,6 +28,7 @@ export default function ProfilePage() {
 
   async function handleLogout() {
     clearUserId()
+    await fetch("/api/auth/logout", { method: "POST" })
     await signOut({ redirect: false })
     router.push("/login")
   }
