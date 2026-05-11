@@ -261,10 +261,11 @@ export async function POST(req: NextRequest) {
           log(controller, `━━ Loop ${loop}/${loops} . assigning each wallet a random token`);
           sseEvent(controller, { type: "progress", loop: loop - 1, total: loops });
 
-          // Assign each wallet a distinct random token
-          const walletTokens = wallets.map((w) => ({
+          // Shuffle tokens and assign each wallet a distinct one
+          const shuffled = [...tokens].sort(() => Math.random() - 0.5);
+          const walletTokens = wallets.map((w, i) => ({
             wallet: w,
-            token: tokens[Math.floor(Math.random() * tokens.length)],
+            token: shuffled[i % shuffled.length],
           }));
 
           // Buy . all wallets staggered 400ms apart to avoid Jupiter rate limits
