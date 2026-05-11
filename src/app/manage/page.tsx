@@ -427,6 +427,7 @@ export default function ManagePage() {
     setCreatorFeeSol(null);
     setCreatorAddress(null);
     setClaimMsg(null);
+    setClaimError(null);
     if (!activeTokenMint) return;
     fetch(`/api/creator-fees/info?mint=${activeTokenMint}`)
       .then((r) => r.ok ? r.json() : null)
@@ -444,10 +445,17 @@ export default function ManagePage() {
     ? wallets.find((w) => w.address === creatorAddress) ?? null
     : null;
 
+  const [claimError, setClaimError] = useState<string | null>(null);
+
   const handleClaimFees = async () => {
-    if (!creatorWallet || !activeTokenMint) return;
+    if (!activeTokenMint) return;
+    if (!creatorWallet) {
+      setClaimError(`Creator wallet (${creatorAddress ? creatorAddress.slice(0, 8) + "…" : "unknown"}) not in wallet list`);
+      return;
+    }
     setClaimingFees(true);
     setClaimMsg(null);
+    setClaimError(null);
     try {
       const res = await fetch("/api/creator-fees/claim", {
         method: "POST",
@@ -458,10 +466,10 @@ export default function ManagePage() {
       if (!res.ok) throw new Error(data.error || "Claim failed");
       setClaimMsg(`Claimed ${formatSol(data.claimedSol, 4)} SOL`);
       setCreatorFeeSol(0);
-      // Refresh balances so the creator wallet's SOL balance updates
       refreshBalances();
     } catch (err: any) {
       console.error("[creator-fees] claim error:", err.message);
+      setClaimError(err.message);
     } finally {
       setClaimingFees(false);
     }
@@ -628,6 +636,11 @@ export default function ManagePage() {
                 {claimMsg && (
                   <span className="text-[10px]" style={{ color: "#4ade80" }}>
                     {claimMsg}
+                  </span>
+                )}
+                {claimError && (
+                  <span className="text-[10px]" style={{ color: "#f87171" }}>
+                    {claimError}
                   </span>
                 )}
               </div>
