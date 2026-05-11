@@ -1,12 +1,14 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { LogOut, Pencil, Check, X, Camera, Users, Zap } from "lucide-react";
 import { clearUserId } from "@/lib/auth";
 import { useStore } from "@/store";
 
 export default function ProfilePage() {
+  const router = useRouter();
   const { data: session } = useSession();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -26,7 +28,8 @@ export default function ProfilePage() {
 
   async function handleLogout() {
     clearUserId()
-    await signOut({ callbackUrl: "/" })
+    await signOut({ redirect: false })
+    router.push("/")
   }
 
   function startEditName() {
