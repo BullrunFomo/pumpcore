@@ -338,26 +338,6 @@ export default function LandingPage() {
         <ArrowDown className="w-4 h-4 text-zinc-600 animate-bounce z-10" />
       </section>
 
-      {/* ── STATS ── */}
-      <section className="px-4 sm:px-8 lg:px-0 mx-auto max-w-4xl mb-12">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-zinc-800 rounded-xl overflow-hidden border border-zinc-800">
-          {[
-            { value: "12,400+", label: "TOKENS LAUNCHED" },
-            { value: "84,000", unit: "SOL", label: "TOTAL BUNDLED" },
-            { value: "3,200+", label: "ACTIVE USERS" },
-            { value: "0.8", unit: "s", label: "AVG BUNDLE TIME" },
-          ].map(({ value, unit, label }) => (
-            <div key={label} className="bg-zinc-950 flex flex-col items-center justify-center py-6 px-4 gap-1">
-              <span className="text-2xl sm:text-3xl font-bold text-blue-400 tracking-tight">
-                {value}
-                {unit && <span className="text-base font-semibold text-zinc-400 ml-0.5">{unit}</span>}
-              </span>
-              <span className="text-[9px] font-bold tracking-[0.18em] uppercase text-zinc-500">{label}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* ── HOW IT WORKS ── */}
       <section className="px-4 sm:px-8 lg:px-0 mx-auto max-w-4xl mb-20">
         <div className="text-center mb-8">
