@@ -469,7 +469,6 @@ export default function ManagePage() {
       refreshBalances();
     } catch (err: any) {
       console.error("[creator-fees] claim error:", err.message);
-      setClaimError(err.message);
     } finally {
       setClaimingFees(false);
     }
@@ -636,11 +635,6 @@ export default function ManagePage() {
                 {claimMsg && (
                   <span className="text-[10px]" style={{ color: "#4ade80" }}>
                     {claimMsg}
-                  </span>
-                )}
-                {claimError && (
-                  <span className="text-[10px]" style={{ color: "#f87171" }}>
-                    {claimError}
                   </span>
                 )}
               </div>
