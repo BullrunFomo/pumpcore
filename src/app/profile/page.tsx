@@ -128,9 +128,8 @@ export default function ProfilePage() {
                 <img src={session.user.image} alt="" width={28} height={28} className="rounded-full shrink-0" />
               )}
               <div className="flex flex-col min-w-0">
-                <span className="text-sm font-medium text-zinc-100 truncate">{session?.user?.name ?? "—"}</span>
                 {session?.user?.email && (
-                  <span className="text-xs text-zinc-500 truncate">{session.user.email}</span>
+                  <span className="text-sm font-medium text-zinc-100 truncate">{session.user.email}</span>
                 )}
               </div>
             </div>
