@@ -1,50 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import { KNOWN_LABELS } from "@/lib/cex-labels";
 
-// ─── SolanaFM label cache ──────────────────────────────────────────────────
-// Caches per-address results for 24 h to avoid repeated API calls.
-// null = "checked, not a CEX"  |  string = CEX name
-const sfmCache = new Map<string, { name: string | null; at: number }>();
-const SFM_TTL = 24 * 60 * 60 * 1_000;
-
-async function lookupSolanaFM(address: string): Promise<string | null> {
-  const hit = sfmCache.get(address);
-  if (hit && Date.now() - hit.at < SFM_TTL) return hit.name;
-
-  try {
-    const res = await fetch(
-      `https://api.solana.fm/v0/accounts?accountHashes[]=${address}`,
-      { cache: "no-store", signal: AbortSignal.timeout(4_000) }
-    );
-    if (!res.ok) return null;
-    const json = await res.json();
-    const entry = json?.result?.data?.[address];
-    // SolanaFM categories: "exchange", "cex", "centralized-exchange" etc.
-    const isCex =
-      entry?.category === "exchange" ||
-      entry?.category === "cex" ||
-      entry?.category === "centralized-exchange";
-    const name: string | null = isCex ? (entry?.name ?? null) : null;
-    sfmCache.set(address, { name, at: Date.now() });
-    return name;
-  } catch {
-    return null;
-  }
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function labelAddress(address: string): string {
   return address.slice(0, 4) + "..." + address.slice(-4);
 }
 
+// Helius enhanced transactions describe known entities in plain text:
+//   "Binance transferred 1.5 SOL to AbCd..."
+//   "Coinbase transferred 2 SOL to AbCd..."
+// Extract the sender name when it looks like a label (not a raw address).
 function extractSenderFromDescription(description: string | undefined): string | null {
   if (!description) return null;
   const match = description.match(/^(.+?)\s+transferred\s/i);
   if (!match) return null;
   const candidate = match[1].trim();
-  if (candidate.length > 25 || /^[1-9A-HJ-NP-Za-km-z]{32,}$/.test(candidate)) return null;
+  // Solana addresses are 32–44 base58 chars — a real name is short
+  if (candidate.length > 30 || /^[1-9A-HJ-NP-Za-km-z]{32,}$/.test(candidate)) return null;
   return candidate;
+}
+
+// Known CEX name fragments so we can mark Helius-described senders as isCex
+// even when they're not in KNOWN_LABELS (covers unlisted hot wallets).
+const CEX_NAME_FRAGMENTS = [
+  "binance", "coinbase", "kraken", "okx", "bybit", "kucoin", "gate",
+  "bitget", "mexc", "huobi", "htx", "crypto.com", "robinhood", "bitfinex",
+  "upbit", "bithumb", "gemini", "bitstamp", "bittrex", "poloniex",
+  "ftx", "celsius", "nexo",
+];
+
+function isCexName(name: string): boolean {
+  const lower = name.toLowerCase();
+  return CEX_NAME_FRAGMENTS.some((f) => lower.includes(f));
 }
 
 function getHeliusApiKey(): string | null {
@@ -52,8 +38,6 @@ function getHeliusApiKey(): string | null {
   const match = rpc.match(/api-key=([^&]+)/);
   return match ? match[1] : null;
 }
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface FundingInfo {
   address: string;
@@ -63,8 +47,6 @@ export interface FundingInfo {
   timestamp: number | null; // ms
   amountSol: number;
 }
-
-// ─── Per-address fetch ────────────────────────────────────────────────────────
 
 async function fetchFundingForAddress(address: string, apiKey: string): Promise<FundingInfo> {
   const empty: FundingInfo = {
@@ -125,20 +107,18 @@ async function fetchFundingForAddress(address: string, apiKey: string): Promise<
 
   const { fromAddr, descLabel, timestamp, amountSol } = oldest;
 
-  // CEX resolution priority:
-  //   1. Static list (instant, no I/O)
-  //   2. Helius description label (already in tx data)
-  //   3. SolanaFM labels API (cached 24h, ~50ms)
+  // Resolution priority:
+  //   1. Static KNOWN_LABELS list (exact address match)
+  //   2. Helius description label that contains a known CEX fragment
+  //   3. Any Helius description label (non-address human name)
   const staticLabel = KNOWN_LABELS[fromAddr];
-  const sfmLabel = (!staticLabel && !descLabel) ? await lookupSolanaFM(fromAddr) : null;
+  const descIsCex = descLabel ? isCexName(descLabel) : false;
 
-  const isCex = !!(staticLabel || descLabel || sfmLabel);
-  const sourceLabel = staticLabel ?? descLabel ?? sfmLabel ?? labelAddress(fromAddr);
+  const isCex = !!(staticLabel || descIsCex);
+  const sourceLabel = staticLabel ?? descLabel ?? labelAddress(fromAddr);
 
   return { address, sourceAddress: fromAddr, sourceLabel, isCex, timestamp, amountSol };
 }
-
-// ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
   const param = req.nextUrl.searchParams.get("addresses");
