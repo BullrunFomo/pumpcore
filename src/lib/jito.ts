@@ -370,7 +370,7 @@ export interface AtomicLaunchParams {
 // Token2022:  tx[0]=create,        tx[1]=devbuy, tx[2..4]=wallet buys (max 3 wallets)
 const JITO_MAX_TXS = 5;
 
-const BUNDLE_MAX_RETRIES = 5;
+const BUNDLE_MAX_RETRIES = 7;
 
 export async function executeAtomicLaunchBundle(
   params: AtomicLaunchParams,
@@ -568,22 +568,23 @@ export async function executeAtomicLaunchBundle(
     lastValidBlockHeight: number;
     submittedEndpoint: string;
   }> {
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("processed");
-    const { encodedTxs, signatures } = assembleTxs(blockhash, attemptTip);
-
     // On the first attempt, pre-simulate the full bundle through Jito so we can
     // surface per-transaction errors before burning any tip.
     if (runPreSim) {
-      const simErr = await simulateJitoBundle(encodedTxs, JITO_ENDPOINTS[0]);
+      const { blockhash: simBlockhash } = await connection.getLatestBlockhash("processed");
+      const { encodedTxs: simTxs } = assembleTxs(simBlockhash, attemptTip);
+      const simErr = await simulateJitoBundle(simTxs, JITO_ENDPOINTS[0]);
       if (simErr) {
         onProgress(`Bundle pre-simulation failed — ${simErr}`, "warn");
-        // Treat as a hard failure so the caller can throw early rather than
-        // spending tips on a bundle that will never land.
         throw new Error(`Bundle simulation failed: ${simErr}`);
       } else {
         onProgress("Bundle pre-simulation passed.", "info");
       }
     }
+
+    // Fetch a fresh blockhash right before signing + submitting so Jito sees the newest possible hash.
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("processed");
+    const { encodedTxs, signatures } = assembleTxs(blockhash, attemptTip);
 
     // Try all endpoints in parallel; fall back to sequential if parallel itself errors
     let result: { bundleId: string; signatures: string[]; endpoint: string };
@@ -651,7 +652,8 @@ export async function executeAtomicLaunchBundle(
     } catch (err: any) {
       lastError = err.message;
       onProgress(`Submit failed: ${err.message}`, "warn");
-      if (attempt < BUNDLE_MAX_RETRIES) await new Promise((r) => setTimeout(r, 2_000));
+      // Wait longer after rate-limiting so regional endpoints have time to clear
+      if (attempt < BUNDLE_MAX_RETRIES) await new Promise((r) => setTimeout(r, 5_000));
       continue;
     }
 
@@ -737,7 +739,8 @@ export async function executeAtomicLaunchBundle(
       `Attempt ${attempt} did not land (${lastError}). ${attempt < BUNDLE_MAX_RETRIES ? "Retrying..." : ""}`,
       "warn"
     );
-    if (attempt < BUNDLE_MAX_RETRIES) await new Promise((r) => setTimeout(r, 1_000));
+    // Wait a few slots between retries to increase the chance of hitting a Jito leader
+    if (attempt < BUNDLE_MAX_RETRIES) await new Promise((r) => setTimeout(r, 3_000));
   }
 
   // Final safety net: check if the token was created by any of the attempts
