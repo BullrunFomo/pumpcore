@@ -370,7 +370,7 @@ export interface AtomicLaunchParams {
 // Token2022:  tx[0]=create,        tx[1]=devbuy, tx[2..4]=wallet buys (max 3 wallets)
 const JITO_MAX_TXS = 5;
 
-const BUNDLE_MAX_RETRIES = 7;
+const BUNDLE_MAX_RETRIES = 5;
 
 export async function executeAtomicLaunchBundle(
   params: AtomicLaunchParams,
