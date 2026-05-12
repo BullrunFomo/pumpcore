@@ -114,8 +114,9 @@ export async function buildCreateTokenIx(
   const metadata = getMetadataPDA(mint.publicKey);
 
   // Encode create instruction data
+  // Metaplex enforces a 10-char symbol limit on-chain; longer symbols live only in off-chain IPFS JSON.
   const nameBuffer = Buffer.from(name, "utf8");
-  const symbolBuffer = Buffer.from(symbol, "utf8");
+  const symbolBuffer = Buffer.from(symbol.slice(0, 10), "utf8");
   const uriBuffer = Buffer.from(metadataUri, "utf8");
 
   // u32 LE length prefix helper
@@ -185,7 +186,7 @@ export async function buildCreateTokenV2Ix(
   );
 
   const nameBuffer = Buffer.from(name, "utf8");
-  const symbolBuffer = Buffer.from(symbol, "utf8");
+  const symbolBuffer = Buffer.from(symbol.slice(0, 10), "utf8");
   const uriBuffer = Buffer.from(metadataUri, "utf8");
   const lenBuf = (b: Buffer) => { const l = Buffer.alloc(4); l.writeUInt32LE(b.length, 0); return l; };
 
