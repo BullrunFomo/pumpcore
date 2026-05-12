@@ -304,7 +304,7 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div>
-                  {launches.slice(0, 20).map((launch) => (
+                  {launches.map((launch) => (
                     <button
                       key={launch.id}
                       onClick={() => {
