@@ -272,7 +272,7 @@ export async function POST(req: NextRequest) {
         }
 
         // ── Step 4: Auto-sell ─────────────────────────────────────────────────
-        if (autoSell.enabled) {
+        if (autoSell?.enabled) {
           const sellWallets: { address: string; privateKey: string }[] = bundleConfig.selectedWallets;
           const pct = Math.min(100, Math.max(1, autoSell.sellPct)) / 100;
 
