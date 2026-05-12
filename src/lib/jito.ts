@@ -15,16 +15,20 @@ import bs58 from "bs58";
 import { randomTipAccount, priorityFeeIx, computeUnitLimitIx, keypairFromPrivateKey } from "./solana";
 import { buildBuyIx, buildBuyIxFromCurve, INITIAL_CURVE } from "./pumpfun";
 
-// Regional endpoints . rotated across retries to avoid 429s and improve landing odds
-const JITO_ENDPOINTS = process.env.JITO_ENDPOINT
+// Regional block-engine endpoints — these have direct validator connections and are the
+// preferred submission targets. The bare mainnet endpoint is a relay that forwards to
+// regional nodes; when regional nodes are rate-limiting our IP the relay also fails to
+// forward, so bundles submitted via relay consistently show "Invalid".
+const JITO_RELAY_ENDPOINT = "https://mainnet.block-engine.jito.wtf/api/v1/bundles";
+const JITO_REGIONAL_ENDPOINTS = process.env.JITO_ENDPOINT
   ? [process.env.JITO_ENDPOINT]
   : [
       "https://ny.mainnet.block-engine.jito.wtf/api/v1/bundles",
       "https://amsterdam.mainnet.block-engine.jito.wtf/api/v1/bundles",
       "https://frankfurt.mainnet.block-engine.jito.wtf/api/v1/bundles",
-      "https://mainnet.block-engine.jito.wtf/api/v1/bundles",
       "https://tokyo.mainnet.block-engine.jito.wtf/api/v1/bundles",
     ];
+const JITO_ENDPOINTS = [...JITO_REGIONAL_ENDPOINTS, JITO_RELAY_ENDPOINT];
 
 const JITO_TIP_LAMPORTS = parseInt(process.env.JITO_TIP_LAMPORTS || "1000000");
 
@@ -151,47 +155,57 @@ async function submitEncodedBundle(
 }
 
 /**
- * Submit to all endpoints simultaneously and take the first acceptance.
- * Parallel submission is safe with Jito (identical bundle content) and avoids
- * wasting block time on sequential 15s timeouts.
+ * Submit to regional endpoints in parallel and take the first acceptance.
+ * Falls back to the relay endpoint only when ALL regional endpoints are rate-limited,
+ * and flags the result so the caller can apply a longer retry delay in that case
+ * (relay-submitted bundles consistently show "Invalid" because the relay can't
+ * forward internally when regional nodes are also throttling it).
  */
 async function sendBundleParallel(
   encodedTxs: string[],
   signatures: string[]
-): Promise<{ bundleId: string; signatures: string[]; endpoint: string }> {
-  const attempts = JITO_ENDPOINTS.map(async (endpoint) => {
+): Promise<{ bundleId: string; signatures: string[]; endpoint: string; viaRelay: boolean }> {
+  // 1. Try all regional endpoints simultaneously.
+  const regionalAttempts = JITO_REGIONAL_ENDPOINTS.map(async (endpoint) => {
     const bundleId = await submitEncodedBundle(encodedTxs, endpoint);
-    return { bundleId, signatures, endpoint };
+    return { bundleId, signatures, endpoint, viaRelay: false };
   });
-
-  const results = await Promise.allSettled(attempts);
-  const errors: string[] = [];
-  for (const r of results) {
+  const regionalResults = await Promise.allSettled(regionalAttempts);
+  const regionalErrors: string[] = [];
+  for (const r of regionalResults) {
     if (r.status === "fulfilled") return r.value;
-    const msg = (r.reason as any)?.message ?? String(r.reason);
-    errors.push(msg);
+    regionalErrors.push((r.reason as any)?.message ?? String(r.reason));
   }
 
-  const allRateLimited = errors.every((e) => e.includes("RATE_LIMITED") || e.includes("429"));
-  const e = new Error(
-    allRateLimited
-      ? "All Jito endpoints rate-limited (429)"
-      : `All Jito endpoints rejected the bundle:\n${errors.join("\n")}`
-  );
-  (e as any).isRateLimit = allRateLimited;
-  throw e;
+  // 2. All regional nodes rejected. Check whether it was all rate-limits or hard errors.
+  const allRegionalRateLimited = regionalErrors.every((e) => e.includes("RATE_LIMITED") || e.includes("429"));
+  if (!allRegionalRateLimited) {
+    throw new Error(`All regional Jito endpoints rejected the bundle:\n${regionalErrors.join("\n")}`);
+  }
+
+  // 3. Regional nodes are rate-limiting us. Try the relay as a last resort.
+  //    This usually results in "Invalid" bundle status, but it's better than nothing.
+  try {
+    const bundleId = await submitEncodedBundle(encodedTxs, JITO_RELAY_ENDPOINT);
+    return { bundleId, signatures, endpoint: JITO_RELAY_ENDPOINT, viaRelay: true };
+  } catch (relayErr: any) {
+    // Even relay rejected — surface the original regional rate-limit error.
+    const e = new Error("All Jito endpoints rate-limited (429)");
+    (e as any).isRateLimit = true;
+    throw e;
+  }
 }
 
 /** Sequential fallback — used only when parallel submission itself errors out. */
 async function sendBundleSequential(
   encodedTxs: string[],
   signatures: string[]
-): Promise<{ bundleId: string; signatures: string[]; endpoint: string }> {
+): Promise<{ bundleId: string; signatures: string[]; endpoint: string; viaRelay: boolean }> {
   const errors: string[] = [];
   for (const endpoint of JITO_ENDPOINTS) {
     try {
       const bundleId = await submitEncodedBundle(encodedTxs, endpoint);
-      return { bundleId, signatures, endpoint };
+      return { bundleId, signatures, endpoint, viaRelay: endpoint === JITO_RELAY_ENDPOINT };
     } catch (err: any) {
       const region = endpoint.match(/\/\/([^.]+)/)?.[1] ?? endpoint;
       errors.push(`${region}: ${err.message}`);
@@ -567,6 +581,7 @@ export async function executeAtomicLaunchBundle(
     blockhash: string;
     lastValidBlockHeight: number;
     submittedEndpoint: string;
+    viaRelay: boolean;
   }> {
     // On the first attempt, pre-simulate the full bundle through Jito so we can
     // surface per-transaction errors before burning any tip.
@@ -586,14 +601,14 @@ export async function executeAtomicLaunchBundle(
     const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("processed");
     const { encodedTxs, signatures } = assembleTxs(blockhash, attemptTip);
 
-    // Try all endpoints in parallel; fall back to sequential if parallel itself errors
-    let result: { bundleId: string; signatures: string[]; endpoint: string };
+    // Try regional endpoints first; fall back to sequential if parallel itself errors
+    let result: { bundleId: string; signatures: string[]; endpoint: string; viaRelay: boolean };
     try {
       result = await sendBundleParallel(encodedTxs, signatures);
     } catch {
       result = await sendBundleSequential(encodedTxs, signatures);
     }
-    return { bundleId: result.bundleId, signatures, blockhash, lastValidBlockHeight, submittedEndpoint: result.endpoint };
+    return { bundleId: result.bundleId, signatures, blockhash, lastValidBlockHeight, submittedEndpoint: result.endpoint, viaRelay: result.viaRelay };
   }
 
   const walletCount = Math.min(buyEntries.length, MAX_BUY_TXS);
@@ -637,6 +652,7 @@ export async function executeAtomicLaunchBundle(
     let confirmedBlockhash: string;
     let confirmedLVBH: number;
     let submittedEndpoint: string;
+    let submittedViaRelay: boolean;
     try {
       const result = await submitBundle(attemptTip, attempt === 1);
       bundleId = result.bundleId;
@@ -645,8 +661,10 @@ export async function executeAtomicLaunchBundle(
       confirmedBlockhash = result.blockhash;
       confirmedLVBH = result.lastValidBlockHeight;
       submittedEndpoint = result.submittedEndpoint;
+      submittedViaRelay = result.viaRelay;
+      const endpointLabel = submittedViaRelay ? "relay (regional rate-limited)" : (submittedEndpoint.match(/\/\/([^.]+)/)?.[1] ?? "jito");
       onProgress(
-        `Bundle accepted via ${submittedEndpoint.match(/\/\/([^.]+)/)?.[1] ?? "jito"} (${bundleId.slice(0, 16)}...) tip=${(attemptTip / 1e9).toFixed(4)} SOL`,
+        `Bundle accepted via ${endpointLabel} (${bundleId.slice(0, 16)}...) tip=${(attemptTip / 1e9).toFixed(4)} SOL`,
         "info"
       );
     } catch (err: any) {
@@ -735,6 +753,23 @@ export async function executeAtomicLaunchBundle(
     }
 
     lastError = outcomeError || `bundle status: ${outcome}`;
+
+    // When the bundle was routed through the relay (all regional endpoints were rate-limited),
+    // the "Invalid" outcome is expected — the relay can't forward because regional nodes are
+    // also throttling it. Don't count this against the attempt budget; wait for regional
+    // nodes to clear their rate limits and retry.
+    if (submittedViaRelay! && outcome === "failed") {
+      onProgress(
+        `Bundle via relay showed Invalid (regional endpoints rate-limited). Waiting 20s for rate limits to clear...`,
+        "warn"
+      );
+      if (attempt < BUNDLE_MAX_RETRIES) {
+        await new Promise((r) => setTimeout(r, 20_000));
+        attempt--; // don't consume this retry slot
+      }
+      continue;
+    }
+
     onProgress(
       `Attempt ${attempt} did not land (${lastError}). ${attempt < BUNDLE_MAX_RETRIES ? "Retrying..." : ""}`,
       "warn"
