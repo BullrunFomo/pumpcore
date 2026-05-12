@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Rocket, Rss, User, LogIn } from "lucide-react";
+import { LayoutDashboard, Rocket, Rss, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -41,31 +41,29 @@ export default function Navbar() {
         {isLanding ? (
           /* Landing page: sign in button only */
           <Link
-            href="/login"
-            className="group flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold tracking-widest uppercase transition-all duration-200"
+            href="/"
+            className="relative flex items-center gap-2 px-5 py-2 rounded-md text-xs font-bold tracking-widest uppercase overflow-hidden transition-all duration-300"
             style={{
-              background: "linear-gradient(135deg, rgba(79,131,255,0.15) 0%, rgba(79,131,255,0.08) 100%)",
-              border: "1px solid rgba(79,131,255,0.4)",
-              color: "#93b4ff",
-              boxShadow: "0 0 14px rgba(79,131,255,0.18), inset 0 1px 0 rgba(79,131,255,0.12)",
+              background: "linear-gradient(135deg, #3b6fd4 0%, #4f83ff 50%, #6fa0ff 100%)",
+              border: "1px solid rgba(111,160,255,0.6)",
+              color: "#fff",
+              boxShadow: "0 0 20px rgba(79,131,255,0.45), 0 0 50px rgba(79,131,255,0.15), inset 0 1px 0 rgba(255,255,255,0.15)",
             }}
             onMouseEnter={(e) => {
               const el = e.currentTarget as HTMLAnchorElement;
-              el.style.background = "linear-gradient(135deg, rgba(79,131,255,0.26) 0%, rgba(79,131,255,0.14) 100%)";
-              el.style.boxShadow = "0 0 22px rgba(79,131,255,0.35), inset 0 1px 0 rgba(79,131,255,0.2)";
-              el.style.borderColor = "rgba(79,131,255,0.65)";
-              el.style.color = "#b8ceff";
+              el.style.boxShadow = "0 0 32px rgba(79,131,255,0.65), 0 0 70px rgba(79,131,255,0.25), inset 0 1px 0 rgba(255,255,255,0.2)";
+              el.style.transform = "translateY(-1px)";
             }}
             onMouseLeave={(e) => {
               const el = e.currentTarget as HTMLAnchorElement;
-              el.style.background = "linear-gradient(135deg, rgba(79,131,255,0.15) 0%, rgba(79,131,255,0.08) 100%)";
-              el.style.boxShadow = "0 0 14px rgba(79,131,255,0.18), inset 0 1px 0 rgba(79,131,255,0.12)";
-              el.style.borderColor = "rgba(79,131,255,0.4)";
-              el.style.color = "#93b4ff";
+              el.style.boxShadow = "0 0 20px rgba(79,131,255,0.45), 0 0 50px rgba(79,131,255,0.15), inset 0 1px 0 rgba(255,255,255,0.15)";
+              el.style.transform = "translateY(0)";
             }}
           >
-            <LogIn className="w-3.5 h-3.5" />
-            Sign In
+            <span className="absolute inset-0 pointer-events-none"
+              style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 60%)" }} />
+            <Rocket className="w-3.5 h-3.5 relative z-10" style={{ filter: "drop-shadow(0 0 4px rgba(255,255,255,0.5))" }} />
+            <span className="relative z-10">Open App</span>
           </Link>
         ) : (
           /* App pages: full nav links */
